@@ -50,6 +50,28 @@ npm run dev
 
 访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `docs/bkn_docs/examples` 下的示例，数据保存在浏览器 localStorage。
 
+### AI 生成
+
+BKN Editor 支持通过 OpenAI 或 Anthropic 的 AI 辅助生成。配置方法：复制示例文件并编辑 `bkn_editor/.env.local`：
+
+```bash
+cd bkn_editor
+copy .env.local.example .env.local   # Windows
+# 或: cp .env.local.example .env.local
+```
+
+| 变量 | 说明 | 必填 |
+|------|------|------|
+| `AI_PROVIDER` | `openai` 或 `anthropic`（默认 `openai`） | 可选 |
+| `OPENAI_API_KEY` | [OpenAI API 密钥](https://platform.openai.com/api-keys) | 使用 OpenAI 时 |
+| `OPENAI_MODEL` | 模型名（默认 `gpt-4o-mini`） | 可选 |
+| `OPENAI_BASE_URL` | 自定义 OpenAI 兼容 API 地址 | 可选 |
+| `ANTHROPIC_API_KEY` | [Anthropic API 密钥](https://console.anthropic.com/) | 使用 Anthropic 时 |
+| `ANTHROPIC_MODEL` | 模型名 | 可选 |
+| `ANTHROPIC_BASE_URL` | 自定义 Anthropic API 地址 | 可选 |
+
+修改 `.env.local` 后需重启 `npm run dev`。
+
 > **说明**：BKN Editor 为**演示工具**，用于理解规范。生产工具需按规范独立实现。
 
 ## 许可证

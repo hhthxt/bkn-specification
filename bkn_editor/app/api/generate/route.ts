@@ -172,21 +172,31 @@ function getProvider(): AIProvider {
   return provider === 'anthropic' ? 'anthropic' : 'openai';
 }
 
+function isPlaceholderOrEmpty(key: string | undefined): boolean {
+  if (!key || !key.trim()) return true;
+  const placeholder = /^sk-your-api-key-here$/i;
+  return placeholder.test(key.trim());
+}
+
 export async function POST(request: NextRequest) {
   try {
     const provider = getProvider();
 
     if (provider === 'openai') {
-      if (!process.env.OPENAI_API_KEY) {
+      if (isPlaceholderOrEmpty(process.env.OPENAI_API_KEY)) {
         return new Response(
-          JSON.stringify({ error: 'OPENAI_API_KEY not configured. Set OPENAI_API_KEY in .env.local or use AI_PROVIDER=anthropic with ANTHROPIC_API_KEY.' }),
+          JSON.stringify({
+            error: 'OPENAI_API_KEY not configured. Set OPENAI_API_KEY in bkn_editor/.env.local with a valid key, or set AI_PROVIDER=anthropic to use Anthropic.',
+          }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
     } else {
-      if (!process.env.ANTHROPIC_API_KEY) {
+      if (isPlaceholderOrEmpty(process.env.ANTHROPIC_API_KEY)) {
         return new Response(
-          JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured. Set ANTHROPIC_API_KEY in .env.local or use AI_PROVIDER=openai with OPENAI_API_KEY.' }),
+          JSON.stringify({
+            error: 'ANTHROPIC_API_KEY not configured. Set ANTHROPIC_API_KEY in bkn_editor/.env.local with a valid key, or set AI_PROVIDER=openai to use OpenAI.',
+          }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
