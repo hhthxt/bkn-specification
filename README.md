@@ -1,54 +1,44 @@
-# BKN Editor - Business Knowledge Network Editor
+# BKN Specification
 
-一个用于编辑和可视化业务知识网络（BKN）的 Web 应用。
+**BKN (Business Knowledge Network)** is a Markdown-based domain modeling language for business knowledge networks. This repository hosts the official specification and examples.
 
-## 功能特性
+## Specification
 
-### 部分1: 文件列表 (FileTree)
-- 树形目录结构展示所有 `.bkn` 文件
-- 支持增删改查操作：
-  - 新建文件/文件夹
-  - 重命名文件
-  - 删除文件（带确认对话框）
-  - 点击文件打开到编辑器
-- 文件图标区分类型（network/entity/relation/action）
-- 右键菜单支持快速操作
+The core documentation is the **BKN Language Specification**:
 
-### 部分2: BKN 编辑器 (Editor)
-- 基于 Monaco Editor 的 Markdown 编辑器
-- 实时语法高亮（YAML frontmatter + Markdown）
-- 快捷功能工具栏：
-  - **添加实体** - 插入 Entity 模板（含数据属性、逻辑属性结构）
-  - **添加关系** - 插入 Relation 模板
-  - **添加行动** - 插入 Action 模板
-- 自动保存到 localStorage（1秒延迟）
+- **[SPECIFICATION.md](docs/ontology/bkn_docs/SPECIFICATION.md)** — Full specification (Chinese)
+- **[SPECIFICATION.en.md](docs/ontology/bkn_docs/SPECIFICATION.en.md)** — English edition
 
-### 部分3: 网络图可视化 (GraphView)
-- 使用 React Flow 渲染实体-关系网络图
-- 节点类型：
-  - Entity 节点（蓝色边框）
-  - Action 节点（橙色边框，连接到绑定的 Entity）
-- 边类型：
-  - Relation 边（实体之间的关系）
-- 交互功能：
-  - 点击节点查看详情（弹窗显示完整信息）
-  - 点击边查看关系详情
-  - 缩放、拖拽、自动布局
-  - 支持 MiniMap 和 Controls
+### Key Concepts
 
-## 技术栈
+| Concept | Description |
+|---------|-------------|
+| Entity | Business object types (e.g. Pod, Node, Service) |
+| Relation | Links between entities |
+| Action | Operations on entities (with tool/MCP binding) |
+| data_view | Data source mapping for entities and relations |
 
-- **框架**: Next.js 14 (App Router)
-- **UI 组件**: shadcn/ui + Tailwind CSS
-- **编辑器**: Monaco Editor (@monaco-editor/react)
-- **图可视化**: React Flow
-- **状态管理**: Zustand
-- **解析**: gray-matter (YAML frontmatter) + js-yaml
-- **存储**: localStorage
-- **图标**: Lucide React
-- **主题**: next-themes (支持深色模式)
+### File Organization
 
-## 快速开始
+```
+docs/ontology/bkn_docs/
+├── SPECIFICATION.md      # Full spec (CN)
+├── SPECIFICATION.en.md   # Full spec (EN)
+├── ARCHITECTURE.md       # Architecture overview
+├── examples/             # Example networks (Kubernetes topology)
+│   ├── k8s-topology.bkn  # Single-file example
+│   ├── k8s-network/      # Split by type (entities, relations, actions)
+│   └── k8s-modular/     # One definition per file
+└── templates/           # BKN file templates
+```
+
+## Demo Tool
+
+This repo includes **BKN Editor**, a demo web app for editing and visualizing BKN files:
+
+- File tree and Monaco editor for `.bkn` files
+- Graph view of entities and relations (React Flow)
+- Templates for Entity, Relation, Action
 
 ```bash
 cd bkn_editor
@@ -56,72 +46,10 @@ npm install
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/ontology/bkn_docs/examples` and stores data in browser localStorage.
 
-### 构建生产版本
+> **Note:** BKN Editor is a **demo** for exploring the specification. Production tooling should follow the spec independently.
 
-```bash
-cd bkn_editor
-npm run build
-npm start
-```
+## License
 
-## 使用说明
-
-1. **初始化**: 首次打开应用会自动加载项目根目录 `docs/ontology/bkn_docs/examples` 下的示例文件
-2. **编辑文件**: 在左侧文件树中选择文件，中间编辑器会自动打开
-3. **插入模板**: 使用工具栏的"插入"按钮快速添加 Entity/Relation/Action
-4. **查看网络图**: 右侧自动显示所有实体和关系的可视化网络图
-5. **查看详情**: 点击网络图中的节点或边查看详细信息
-
-## 数据存储
-
-- 所有文件内容存储在浏览器的 `localStorage` 中
-- 支持上传 `.bkn` 文件
-- 支持下载当前文件
-- 支持重置所有数据
-
-## 项目结构
-
-```
-bkn_verify/
-├── docs/ontology/bkn_docs/   # BKN 规范与示例
-│   ├── SPECIFICATION.md
-│   └── examples/
-├── bkn_editor/              # 应用目录
-│   ├── app/                 # Next.js App Router
-│   ├── components/          # FileTree, Editor, GraphView, ui
-│   ├── lib/                 # bkn-parser, storage, store
-│   ├── types/
-│   └── package.json
-└── README.md
-```
-
-## 开发说明
-
-### BKN 文件格式
-
-BKN 文件使用 Markdown 格式，包含：
-- YAML Frontmatter：文件元数据（type, id, name 等）
-- Markdown Body：知识网络定义内容
-
-详细规范请参考项目根目录 `docs/ontology/bkn_docs/SPECIFICATION.md`
-
-### 解析器
-
-`lib/bkn-parser.ts` 负责：
-1. 解析 YAML frontmatter
-2. 解析 Markdown body 中的表格和结构化内容
-3. 提取 Entity、Relation、Action 信息
-4. 合并成统一的 Network JSON 结构
-
-### 状态管理
-
-使用 Zustand store (`bkn_editor/lib/store.ts`) 管理：
-- 当前打开的文件
-- 解析后的网络结构
-- 文件变化时的自动刷新
-
-## 许可证
-
-MIT
+Apache-2.0
