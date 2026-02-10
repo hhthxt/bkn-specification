@@ -19,21 +19,21 @@ const ENTITY_TEMPLATE = `## Entity: new_entity
 
 **实体名称** - 描述
 
-### 数据来源
+### Data Source
 
-| 类型 | ID |
-|------|-----|
-| data_view | view_id |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | view_id | view_name |
 
-> **主键**: \`id\` | **显示属性**: \`name\`
+> **Primary Key**: \`id\` | **Display Key**: \`name\`
 
-### 属性覆盖
+### Property Override
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
 | property_name | 属性显示名 | keyword | 说明 |
 
-### 逻辑属性
+### Logic Properties
 
 #### metric_name
 
@@ -41,8 +41,8 @@ const ENTITY_TEMPLATE = `## Entity: new_entity
 - **来源**: metric_source (metric-model)
 - **说明**: 指标说明
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | id | property | id |
 | param | input | - |
 `;
@@ -51,17 +51,17 @@ const RELATION_TEMPLATE = `## Relation: new_relation
 
 **关系名称** - 描述
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | source_entity | target_entity | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 | 终点属性 |
-|----------|----------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | source_prop | target_prop |
 
-### 业务语义
+### Business Semantics
 
 关系说明...
 `;
@@ -70,11 +70,11 @@ const ACTION_TEMPLATE = `## Action: new_action
 
 **行动名称** - 描述
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | entity_id | modify |
 
-### 触发条件
+### Trigger Condition
 
 \`\`\`yaml
 condition:
@@ -84,24 +84,24 @@ condition:
   value: Failed
 \`\`\`
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
-|------|----------|--------|
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
 | tool | toolbox_id | tool_id |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
 | param1 | property | property_name | 说明 |
 | param2 | input | - | 说明 |
 | param3 | const | value | 说明 |
 
-### 调度配置
+### Schedule
 
-| 类型 | 表达式 |
-|------|--------|
+| Type | Expression |
+|------|------------|
 | FIX_RATE | 5m |
 `;
 

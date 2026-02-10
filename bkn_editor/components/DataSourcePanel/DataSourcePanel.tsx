@@ -22,13 +22,13 @@ export function DataSourcePanel() {
       <div className="p-2 border-b bg-muted/30">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <Database className="h-4 w-4" />
-          数据来源
+          Data Sources
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto">
         {dataSources.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            暂无数据来源
+            No data sources
           </div>
         ) : (
           <div className="p-1">

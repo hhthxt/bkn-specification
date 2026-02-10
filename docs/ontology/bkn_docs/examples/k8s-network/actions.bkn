@@ -2,11 +2,11 @@
 type: fragment
 id: k8s-actions
 name: Kubernetes行动定义
-parent: index.bkn
+network: k8s-network
 version: 1.0.0
 ---
 
-# 行动定义
+# Actions
 
 本文件定义 Kubernetes 网络中的运维行动。
 
@@ -16,11 +16,11 @@ version: 1.0.0
 
 **重启Pod** - 当 Pod 状态异常时，自动执行重启操作
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | pod | modify |
 
-### 触发条件
+### Trigger Condition
 
 ```yaml
 condition:
@@ -34,34 +34,34 @@ condition:
 
 > 当 Pod 状态为 Unknown 或 Failed 时触发
 
-### 影响范围
+### Scope of Impact
 
-| 影响对象 | 影响描述 |
-|----------|----------|
-| pod | 删除并重建 Pod，恢复服务状态 |
+| Object | Impact Description |
+|--------|---------------------|
+| pod | Delete and recreate Pod, restore service |
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
-|------|----------|--------|
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
 | tool | k8s_toolbox | kubectl_delete_pod |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
-| pod | property | pod_name | Pod 名称 |
-| namespace | property | pod_namespace | 命名空间 |
-| grace_period | const | 30 | 优雅终止等待秒数 |
-| force | input | - | 是否强制删除 |
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
+| pod | property | pod_name | Pod name |
+| namespace | property | pod_namespace | Namespace |
+| grace_period | const | 30 | Grace period seconds |
+| force | input | - | Force delete |
 
-### 调度配置
+### Schedule
 
-| 类型 | 表达式 |
-|------|--------|
+| Type | Expression |
+|------|------------|
 | FIX_RATE | 5m |
 
-### 执行流程
+### Execution Flow
 
 1. 确认 Pod 状态仍为异常
 2. 执行删除操作
@@ -74,11 +74,11 @@ condition:
 
 **隔离节点** - 将故障节点标记为不可调度
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | node | modify |
 
-### 触发条件
+### Trigger Condition
 
 ```yaml
 condition:
@@ -90,25 +90,25 @@ condition:
 
 > 当 Node 状态为 NotReady 时触发
 
-### 影响范围
+### Scope of Impact
 
-| 影响对象 | 影响描述 |
-|----------|----------|
-| node | 标记节点为不可调度状态 |
+| Object | Impact Description |
+|--------|---------------------|
+| node | Mark node as unschedulable |
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | MCP ID | 工具名称 |
-|------|--------|----------|
+| Type | MCP ID | Tool Name |
+|------|--------|-----------|
 | mcp | kubernetes-mcp | cordon_node |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 |
-|------|------|------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | node | property | node_name |
 
-### 执行说明
+### Execution Description
 
 1. 执行 `kubectl cordon` 标记节点不可调度
 2. 现有 Pod 继续运行

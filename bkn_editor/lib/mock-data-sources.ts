@@ -20,7 +20,7 @@ export const mockDataSources: Record<string, MockDataSource> = {
     name: 'pod_info_view',
     description: 'Pod 实例信息视图，包含 Pod 的基本信息和状态',
     columns: [
-      { name: 'id', type: 'int64', description: '主键ID' },
+      { name: 'id', type: 'int64', description: 'Primary key ID' },
       { name: 'pod_name', type: 'VARCHAR', description: 'Pod名称' },
       { name: 'pod_status', type: 'VARCHAR', description: 'Pod状态 (Running/Pending/Failed)' },
       { name: 'pod_node_name', type: 'VARCHAR', description: 'Pod所在节点名称' },
@@ -63,7 +63,7 @@ export const mockDataSources: Record<string, MockDataSource> = {
     name: 'node_info_view',
     description: 'Node 节点信息视图，包含节点的资源容量和状态',
     columns: [
-      { name: 'id', type: 'int64', description: '主键ID' },
+      { name: 'id', type: 'int64', description: 'Primary key ID' },
       { name: 'node_name', type: 'VARCHAR', description: '节点名称' },
       { name: 'node_status', type: 'VARCHAR', description: '节点状态 (Ready/NotReady)' },
       { name: 'node_cpu_capacity', type: 'VARCHAR', description: 'CPU总容量（核心数）' },
@@ -114,7 +114,7 @@ export const mockDataSources: Record<string, MockDataSource> = {
     name: 'service_info_view',
     description: 'Service 服务信息视图，包含服务的网络配置和路由信息',
     columns: [
-      { name: 'id', type: 'int64', description: '主键ID' },
+      { name: 'id', type: 'int64', description: 'Primary key ID' },
       { name: 'service_name', type: 'VARCHAR', description: 'Service名称' },
       { name: 'service_namespace', type: 'VARCHAR', description: 'Service所属命名空间' },
       { name: 'service_type', type: 'VARCHAR', description: 'Service类型 (ClusterIP/NodePort/LoadBalancer)' },

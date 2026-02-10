@@ -2,11 +2,11 @@
 type: fragment
 id: k8s-relations
 name: Kubernetes关系定义
-parent: index.bkn
+network: k8s-network
 version: 1.0.0
 ---
 
-# 关系定义
+# Relations
 
 本文件定义 Kubernetes 网络中实体之间的关系。
 
@@ -16,17 +16,17 @@ version: 1.0.0
 
 **Pod属于节点** - Pod 与其所在节点之间的归属关系
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | pod | node | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 (Pod) | 终点属性 (Node) |
-|----------------|-----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | pod_node_name | node_name |
 
-### 业务语义
+### Business Semantics
 
 一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。
 
@@ -39,17 +39,17 @@ version: 1.0.0
 
 **Service路由Pod** - Service 到 Pod 的流量路由关系
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | service | pod | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 (Service) | 终点属性 (Pod) |
-|--------------------|----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | service_name | service_name |
 
-### 业务语义
+### Business Semantics
 
 Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 

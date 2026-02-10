@@ -5,6 +5,10 @@ name: {网络名称}
 version: 1.0.0
 tags: [{标签1}, {标签2}]
 description: {网络描述}
+# includes:                    # 按类型拆分时，引用子文件
+#   - entities.bkn
+#   - relations.bkn
+#   - actions.bkn
 ---
 
 # {网络名称}
@@ -21,29 +25,29 @@ graph TB
 
 ---
 
-# 实体定义
+# Entities
 
 ## Entity: {entity_id}
 
 **{实体名称}** - {简短描述}
 
-### 数据来源
+### Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **主键**: `{primary_key}` | **显示属性**: `{display_key}`
+> **Primary Key**: `{primary_key}` | **Display Key**: `{display_key}`
 
-### 属性覆盖
+### Property Override
 
 <!-- 可选：仅声明需要特殊配置的属性 -->
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
 | {property} | {显示名} | {索引配置} | {说明} |
 
-### 逻辑属性
+### Logic Properties
 
 <!-- 可选：指标、算子等扩展属性 -->
 
@@ -53,46 +57,46 @@ graph TB
 - **来源**: {source_id} ({source_type})
 - **说明**: {说明}
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | {param} | property | {property_name} |
 | {param} | input | - |
 
 ---
 
-# 关系定义
+# Relations
 
 ## Relation: {relation_id}
 
 **{关系名称}** - {简短描述}
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | {source_entity} | {target_entity} | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 | 终点属性 |
-|----------|----------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | {source_prop} | {target_prop} |
 
-### 业务语义
+### Business Semantics
 
 {关系的业务含义说明}
 
 ---
 
-# 行动定义
+# Actions
 
 ## Action: {action_id}
 
 **{行动名称}** - {简短描述}
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | {entity_id} | add | modify | delete |
 
-### 触发条件
+### Trigger Condition
 
 ```yaml
 condition:
@@ -102,25 +106,25 @@ condition:
   value: {value}
 ```
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具ID |
-|------|--------|
+| Type | Tool ID |
+|------|---------|
 | tool | {tool_id} |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
 | {param} | property | {property_name} | {说明} |
 | {param} | input | - | {说明} |
 
-### 调度配置
+### Schedule
 
-| 类型 | 表达式 |
-|------|--------|
+| Type | Expression |
+|------|------------|
 | FIX_RATE | {interval} |
 
-### 执行说明
+### Execution Description
 
 {详细的执行流程说明}

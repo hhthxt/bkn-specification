@@ -18,13 +18,13 @@ tags: [{标签1}, {标签2}]
 
 {详细描述}
 
-## 绑定实体
+## Bound Entity
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | {entity_id} | modify |
 
-## 触发条件
+## Trigger Condition
 
 ```yaml
 condition:
@@ -69,15 +69,15 @@ condition:
 |------|--------|
 | FIX_RATE | {interval} |
 
-## 权限与前置条件
+## Permissions and Prerequisites
 
 {谁可以启用/执行、是否需要审批、需要哪些凭据/权限}
 
-## 回滚/失败策略
+## Rollback/Failure Policy
 
 {失败如何处理、是否重试、是否可撤销、如何回滚}
 
-## 执行流程
+## Execution Flow
 
 1. {步骤1}
 2. {步骤2}

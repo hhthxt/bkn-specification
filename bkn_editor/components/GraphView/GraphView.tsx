@@ -350,16 +350,16 @@ function EntityDetails({ entity }: { entity: Entity }) {
           <div><span className="text-muted-foreground">ID:</span> {entity.id}</div>
           {entity.network && <div><span className="text-muted-foreground">网络:</span> {entity.network}</div>}
           {entity.namespace && <div><span className="text-muted-foreground">命名空间:</span> {entity.namespace}</div>}
-          {entity.primaryKey && <div><span className="text-muted-foreground">主键:</span> {entity.primaryKey}</div>}
-          {entity.displayKey && <div><span className="text-muted-foreground">显示属性:</span> {entity.displayKey}</div>}
+          {entity.primaryKey && <div><span className="text-muted-foreground">Primary Key:</span> {entity.primaryKey}</div>}
+          {entity.displayKey && <div><span className="text-muted-foreground">Display Key:</span> {entity.displayKey}</div>}
         </div>
       </div>
 
       {entity.dataSource && (
         <div>
-          <h3 className="font-semibold mb-2">数据来源</h3>
+          <h3 className="font-semibold mb-2">Data Source</h3>
           <div className="text-sm">
-            <div><span className="text-muted-foreground">类型:</span> {entity.dataSource.type}</div>
+            <div><span className="text-muted-foreground">Type:</span> {entity.dataSource.type}</div>
             <div><span className="text-muted-foreground">ID:</span> {entity.dataSource.id}</div>
           </div>
         </div>
@@ -367,19 +367,19 @@ function EntityDetails({ entity }: { entity: Entity }) {
 
       {entity.properties && entity.properties.length > 0 && (
         <div>
-          <h3 className="font-semibold mb-2">属性覆盖</h3>
+          <h3 className="font-semibold mb-2">Property Override</h3>
           <div className="text-sm space-y-2">
             {entity.properties.map((prop, idx) => (
               <div key={idx} className="border-l-2 pl-3 py-1">
                 <div className="font-medium">{prop.name}</div>
                 {prop.displayName && (
-                  <div className="text-muted-foreground text-xs">显示名: {prop.displayName}</div>
+                  <div className="text-muted-foreground text-xs">Display Name: {prop.displayName}</div>
                 )}
                 {prop.type && (
-                  <div className="text-muted-foreground text-xs">类型: {prop.type}</div>
+                  <div className="text-muted-foreground text-xs">Type: {prop.type}</div>
                 )}
                 {prop.indexConfig && (
-                  <div className="text-muted-foreground text-xs">索引配置: {prop.indexConfig}</div>
+                  <div className="text-muted-foreground text-xs">Index Config: {prop.indexConfig}</div>
                 )}
                 {prop.description && (
                   <div className="text-muted-foreground text-xs mt-1">{prop.description}</div>
@@ -422,8 +422,8 @@ function ActionDetails({ action }: { action: Action }) {
         <h3 className="font-semibold mb-2">基本信息</h3>
         <div className="space-y-1 text-sm">
           <div><span className="text-muted-foreground">ID:</span> {action.id}</div>
-          <div><span className="text-muted-foreground">绑定实体:</span> {action.entityId}</div>
-          <div><span className="text-muted-foreground">行动类型:</span> {action.actionType}</div>
+          <div><span className="text-muted-foreground">Bound Entity:</span> {action.entityId}</div>
+          <div><span className="text-muted-foreground">Action Type:</span> {action.actionType}</div>
           {action.network && <div><span className="text-muted-foreground">网络:</span> {action.network}</div>}
           {action.enabled !== undefined && (
             <div><span className="text-muted-foreground">启用:</span> {action.enabled ? '是' : '否'}</div>
@@ -436,7 +436,7 @@ function ActionDetails({ action }: { action: Action }) {
 
       {action.condition && (
         <div>
-          <h3 className="font-semibold mb-2">触发条件</h3>
+          <h3 className="font-semibold mb-2">Trigger Condition</h3>
           <div className="text-sm">
             <div><span className="text-muted-foreground">字段:</span> {action.condition.field}</div>
             <div><span className="text-muted-foreground">操作:</span> {action.condition.operation}</div>
@@ -451,8 +451,8 @@ function ActionDetails({ action }: { action: Action }) {
         <div>
           <h3 className="font-semibold mb-2">工具配置</h3>
           <div className="text-sm">
-            <div><span className="text-muted-foreground">工具箱ID:</span> {action.toolConfig.boxId}</div>
-            <div><span className="text-muted-foreground">工具ID:</span> {action.toolConfig.toolId}</div>
+            <div><span className="text-muted-foreground">Toolbox ID:</span> {action.toolConfig.boxId}</div>
+            <div><span className="text-muted-foreground">Tool ID:</span> {action.toolConfig.toolId}</div>
           </div>
         </div>
       )}
@@ -484,15 +484,15 @@ function RelationDetails({ relation }: { relation: Relation }) {
         <h3 className="font-semibold mb-2">基本信息</h3>
         <div className="space-y-1 text-sm">
           <div><span className="text-muted-foreground">ID:</span> {relation.id}</div>
-          <div><span className="text-muted-foreground">起点:</span> {relation.source}</div>
-          <div><span className="text-muted-foreground">终点:</span> {relation.target}</div>
-          <div><span className="text-muted-foreground">类型:</span> {relation.type}</div>
+          <div><span className="text-muted-foreground">Source:</span> {relation.source}</div>
+          <div><span className="text-muted-foreground">Target:</span> {relation.target}</div>
+          <div><span className="text-muted-foreground">Type:</span> {relation.type}</div>
         </div>
       </div>
 
       {relation.mappingRules && relation.mappingRules.length > 0 && (
         <div>
-          <h3 className="font-semibold mb-2">映射规则</h3>
+          <h3 className="font-semibold mb-2">Mapping Rules</h3>
           <div className="text-sm space-y-1">
             {relation.mappingRules.map((rule, idx) => (
               <div key={idx}>

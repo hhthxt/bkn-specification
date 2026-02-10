@@ -46,7 +46,7 @@ function readBKNFiles(dir: string, basePath: string = ''): Record<string, string
 
 export async function GET() {
   try {
-    const examplesDir = join(process.cwd(), 'docs', 'ontology', 'bkn_docs', 'examples');
+    const examplesDir = join(process.cwd(), '..', 'docs', 'ontology', 'bkn_docs', 'examples');
     const projects: Project[] = [];
     
     // Project 1: k8s-topology (single file)

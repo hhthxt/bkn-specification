@@ -11,19 +11,19 @@ tags: [拓扑架构, 网络]
 
 Service 到 Pod 的流量路由关系。
 
-## 关联定义
+## Endpoints
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | service | pod | direct |
 
-## 映射规则
+## Mapping Rules
 
-| 起点属性 (Service) | 终点属性 (Pod) |
-|--------------------|----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | service_name | service_name |
 
-## 业务语义
+## Business Semantics
 
 Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 

@@ -110,64 +110,63 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
     entity.description = descMatch[1].trim();
   }
 
-  // Parse data source table
-  const dataSourceMatch = file.content.match(/###\s+数据来源\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse data source table (## or ### section level)
+  const dataSourceMatch = file.content.match(/#{2,3}\s+(?:Data Source|数据来源)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (dataSourceMatch) {
     const table = parseTable(dataSourceMatch[1]);
-    if (table.length > 0 && table[0]['类型']) {
+    if (table.length > 0 && (table[0]['Type'] || table[0]['类型'])) {
       entity.dataSource = {
-        type: table[0]['类型'] || table[0]['类型'] || '',
+        type: table[0]['Type'] || table[0]['类型'] || '',
         id: table[0]['ID'] || table[0]['id'] || '',
-        name: table[0]['名称'] || table[0]['name'],
+        name: table[0]['Name'] || table[0]['名称'] || table[0]['name'],
       };
     }
   }
 
-  // Parse primary key and display key from quote block
-  const quoteMatch = file.content.match(/>\s*\*\*主键\*\*:\s*`([^`]+)`\s*\|\s*\*\*显示属性\*\*:\s*`([^`]+)`/);
+  // Parse primary key and display key from quote block (both English and Chinese)
+  const quoteMatch = file.content.match(/>\s*\*\*(?:Primary Key|主键)\*\*:\s*`([^`]+)`\s*\|\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
   if (quoteMatch) {
     entity.primaryKey = quoteMatch[1];
     entity.displayKey = quoteMatch[2];
   } else {
-    // Try alternative format
-    const altMatch = file.content.match(/>\s*\*\*显示属性\*\*:\s*`([^`]+)`/);
+    const altMatch = file.content.match(/>\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
     if (altMatch) {
       entity.displayKey = altMatch[1];
     }
   }
 
-  // Parse data properties table
-  const dataPropsMatch = file.content.match(/###\s+数据属性\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse data properties table (## or ### section level)
+  const dataPropsMatch = file.content.match(/#{2,3}\s+(?:Data Properties|数据属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (dataPropsMatch) {
     const table = parseTable(dataPropsMatch[1]);
     entity.dataProperties = table.map((row) => ({
-      name: row['属性名'] || row['property_name'] || '',
-      displayName: row['显示名'] || row['display_name'],
-      type: row['类型'] || row['type'],
-      description: row['说明'] || row['description'],
-      isPrimaryKey: row['主键'] === 'YES' || row['主键'] === '是' || row['isPrimaryKey'] === 'YES',
-      isIndexed: row['索引'] === 'YES' || row['索引'] === '是' || row['isIndexed'] === 'YES',
+      name: row['Property'] || row['属性名'] || row['property_name'] || '',
+      displayName: row['Display Name'] || row['显示名'] || row['display_name'],
+      type: row['Type'] || row['类型'] || row['type'],
+      description: row['Description'] || row['说明'] || row['description'],
+      isPrimaryKey: row['Primary Key'] === 'YES' || row['主键'] === 'YES' || row['主键'] === '是' || row['isPrimaryKey'] === 'YES',
+      isIndexed: row['Index'] === 'YES' || row['索引'] === 'YES' || row['索引'] === '是' || row['isIndexed'] === 'YES',
     }));
   }
 
-  // Parse properties override table
-  const propsMatch = file.content.match(/###\s+属性覆盖\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse properties override table (## or ### section level)
+  const propsMatch = file.content.match(/#{2,3}\s+(?:Property Override|属性覆盖)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (propsMatch) {
     const table = parseTable(propsMatch[1]);
     entity.properties = table.map((row) => ({
-      name: row['属性名'] || row['property_name'] || '',
-      displayName: row['显示名'] || row['display_name'],
-      type: row['类型'] || row['type'],
-      indexConfig: row['索引配置'] || row['index_config'],
-      description: row['说明'] || row['description'],
+      name: row['Property'] || row['属性名'] || row['property_name'] || '',
+      displayName: row['Display Name'] || row['显示名'] || row['display_name'],
+      type: row['Type'] || row['类型'] || row['type'],
+      indexConfig: row['Index Config'] || row['索引配置'] || row['index_config'],
+      description: row['Description'] || row['说明'] || row['description'],
     }));
   }
 
-  // Parse logic properties
-  const logicPropsMatch = file.content.match(/###\s+逻辑属性\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse logic properties (## or ### section level)
+  const logicPropsMatch = file.content.match(/#{2,3}\s+(?:Logic Properties|逻辑属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (logicPropsMatch) {
     const logicProps: LogicProperty[] = [];
-    const sections = logicPropsMatch[1].split(/\n####\s+/);
+    const sections = logicPropsMatch[1].split(/\n#{3,4}\s+/);
     
     for (let i = 1; i < sections.length; i++) {
       const section = sections[i];
@@ -204,12 +203,13 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
 
       // Parse parameters table
       const paramTable = parseTable(section);
-      if (paramTable.length > 0 && paramTable[0]['参数名']) {
+      const hasParams = paramTable.length > 0 && (paramTable[0]['Parameter'] || paramTable[0]['参数名']);
+      if (hasParams) {
         prop.parameters = paramTable.map((row) => ({
-          name: row['参数名'] || row['parameter_name'] || '',
-          source: (row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
-          binding: row['绑定值'] || row['binding'] || row['绑定'] || undefined,
-          description: row['说明'] || row['description'],
+          name: row['Parameter'] || row['参数名'] || row['parameter_name'] || '',
+          source: (row['Source'] || row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
+          binding: row['Binding'] || row['绑定值'] || row['binding'] || row['绑定'] || undefined,
+          description: row['Description'] || row['说明'] || row['description'],
         }));
       }
 
@@ -252,58 +252,58 @@ function parseEntity(file: BKNFile): Entity | null {
     description: file.frontmatter.description,
   };
 
-  // Parse data source table
-  const dataSourceMatch = file.content.match(/##\s+数据来源\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse data source table (## or ### in single-file)
+  const dataSourceMatch = file.content.match(/#{2,3}\s+(?:Data Source|数据来源)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (dataSourceMatch) {
     const table = parseTable(dataSourceMatch[1]);
-    if (table.length > 0 && table[0]['类型']) {
+    if (table.length > 0 && (table[0]['Type'] || table[0]['类型'])) {
       entity.dataSource = {
-        type: table[0]['类型'] || '',
+        type: table[0]['Type'] || table[0]['类型'] || '',
         id: table[0]['ID'] || table[0]['id'] || '',
-        name: table[0]['名称'] || table[0]['name'],
+        name: table[0]['Name'] || table[0]['名称'] || table[0]['name'],
       };
     }
   }
 
-  // Parse primary key and display key from quote block
-  const quoteMatch = file.content.match(/>\s*\*\*主键\*\*:\s*`([^`]+)`\s*\|\s*\*\*显示属性\*\*:\s*`([^`]+)`/);
+  // Parse primary key and display key from quote block (both English and Chinese)
+  const quoteMatch = file.content.match(/>\s*\*\*(?:Primary Key|主键)\*\*:\s*`([^`]+)`\s*\|\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
   if (quoteMatch) {
     entity.primaryKey = quoteMatch[1];
     entity.displayKey = quoteMatch[2];
   }
 
-  // Parse data properties table
-  const dataPropsMatch = file.content.match(/##\s+数据属性\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse data properties table (## or ### in single-file)
+  const dataPropsMatch = file.content.match(/#{2,3}\s+(?:Data Properties|数据属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (dataPropsMatch) {
     const table = parseTable(dataPropsMatch[1]);
     entity.dataProperties = table.map((row) => ({
-      name: row['属性名'] || row['property_name'] || '',
-      displayName: row['显示名'] || row['display_name'],
-      type: row['类型'] || row['type'],
-      description: row['说明'] || row['description'],
-      isPrimaryKey: row['主键'] === 'YES' || row['主键'] === '是' || row['isPrimaryKey'] === 'YES',
-      isIndexed: row['索引'] === 'YES' || row['索引'] === '是' || row['isIndexed'] === 'YES',
+      name: row['Property'] || row['属性名'] || row['property_name'] || '',
+      displayName: row['Display Name'] || row['显示名'] || row['display_name'],
+      type: row['Type'] || row['类型'] || row['type'],
+      description: row['Description'] || row['说明'] || row['description'],
+      isPrimaryKey: row['Primary Key'] === 'YES' || row['主键'] === 'YES' || row['主键'] === '是' || row['isPrimaryKey'] === 'YES',
+      isIndexed: row['Index'] === 'YES' || row['索引'] === 'YES' || row['索引'] === '是' || row['isIndexed'] === 'YES',
     }));
   }
 
-  // Parse properties override table
-  const propsMatch = file.content.match(/##\s+属性覆盖\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse properties override table (## or ### in single-file)
+  const propsMatch = file.content.match(/#{2,3}\s+(?:Property Override|属性覆盖)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (propsMatch) {
     const table = parseTable(propsMatch[1]);
     entity.properties = table.map((row) => ({
-      name: row['属性名'] || row['property_name'] || '',
-      displayName: row['显示名'] || row['display_name'],
-      type: row['类型'] || row['type'],
-      indexConfig: row['索引配置'] || row['index_config'],
-      description: row['说明'] || row['description'],
+      name: row['Property'] || row['属性名'] || row['property_name'] || '',
+      displayName: row['Display Name'] || row['显示名'] || row['display_name'],
+      type: row['Type'] || row['类型'] || row['type'],
+      indexConfig: row['Index Config'] || row['索引配置'] || row['index_config'],
+      description: row['Description'] || row['说明'] || row['description'],
     }));
   }
 
-  // Parse logic properties
-  const logicPropsMatch = file.content.match(/##\s+逻辑属性\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse logic properties (## or ### in single-file; subsections are ###)
+  const logicPropsMatch = file.content.match(/#{2,3}\s+(?:Logic Properties|逻辑属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (logicPropsMatch) {
     const logicProps: LogicProperty[] = [];
-    const sections = logicPropsMatch[1].split(/\n###\s+/);
+    const sections = logicPropsMatch[1].split(/\n#{3}\s+/);
     
     for (let i = 1; i < sections.length; i++) {
       const section = sections[i];
@@ -330,12 +330,13 @@ function parseEntity(file: BKNFile): Entity | null {
       if (descMatch) prop.description = descMatch[1].trim();
 
       const paramTable = parseTable(section);
-      if (paramTable.length > 0 && paramTable[0]['参数名']) {
+      const hasParams2 = paramTable.length > 0 && (paramTable[0]['Parameter'] || paramTable[0]['参数名']);
+      if (hasParams2) {
         prop.parameters = paramTable.map((row) => ({
-          name: row['参数名'] || row['parameter_name'] || '',
-          source: (row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
-          binding: row['绑定值'] || row['binding'] || row['绑定'] || undefined,
-          description: row['说明'] || row['description'],
+          name: row['Parameter'] || row['参数名'] || row['parameter_name'] || '',
+          source: (row['Source'] || row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
+          binding: row['Binding'] || row['绑定值'] || row['binding'] || row['绑定'] || undefined,
+          description: row['Description'] || row['说明'] || row['description'],
         }));
       }
 
@@ -408,39 +409,41 @@ function parseRelationFromContent(file: BKNFile, relationId: string): Relation |
     relation.description = descMatch[1].trim();
   }
 
-  // Parse relation definition table (起点/终点/类型)
-  // Look for table with 起点/终点/类型 headers
-  // Match table from header to next section (### or ## or blank line)
-  const relDefMatch = file.content.match(/\|\s*起点\s*\|\s*终点\s*\|\s*类型\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
+  // Parse relation definition table (Source/Target/Type or 起点/终点/类型)
+  const relDefMatch = file.content.match(/\|\s*(?:Source|起点)\s*\|\s*(?:Target|终点)\s*\|\s*(?:Type|类型)\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
   
   if (relDefMatch) {
     const table = parseTable(relDefMatch[0]);
     if (table.length > 0) {
-      relation.source = table[0]['起点'] || table[0]['source'] || '';
-      relation.target = table[0]['终点'] || table[0]['target'] || '';
-      relation.type = (table[0]['类型'] || table[0]['type'] || 'direct') as 'direct' | 'data_view';
+      relation.source = table[0]['Source'] || table[0]['起点'] || table[0]['source'] || '';
+      relation.target = table[0]['Target'] || table[0]['终点'] || table[0]['target'] || '';
+      relation.type = (table[0]['Type'] || table[0]['类型'] || table[0]['type'] || 'direct') as 'direct' | 'data_view';
     }
   }
 
-  // Parse mapping rules
-  const mappingMatch = file.content.match(/###\s+映射规则\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse mapping rules (## or ### section level)
+  const mappingMatch = file.content.match(/#{2,3}\s+(?:Mapping Rules|映射规则)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
   if (mappingMatch) {
     const table = parseTable(mappingMatch[1]);
-    relation.mappingRules = table.map((row) => ({
-      sourceProperty: row['起点属性'] || row['source_property'] || row['起点属性 (Pod)'] || row['起点属性 (Service)'] || undefined,
-      targetProperty: row['终点属性'] || row['target_property'] || row['终点属性 (Node)'] || row['终点属性 (Pod)'] || undefined,
-      viewProperty: row['视图属性'] || row['view_property'] || undefined,
-    }));
+    relation.mappingRules = table.map((row) => {
+      const srcKey = Object.keys(row).find(k => k.includes('Source') || k.includes('起点'));
+      const tgtKey = Object.keys(row).find(k => k.includes('Target') || k.includes('终点'));
+      return {
+        sourceProperty: row['Source Property'] || row['起点属性'] || row['source_property'] || row['起点属性 (Pod)'] || row['起点属性 (Service)'] || (srcKey ? row[srcKey] : undefined),
+        targetProperty: row['Target Property'] || row['终点属性'] || row['target_property'] || row['终点属性 (Node)'] || row['终点属性 (Pod)'] || (tgtKey ? row[tgtKey] : undefined),
+        viewProperty: row['View Property'] || row['视图属性'] || row['view_property'] || undefined,
+      };
+    });
   }
 
-  // Parse data view mapping (for data_view type)
+  // Parse data view mapping (for data_view type, ## or ### section level)
   if (relation.type === 'data_view') {
-    const viewMatch = file.content.match(/###\s+映射视图\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+    const viewMatch = file.content.match(/#{2,3}\s+(?:Mapping View|映射视图)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
     if (viewMatch) {
       const table = parseTable(viewMatch[1]);
       if (table.length > 0) {
         relation.dataView = {
-          type: table[0]['类型'] || '',
+          type: table[0]['Type'] || table[0]['类型'] || '',
           id: table[0]['ID'] || table[0]['id'] || '',
         };
       }
@@ -479,19 +482,19 @@ function parseRelation(file: BKNFile): Relation | null {
     description: file.frontmatter.description,
   };
 
-  // Parse relation definition table from "## 关联定义" section
-  const relDefMatch = file.content.match(/##\s+关联定义\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse relation definition table from "## Endpoints" or "## 关联定义"
+  const relDefMatch = file.content.match(/#{2,3}\s+(?:Endpoints|关联定义)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (relDefMatch) {
     const table = parseTable(relDefMatch[1]);
     if (table.length > 0) {
-      relation.source = table[0]['起点'] || table[0]['source'] || '';
-      relation.target = table[0]['终点'] || table[0]['target'] || '';
-      relation.type = (table[0]['类型'] || table[0]['type'] || 'direct') as 'direct' | 'data_view';
+      relation.source = table[0]['Source'] || table[0]['起点'] || table[0]['source'] || '';
+      relation.target = table[0]['Target'] || table[0]['终点'] || table[0]['target'] || '';
+      relation.type = (table[0]['Type'] || table[0]['类型'] || table[0]['type'] || 'direct') as 'direct' | 'data_view';
     }
   }
 
-  // Parse mapping rules from "## 映射规则" section
-  const mappingMatch = file.content.match(/##\s+映射规则\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse mapping rules (## or ### section level)
+  const mappingMatch = file.content.match(/#{2,3}\s+(?:Mapping Rules|映射规则)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (mappingMatch) {
     const table = parseTable(mappingMatch[1]);
     relation.mappingRules = table.map((row) => {
@@ -570,14 +573,13 @@ function parseActionFromContent(file: BKNFile, actionId: string): Action | null 
     action.description = descMatch[1].trim();
   }
 
-  // Parse binding entity table
-  // Match table from header to next section (### or ## or blank line)
-  const bindingMatch = file.content.match(/\|\s*绑定实体\s*\|\s*行动类型\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
+  // Parse binding entity table (Bound Entity/Action Type or 绑定实体/行动类型)
+  const bindingMatch = file.content.match(/\|\s*(?:Bound Entity|绑定实体)\s*\|\s*(?:Action Type|行动类型)\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
   if (bindingMatch) {
     const table = parseTable(bindingMatch[0]);
     if (table.length > 0) {
-      action.entityId = table[0]['绑定实体'] || table[0]['entity_id'] || '';
-      action.actionType = (table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
+      action.entityId = table[0]['Bound Entity'] || table[0]['绑定实体'] || table[0]['entity_id'] || '';
+      action.actionType = (table[0]['Action Type'] || table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
     }
   }
 
@@ -606,59 +608,59 @@ function parseActionFromContent(file: BKNFile, actionId: string): Action | null 
   }
 
   // Parse tool config
-  const toolMatch = file.content.match(/###\s+工具配置\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  const toolMatch = file.content.match(/#{2,3}\s+(?:Tool Configuration|工具配置)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
   if (toolMatch) {
     const table = parseTable(toolMatch[1]);
     if (table.length > 0) {
-      const type = table[0]['类型'] || table[0]['type'] || '';
+      const type = table[0]['Type'] || table[0]['类型'] || table[0]['type'] || '';
       if (type === 'tool') {
         action.toolConfig = {
           type: 'tool',
-          boxId: table[0]['工具箱ID'] || table[0]['box_id'],
-          toolId: table[0]['工具ID'] || table[0]['tool_id'] || '',
+          boxId: table[0]['Toolbox ID'] || table[0]['工具箱ID'] || table[0]['box_id'],
+          toolId: table[0]['Tool ID'] || table[0]['工具ID'] || table[0]['tool_id'] || '',
         };
       } else if (type === 'mcp') {
         action.mcpConfig = {
           type: 'mcp',
           mcpId: table[0]['MCP ID'] || table[0]['mcp_id'] || '',
-          toolName: table[0]['工具名称'] || table[0]['tool_name'] || '',
+          toolName: table[0]['Tool Name'] || table[0]['工具名称'] || table[0]['tool_name'] || '',
         };
       }
     }
   }
 
   // Parse parameters
-  const paramMatch = file.content.match(/###\s+参数绑定\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  const paramMatch = file.content.match(/#{2,3}\s+(?:Parameter Binding|参数绑定)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
   if (paramMatch) {
     const table = parseTable(paramMatch[1]);
     action.parameters = table.map((row) => ({
-      name: row['参数'] || row['parameter'] || row['参数名'] || '',
-      source: (row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
-      binding: row['绑定'] || row['binding'] || row['绑定值'] || undefined,
-      description: row['说明'] || row['description'],
+      name: row['Parameter'] || row['参数'] || row['parameter'] || row['参数名'] || '',
+      source: (row['Source'] || row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
+      binding: row['Binding'] || row['绑定'] || row['binding'] || row['绑定值'] || undefined,
+      description: row['Description'] || row['说明'] || row['description'],
     }));
   }
 
   // Parse schedule
-  const scheduleMatch = file.content.match(/###\s+调度配置\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  const scheduleMatch = file.content.match(/#{2,3}\s+(?:Schedule|调度配置)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
   if (scheduleMatch) {
     const table = parseTable(scheduleMatch[1]);
     if (table.length > 0) {
       action.schedule = {
-        type: (table[0]['类型'] || table[0]['type'] || 'FIX_RATE') as 'FIX_RATE' | 'CRON',
-        expression: table[0]['表达式'] || table[0]['expression'] || '',
-        description: table[0]['说明'] || table[0]['description'],
+        type: (table[0]['Type'] || table[0]['类型'] || table[0]['type'] || 'FIX_RATE') as 'FIX_RATE' | 'CRON',
+        expression: table[0]['Expression'] || table[0]['表达式'] || table[0]['expression'] || '',
+        description: table[0]['Description'] || table[0]['说明'] || table[0]['description'],
       };
     }
   }
 
-  // Parse affect
-  const affectMatch = file.content.match(/###\s+影响范围\s*\n\n([\s\S]*?)(?=\n###|\n##|$)/);
+  // Parse affect (Scope of Impact)
+  const affectMatch = file.content.match(/#{2,3}\s+(?:Scope of Impact|影响范围)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n##|$)/);
   if (affectMatch) {
     const table = parseTable(affectMatch[1]);
     action.affect = table.map((row) => ({
-      object: row['影响对象'] || row['object'] || '',
-      description: row['影响描述'] || row['description'] || '',
+      object: row['Object'] || row['影响对象'] || row['object'] || '',
+      description: row['Impact Description'] || row['影响描述'] || row['description'] || '',
     }));
   }
 
@@ -696,13 +698,13 @@ function parseAction(file: BKNFile): Action | null {
     description: file.frontmatter.description,
   };
 
-  // Parse binding entity table from "## 绑定实体" section
-  const bindingMatch = file.content.match(/##\s+绑定实体\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse binding entity table (## or ### section level)
+  const bindingMatch = file.content.match(/#{2,3}\s+(?:Bound Entity|绑定实体)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (bindingMatch) {
     const table = parseTable(bindingMatch[1]);
     if (table.length > 0) {
-      action.entityId = table[0]['绑定实体'] || table[0]['entity_id'] || '';
-      action.actionType = (table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
+      action.entityId = table[0]['Bound Entity'] || table[0]['绑定实体'] || table[0]['entity_id'] || '';
+      action.actionType = (table[0]['Action Type'] || table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
     }
   }
 
@@ -729,60 +731,60 @@ function parseAction(file: BKNFile): Action | null {
     }
   }
 
-  // Parse tool config from "## 工具配置" section
-  const toolMatch = file.content.match(/##\s+工具配置\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse tool config (## or ### section level)
+  const toolMatch = file.content.match(/#{2,3}\s+(?:Tool Configuration|工具配置)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (toolMatch) {
     const table = parseTable(toolMatch[1]);
     if (table.length > 0) {
-      const type = table[0]['类型'] || table[0]['type'] || '';
+      const type = table[0]['Type'] || table[0]['类型'] || table[0]['type'] || '';
       if (type === 'tool') {
         action.toolConfig = {
           type: 'tool',
-          boxId: table[0]['工具箱ID'] || table[0]['box_id'],
-          toolId: table[0]['工具ID'] || table[0]['tool_id'] || '',
+          boxId: table[0]['Toolbox ID'] || table[0]['工具箱ID'] || table[0]['box_id'],
+          toolId: table[0]['Tool ID'] || table[0]['工具ID'] || table[0]['tool_id'] || '',
         };
       } else if (type === 'mcp') {
         action.mcpConfig = {
           type: 'mcp',
           mcpId: table[0]['MCP ID'] || table[0]['mcp_id'] || '',
-          toolName: table[0]['工具名称'] || table[0]['tool_name'] || '',
+          toolName: table[0]['Tool Name'] || table[0]['工具名称'] || table[0]['tool_name'] || '',
         };
       }
     }
   }
 
-  // Parse parameters from "## 参数绑定" section
-  const paramMatch = file.content.match(/##\s+参数绑定\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse parameters (## or ### section level)
+  const paramMatch = file.content.match(/#{2,3}\s+(?:Parameter Binding|参数绑定)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (paramMatch) {
     const table = parseTable(paramMatch[1]);
     action.parameters = table.map((row) => ({
-      name: row['参数'] || row['parameter'] || row['参数名'] || '',
-      source: (row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
-      binding: row['绑定'] || row['binding'] || row['绑定值'] || undefined,
-      description: row['说明'] || row['description'],
+      name: row['Parameter'] || row['参数'] || row['parameter'] || row['参数名'] || '',
+      source: (row['Source'] || row['来源'] || row['source'] || 'input') as 'property' | 'input' | 'const',
+      binding: row['Binding'] || row['绑定'] || row['binding'] || row['绑定值'] || undefined,
+      description: row['Description'] || row['说明'] || row['description'],
     }));
   }
 
-  // Parse schedule from "## 调度配置" section
-  const scheduleMatch = file.content.match(/##\s+调度配置\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse schedule (## or ### section level)
+  const scheduleMatch = file.content.match(/#{2,3}\s+(?:Schedule|调度配置)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (scheduleMatch) {
     const table = parseTable(scheduleMatch[1]);
     if (table.length > 0) {
       action.schedule = {
-        type: (table[0]['类型'] || table[0]['type'] || 'FIX_RATE') as 'FIX_RATE' | 'CRON',
-        expression: table[0]['表达式'] || table[0]['expression'] || '',
-        description: table[0]['说明'] || table[0]['description'],
+        type: (table[0]['Type'] || table[0]['类型'] || table[0]['type'] || 'FIX_RATE') as 'FIX_RATE' | 'CRON',
+        expression: table[0]['Expression'] || table[0]['表达式'] || table[0]['expression'] || '',
+        description: table[0]['Description'] || table[0]['说明'] || table[0]['description'],
       };
     }
   }
 
-  // Parse affect from "## 影响范围" section
-  const affectMatch = file.content.match(/##\s+影响范围\s*\n+([\s\S]*?)(?=\n##|$)/);
+  // Parse affect (## or ### section level, Scope of Impact)
+  const affectMatch = file.content.match(/#{2,3}\s+(?:Scope of Impact|影响范围)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (affectMatch) {
     const table = parseTable(affectMatch[1]);
     action.affect = table.map((row) => ({
-      object: row['影响对象'] || row['object'] || '',
-      description: row['影响描述'] || row['description'] || '',
+      object: row['Object'] || row['影响对象'] || row['object'] || '',
+      description: row['Impact Description'] || row['影响描述'] || row['description'] || '',
     }));
   }
 

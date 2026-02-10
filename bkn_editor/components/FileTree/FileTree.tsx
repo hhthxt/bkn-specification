@@ -186,13 +186,13 @@ name: ${name.replace('.bkn', '')}
 
 **${name.replace('.bkn', '')}** - 描述
 
-### 数据来源
+### Data Source
 
-| 类型 | ID |
-|------|-----|
-| data_view | view_id |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | view_id | view_name |
 
-> **主键**: \`id\` | **显示属性**: \`name\`
+> **Primary Key**: \`id\` | **Display Key**: \`name\`
 `;
       saveFile(finalPath, content);
     } else {

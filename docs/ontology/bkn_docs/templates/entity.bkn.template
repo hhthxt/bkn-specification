@@ -14,23 +14,31 @@ tags: [{标签1}, {标签2}]
 
 {详细描述}
 
-## 数据来源
+## Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **主键**: `{primary_key}` | **显示属性**: `{display_key}`
+> **Primary Key**: `{primary_key}` | **Display Key**: `{display_key}`
 
-## 属性覆盖
+## Data Properties
+
+<!-- 可选（模式三：完整定义）：显式声明所有属性 -->
+
+| Property | Display Name | Type | Description | Primary Key | Index |
+|----------|--------------|------|--------------|:------------:|:-----:|
+| {property} | {显示名} | {type} | {说明} | | |
+
+## Property Override
 
 <!-- 可选：仅声明需要特殊配置的属性 -->
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
 | {property} | {显示名} | {索引配置} | {说明} |
 
-## 逻辑属性
+## Logic Properties
 
 <!-- 可选：指标、算子等扩展属性 -->
 
@@ -40,11 +48,11 @@ tags: [{标签1}, {标签2}]
 - **来源**: {source_id} ({source_type})
 - **说明**: {说明}
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | {param} | property | {property_name} |
 | {param} | input | - |
 
-## 业务语义
+## Business Semantics
 
 {业务含义说明}

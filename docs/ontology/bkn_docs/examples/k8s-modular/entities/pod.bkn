@@ -11,17 +11,17 @@ tags: [拓扑架构, 容器, Kubernetes]
 
 Kubernetes 中的最小部署单元，一个或多个容器的集合。
 
-## 数据来源
+## Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **主键**: `id` | **显示属性**: `pod_name`
+> **Primary Key**: `id` | **Display Key**: `pod_name`
 
-## 数据属性
+## Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
+| Property | Display Name | Type | Description | Primary Key | Index |
 |--------|--------|------|------|:----:|:----:|
 | id | ID | int64 | 主键ID | YES | YES |
 | pod_name | Pod名称 | VARCHAR | Pod名称 | | YES |
@@ -31,28 +31,28 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 | pod_ip | Pod IP | VARCHAR | Pod IP地址 | | |
 | pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | |
 
-## 属性覆盖
+## Property Override
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
 | pod_status | 状态 | fulltext + vector | 支持全文和语义搜索 |
 | pod_name | Pod名称 | keyword + fulltext | 支持精确和模糊匹配 |
 
-## 逻辑属性
+## Logic Properties
 
 ### pod_metrics
 
-- **类型**: metric
-- **来源**: pod_metric (metric-model)
-- **说明**: Pod的监控指标
+- **Type**: metric
+- **Source**: pod_metric (metric-model)
+- **Description**: Pod monitoring metrics
 
-| 参数名 | 来源 | 绑定值 |
+| Parameter | Source | Binding |
 |--------|------|--------|
 | id | property | id |
 | pod_name | property | pod_name |
 | instant | input | - |
 
-## 业务语义
+## Business Semantics
 
 Pod 是 K8s 调度的基本单位，包含共享网络和存储的容器组。
 

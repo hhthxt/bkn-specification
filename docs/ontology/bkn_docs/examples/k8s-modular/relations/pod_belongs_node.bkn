@@ -11,19 +11,19 @@ tags: [拓扑架构]
 
 Pod 与其所在节点之间的归属关系。
 
-## 关联定义
+## Endpoints
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | pod | node | direct |
 
-## 映射规则
+## Mapping Rules
 
-| 起点属性 (Pod) | 终点属性 (Node) |
-|----------------|-----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | pod_node_name | node_name |
 
-## 业务语义
+## Business Semantics
 
 一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。
 

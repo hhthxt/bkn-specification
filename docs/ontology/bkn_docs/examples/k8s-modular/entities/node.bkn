@@ -11,17 +11,17 @@ tags: [拓扑架构, 基础设施, Kubernetes]
 
 Kubernetes 集群中的工作节点，承载 Pod 运行。
 
-## 数据来源
+## Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380disg | node_info_view |
 
-> **主键**: `id` | **显示属性**: `node_name`
+> **Primary Key**: `id` | **Display Key**: `node_name`
 
-## 数据属性
+## Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
+| Property | Display Name | Type | Description | Primary Key | Index |
 |--------|--------|------|------|:----:|:----:|
 | id | ID | int64 | 主键ID | YES | YES |
 | node_name | 节点名称 | VARCHAR | 节点名称 | | YES |
@@ -33,13 +33,13 @@ Kubernetes 集群中的工作节点，承载 Pod 运行。
 | node_kubelet_version | Kubelet版本 | VARCHAR | Kubelet版本 | | |
 | node_os_image | 操作系统 | VARCHAR | 操作系统镜像 | | |
 
-## 属性覆盖
+## Property Override
 
-| 属性名 | 显示名 | 说明 |
-|--------|--------|------|
+| Property | Display Name | Description |
+|----------|--------------|-------------|
 | node_status | 节点状态 | Ready/NotReady/Unknown |
 
-## 业务语义
+## Business Semantics
 
 Node 是集群的计算资源单元，可以是物理机或虚拟机。
 

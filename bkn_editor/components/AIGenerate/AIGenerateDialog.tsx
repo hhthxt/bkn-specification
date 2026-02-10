@@ -40,9 +40,9 @@ export function AIGenerateDialog({
 
   // Quick prompt templates
   const quickPrompts = [
-    { label: '新建实体', prompt: '帮我创建一个新的实体类，包含数据来源、主键、显示属性等完整定义' },
+    { label: '新建实体', prompt: '帮我创建一个新的实体类，包含 Data Source、Primary Key、Display Key 等完整定义' },
     { label: '新建关系', prompt: '帮我创建一个新的关系，连接两个已存在的实体' },
-    { label: '新建行动', prompt: '帮我创建一个新的行动，包含触发条件、工具配置和参数绑定' },
+    { label: '新建行动', prompt: '帮我创建一个新的行动，包含 Trigger Condition、Tool Configuration 和 Parameter Binding' },
   ];
 
   const handleQuickPrompt = (quickPrompt: string) => {
@@ -84,7 +84,7 @@ BKN 格式规则:
   - Frontmatter 类型定义
   - 表格格式规范
 
-可用数据来源:
+Available Data Sources:
 ${dataSourcesSummary}
 
 项目文件上下文:${existingFilesContext || '\n  无'}
@@ -244,23 +244,23 @@ network: k8s-topology
 
 **新实体** - 这是一个由AI生成的实体示例
 
-### 数据来源
+### Data Source
 
-| 类型 | ID |
-|------|-----|
-| data_view | d2mio43q6gt6p380dis0 |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **主键**: \`id\` | **显示属性**: \`name\`
+> **Primary Key**: \`id\` | **Display Key**: \`name\`
 
-### 数据属性
+### Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
-|--------|--------|------|------|:----:|:----:|
-| id | ID | int64 | 主键ID | YES | YES |
+| Property | Display Name | Type | Description | Primary Key | Index |
+|----------|--------------|------|--------------|:------------:|:-----:|
+| id | ID | int64 | Primary key ID | YES | YES |
 | name | 名称 | VARCHAR | 实体名称 | | YES |
 | status | 状态 | VARCHAR | 实体状态 | | YES |
 
-### 逻辑属性
+### Logic Properties
 
 #### entity_metrics
 
@@ -268,8 +268,8 @@ network: k8s-topology
 - **来源**: entity_metric (metric-model)
 - **说明**: 实体监控指标
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | id | property | id |
 | name | property | name |`;
     } else if (lowerPrompt.includes('关系') || lowerPrompt.includes('relation')) {
@@ -284,17 +284,17 @@ network: k8s-topology
 
 **新关系** - 这是一个由AI生成的关系示例
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | pod | node | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 | 终点属性 |
-|----------|----------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | pod_node_name | node_name |
 
-### 业务语义
+### Business Semantics
 
 这是一个示例关系定义，用于连接两个实体。`;
     } else if (lowerPrompt.includes('行动') || lowerPrompt.includes('action')) {
@@ -310,11 +310,11 @@ action_type: modify
 
 **新行动** - 这是一个由AI生成的行动示例
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | pod | modify |
 
-### 触发条件
+### Trigger Condition
 
 \`\`\`yaml
 condition:
@@ -324,16 +324,16 @@ condition:
   value: Failed
 \`\`\`
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
-|------|----------|--------|
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
 | tool | k8s_toolbox | example_tool |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
 | id | property | id | 实体ID |
 | name | property | name | 实体名称 |`;
     }
@@ -350,13 +350,13 @@ network: k8s-topology
 
 **生成的实体** - AI生成的示例实体
 
-### 数据来源
+### Data Source
 
-| 类型 | ID |
-|------|-----|
-| data_view | d2mio43q6gt6p380dis0 |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **主键**: \`id\` | **显示属性**: \`name\``;
+> **Primary Key**: \`id\` | **Display Key**: \`name\``;
   };
 
   // Resolve @ mentions in prompt to actual content
@@ -380,7 +380,7 @@ network: k8s-topology
         ).join('\n');
         resolvedPrompt = resolvedPrompt.replace(
           mention,
-          `\n\n[数据来源: ${ds.name}]\n${ds.description}\n\n字段:\n${columns}\n\n`
+          `\n\n[Data source: ${ds.name}]\n${ds.description}\n\nFields:\n${columns}\n\n`
         );
       }
     }
@@ -647,7 +647,7 @@ network: k8s-topology
                 ref={textareaRef}
                 value={prompt}
                 onChange={(e) => handlePromptChange(e.target.value)}
-                placeholder="例如：帮我定义一个 Deployment 实体类，包含数据来源、主键和显示属性... 使用 @文件名 或 @数据资源名 引用项目内容"
+                placeholder="例如：帮我定义一个 Deployment 实体类，包含 Data Source、Primary Key、Display Key... 使用 @文件名 或 @数据资源名 引用项目内容"
                 className="w-full min-h-[100px] p-3 border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 disabled={isGenerating}
                 onKeyDown={(e) => {
@@ -692,7 +692,7 @@ network: k8s-topology
                             {mention.displayName}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
-                            {mention.type === 'file' ? mention.name : `数据来源: ${mention.name}`}
+                            {mention.type === 'file' ? mention.name : `Data source: ${mention.name}`}
                           </div>
                         </div>
                       </button>

@@ -48,27 +48,27 @@ network: {network_id}
 
 **{显示名称}** - {简短描述}
 
-### 数据来源
+### Data Source
 
-| 类型 | ID |
-|------|-----|
-| data_view | {view_id} |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | {view_id} | {view_name} |
 
-> **主键**: \`{primary_key}\` | **显示属性**: \`{display_key}\`
+> **Primary Key**: \`{primary_key}\` | **Display Key**: \`{display_key}\`
 
-### 属性覆盖
+### Property Override
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
 | {property} | {显示名} | {索引配置} | {说明} |
 
-### 数据属性
+### Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
-|--------|--------|------|------|:----:|:----:|
+| Property | Display Name | Type | Description | Primary Key | Index |
+|----------|--------------|------|--------------|:-----------:|:-----:|
 | {name} | {display} | {type} | {desc} | YES/NO | YES/NO |
 
-### 逻辑属性
+### Logic Properties
 
 #### {property_name}
 
@@ -76,8 +76,8 @@ network: {network_id}
 - **来源**: {source_id} ({source_type})
 - **说明**: {description}
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | {param} | property | {property_name} |
 | {param} | input | - |
 \`\`\`
@@ -95,14 +95,14 @@ network: {network_id}
 
 **{显示名称}** - {简短描述}
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | {source_entity} | {target_entity} | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 | 终点属性 |
-|----------|----------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | {source_prop} | {target_prop} |
 \`\`\`
 
@@ -120,11 +120,11 @@ action_type: add | modify | delete
 
 **{显示名称}** - {简短描述}
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | {entity_id} | modify |
 
-### 触发条件
+### Trigger Condition
 
 \`\`\`yaml
 condition:
@@ -134,16 +134,16 @@ condition:
   value: {value}
 \`\`\`
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
-|------|----------|--------|
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
 | tool | {box_id} | {tool_id} |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
 | {param} | property | {property_name} | {说明} |
 | {param} | input | - | {说明} |
 | {param} | const | {value} | {说明} |

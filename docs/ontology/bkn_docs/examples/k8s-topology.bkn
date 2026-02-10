@@ -34,67 +34,67 @@ graph TB
 
 ---
 
-# 实体定义
+# Entities
 
 ## Entity: pod
 
-**Pod实例** - Kubernetes 中的最小部署单元，一个或多个容器的集合
+**Pod Instance** - Kubernetes 中的最小部署单元，一个或多个容器的集合
 
-### 数据来源
+### Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **主键**: `id` | **显示属性**: `pod_name`
+> **Primary Key**: `id` | **Display Key**: `pod_name`
 
-### 数据属性
+### Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
-|--------|--------|------|------|:----:|:----:|
-| id | ID | int64 | 主键ID | YES | YES |
-| pod_name | Pod名称 | VARCHAR | Pod名称 | | YES |
-| pod_status | Pod状态 | VARCHAR | Pod状态 (Running/Pending/Failed) | | YES |
-| pod_node_name | 所在节点 | VARCHAR | Pod所在节点名称 | | YES |
-| pod_namespace | 命名空间 | VARCHAR | Pod所属命名空间 | | YES |
-| pod_ip | Pod IP | VARCHAR | Pod IP地址 | | |
-| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | |
+| Property | Display Name | Type | Description | Primary Key | Index |
+|----------|--------------|------|-------------|:-----------:|:-----:|
+| id | ID | int64 | Primary key | YES | YES |
+| pod_name | Pod Name | VARCHAR | Pod name | | YES |
+| pod_status | Pod Status | VARCHAR | Pod status (Running/Pending/Failed) | | YES |
+| pod_node_name | Node | VARCHAR | Pod node name | | YES |
+| pod_namespace | Namespace | VARCHAR | Pod namespace | | YES |
+| pod_ip | Pod IP | VARCHAR | Pod IP address | | |
+| pod_created_at | Created At | TIMESTAMP | Pod creation time | | |
 
-### 属性覆盖
+### Property Override
 
-| 属性名 | 显示名 | 索引配置 | 说明 |
-|--------|--------|----------|------|
-| pod_status | 状态 | fulltext + vector | 支持全文和语义搜索 |
-| pod_name | Pod名称 | keyword + fulltext | 支持精确和模糊匹配 |
+| Property | Display Name | Index Config | Description |
+|----------|--------------|--------------|-------------|
+| pod_status | Status | fulltext + vector | Full-text and semantic search |
+| pod_name | Pod Name | keyword + fulltext | Exact and fuzzy match |
 
-### 逻辑属性
+### Logic Properties
 
 #### pod_metrics
 
 Pod 的监控指标，用于获取 CPU、内存、网络等实时数据。
 
-- **类型**: metric
-- **来源**: pod_metric (metric-model)
-- **说明**: Pod的监控指标
+- **Type**: metric
+- **Source**: pod_metric (metric-model)
+- **Description**: Pod monitoring metrics
 
-| 参数名 | 来源 | 绑定值 | 说明 |
-|--------|------|--------|------|
-| id | property | id | 绑定Pod主键 |
-| pod_name | property | pod_name | 绑定Pod名称 |
-| instant | input | - | 瞬时查询时间点 |
-| start | input | - | 范围查询开始时间 |
-| end | input | - | 范围查询结束时间 |
+| Parameter | Source | Binding | Description |
+|-----------|--------|---------|-------------|
+| id | property | id | Bind Pod primary key |
+| pod_name | property | pod_name | Bind Pod name |
+| instant | input | - | Instant query time |
+| start | input | - | Range query start |
+| end | input | - | Range query end |
 
 #### pod_operator
 
 Pod 的自定义算子，用于执行复杂计算逻辑。
 
-- **类型**: operator
-- **来源**: pod_operator (operator)
-- **说明**: Pod的自定义算子
+- **Type**: operator
+- **Source**: pod_operator (operator)
+- **Description**: Pod custom operator
 
-| 参数名 | 来源 | 绑定值 |
-|--------|------|--------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | operator_param1 | property | id |
 | operator_param2 | property | pod_name |
 | operator_param3 | input | - |
@@ -103,21 +103,21 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 ## Entity: node
 
-**Node节点** - Kubernetes 集群中的工作节点，承载 Pod 运行
+**Node** - Kubernetes 集群中的工作节点，承载 Pod 运行
 
-### 数据来源
+### Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380disg | node_info_view |
 
-> **主键**: `id` | **显示属性**: `node_name`
+> **Primary Key**: `id` | **Display Key**: `node_name`
 
-### 属性覆盖
+### Property Override
 
-| 属性名 | 显示名 | 说明 |
-|--------|--------|------|
-| node_status | 节点状态 | Ready/NotReady/Unknown |
+| Property | Display Name | Description |
+|----------|--------------|-------------|
+| node_status | Node Status | Ready/NotReady/Unknown |
 
 ---
 
@@ -125,19 +125,19 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 **Service服务** - Kubernetes 服务抽象层，提供稳定的访问入口
 
-### 数据来源
+### Data Source
 
-| 类型 | ID | 名称 |
+| Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dith | service_info_view |
 
-> **主键**: `id` | **显示属性**: `service_name`
+> **Primary Key**: `id` | **Display Key**: `service_name`
 
-### 数据属性
+### Data Properties
 
-| 属性名 | 显示名 | 类型 | 说明 | 主键 | 索引 |
-|--------|--------|------|------|:----:|:----:|
-| id | ID | int64 | 主键ID | YES | YES |
+| Property | Display Name | Type | Description | Primary Key | Index |
+|----------|--------------|------|--------------|:------------:|:-----:|
+| id | ID | int64 | Primary key ID | YES | YES |
 | service_name | Service名称 | VARCHAR | Service名称 | | YES |
 | service_namespace | 命名空间 | VARCHAR | Service所属命名空间 | | YES |
 | service_type | Service类型 | VARCHAR | Service类型 (ClusterIP/NodePort/LoadBalancer) | | |
@@ -148,23 +148,23 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 ---
 
-# 关系定义
+# Relations
 
 ## Relation: pod_belongs_node
 
-**Pod属于节点** - Pod 与其所在物理/虚拟节点之间的归属关系
+**Pod Belongs to Node** - Pod 与其所在物理/虚拟节点之间的归属关系
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | pod | node | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 (Pod) | 终点属性 (Node) |
-|----------------|-----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | pod_node_name | node_name |
 
-### 业务语义
+### Business Semantics
 
 一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。
 
@@ -176,19 +176,19 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 ## Relation: service_routes_pod
 
-**Service路由Pod** - Service 到 Pod 的流量路由关系
+**Service Routes to Pod** - Service 到 Pod 的流量路由关系
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | service | pod | direct |
 
-### 映射规则
+### Mapping Rules
 
-| 起点属性 (Service) | 终点属性 (Pod) |
-|--------------------|----------------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | service_name | service_name |
 
-### 业务语义
+### Business Semantics
 
 Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 
@@ -197,17 +197,17 @@ Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 
 ---
 
-# 行动定义
+# Actions
 
 ## Action: restart_pod
 
 **重启Pod** - 当 Pod 状态异常时，自动执行重启操作以恢复服务
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | pod | modify |
 
-### 触发条件
+### Trigger Condition
 
 ```yaml
 condition:
@@ -221,34 +221,34 @@ condition:
 
 > 当 Pod 状态为 Unknown 或 Failed 时触发
 
-### 影响范围
+### Scope of Impact
 
-| 影响对象 | 影响描述 |
-|----------|----------|
-| pod | 删除并重建 Pod，恢复服务状态 |
+| Object | Impact Description |
+|--------|---------------------|
+| pod | Delete and recreate Pod, restore service |
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
-|------|----------|--------|
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
 | tool | k8s_toolbox | kubectl_delete_pod |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
-| pod | property | pod_name | Pod 名称 |
-| namespace | property | pod_namespace | 命名空间 |
-| grace_period | const | 30 | 优雅终止等待秒数 |
-| force | input | - | 是否强制删除 |
+| Parameter | Source | Binding | Description |
+|------------|--------|---------|-------------|
+| pod | property | pod_name | Pod name |
+| namespace | property | pod_namespace | Namespace |
+| grace_period | const | 30 | Graceful termination seconds |
+| force | input | - | Force delete |
 
-### 调度配置
+### Schedule
 
-| 类型 | 表达式 | 说明 |
-|------|--------|------|
-| FIX_RATE | 5m | 每5分钟检查一次条件 |
+| Type | Expression | Description |
+|------|------------|-------------|
+| FIX_RATE | 5m | Check every 5 minutes |
 
-### 执行流程
+### Execution Flow
 
 ```mermaid
 flowchart TD
@@ -281,13 +281,13 @@ flowchart TD
 
 ## Action: cordon_node
 
-**隔离节点** - 将故障节点标记为不可调度，防止新 Pod 被调度到该节点
+**Cordon Node** - 将故障节点标记为不可调度，防止新 Pod 被调度到该节点
 
-| 绑定实体 | 行动类型 |
-|----------|----------|
+| Bound Entity | Action Type |
+|--------------|-------------|
 | node | modify |
 
-### 触发条件
+### Trigger Condition
 
 ```yaml
 condition:
@@ -299,25 +299,25 @@ condition:
 
 > 当 Node 状态为 NotReady 时触发
 
-### 影响范围
+### Scope of Impact
 
-| 影响对象 | 影响描述 |
-|----------|----------|
-| node | 标记节点为不可调度状态 |
+| Object | Impact Description |
+|--------|---------------------|
+| node | Mark node as unschedulable |
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | MCP ID | 工具名称 |
-|------|--------|----------|
+| Type | MCP ID | Tool Name |
+|------|--------|-----------|
 | mcp | kubernetes-mcp | cordon_node |
 
-### 参数绑定
+### Parameter Binding
 
-| 参数 | 来源 | 绑定 |
-|------|------|------|
+| Parameter | Source | Binding |
+|-----------|--------|---------|
 | node | property | node_name |
 
-### 执行说明
+### Execution Description
 
 1. 执行 `kubectl cordon ${node}` 标记节点不可调度
 2. 现有 Pod 不受影响，继续运行

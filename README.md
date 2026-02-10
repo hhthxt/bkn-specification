@@ -50,15 +50,9 @@
 
 ## 快速开始
 
-### 安装依赖
-
 ```bash
+cd bkn_editor
 npm install
-```
-
-### 开发模式
-
-```bash
 npm run dev
 ```
 
@@ -67,13 +61,14 @@ npm run dev
 ### 构建生产版本
 
 ```bash
+cd bkn_editor
 npm run build
 npm start
 ```
 
 ## 使用说明
 
-1. **初始化**: 首次打开应用会自动加载 `docs/ontology/bkn_docs/examples` 目录下的示例文件
+1. **初始化**: 首次打开应用会自动加载项目根目录 `docs/ontology/bkn_docs/examples` 下的示例文件
 2. **编辑文件**: 在左侧文件树中选择文件，中间编辑器会自动打开
 3. **插入模板**: 使用工具栏的"插入"按钮快速添加 Entity/Relation/Action
 4. **查看网络图**: 右侧自动显示所有实体和关系的可视化网络图
@@ -90,24 +85,16 @@ npm start
 
 ```
 bkn_verify/
-├── app/                    # Next.js App Router
-│   ├── api/examples/      # API 路由：加载示例文件
-│   ├── layout.tsx         # 根布局
-│   ├── page.tsx           # 主页面（三栏布局）
-│   └── globals.css        # 全局样式
-├── components/
-│   ├── FileTree/          # 文件树组件
-│   ├── Editor/            # 编辑器组件
-│   ├── GraphView/         # 网络图组件
-│   └── ui/                # shadcn/ui 组件
-├── lib/
-│   ├── bkn-parser.ts      # BKN 解析器
-│   ├── storage.ts         # localStorage 封装
-│   ├── store.ts          # Zustand 状态管理
-│   └── utils.ts          # 工具函数
-├── types/
-│   └── bkn.ts            # TypeScript 类型定义
-└── docs/ontology/bkn_docs/examples/  # 示例 BKN 文件
+├── docs/ontology/bkn_docs/   # BKN 规范与示例
+│   ├── SPECIFICATION.md
+│   └── examples/
+├── bkn_editor/              # 应用目录
+│   ├── app/                 # Next.js App Router
+│   ├── components/          # FileTree, Editor, GraphView, ui
+│   ├── lib/                 # bkn-parser, storage, store
+│   ├── types/
+│   └── package.json
+└── README.md
 ```
 
 ## 开发说明
@@ -118,7 +105,7 @@ BKN 文件使用 Markdown 格式，包含：
 - YAML Frontmatter：文件元数据（type, id, name 等）
 - Markdown Body：知识网络定义内容
 
-详细规范请参考 `docs/ontology/bkn_docs/SPECIFICATION.md`
+详细规范请参考项目根目录 `docs/ontology/bkn_docs/SPECIFICATION.md`
 
 ### 解析器
 
@@ -130,7 +117,7 @@ BKN 文件使用 Markdown 格式，包含：
 
 ### 状态管理
 
-使用 Zustand store (`lib/store.ts`) 管理：
+使用 Zustand store (`bkn_editor/lib/store.ts`) 管理：
 - 当前打开的文件
 - 解析后的网络结构
 - 文件变化时的自动刷新

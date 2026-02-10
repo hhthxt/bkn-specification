@@ -14,19 +14,46 @@ tags: [{标签1}, {标签2}]
 
 {详细描述}
 
-## 关联定义
+## Endpoints
 
-| 起点 | 终点 | 类型 |
-|------|------|------|
+| Source | Target | Type |
+|--------|--------|------|
 | {source_entity} | {target_entity} | direct |
 
-## 映射规则
+## Mapping Rules
 
-| 起点属性 | 终点属性 |
-|----------|----------|
+| Source Property | Target Property |
+|-----------------|-----------------|
 | {source_prop} | {target_prop} |
 
-## 业务语义
+<!-- data_view type relation (replace Endpoints and Mapping Rules above):
+
+## Endpoints
+
+| Source | Target | Type |
+|--------|--------|------|
+| {source_entity} | {target_entity} | data_view |
+
+## Mapping View
+
+| Type | ID |
+|------|-----|
+| data_view | {view_id} |
+
+## Source Mapping
+
+| Source Property | View Property |
+|-----------------|----------------|
+| {source_prop} | {view_prop} |
+
+## Target Mapping
+
+| View Property | Target Property |
+|---------------|-----------------|
+| {view_prop} | {target_prop} |
+-->
+
+## Business Semantics
 
 {关系的业务含义说明}
 
