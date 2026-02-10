@@ -2,12 +2,14 @@
 
 **BKN (Business Knowledge Network)** is a Markdown-based domain modeling language for business knowledge networks. This repository hosts the official specification and examples.
 
+[中文](README.zh.md)
+
 ## Specification
 
 The core documentation is the **BKN Language Specification**:
 
-- **[SPECIFICATION.md](docs/ontology/bkn_docs/SPECIFICATION.md)** — Full specification (Chinese)
-- **[SPECIFICATION.en.md](docs/ontology/bkn_docs/SPECIFICATION.en.md)** — English edition
+- **[SPECIFICATION.md](docs/bkn_docs/SPECIFICATION.md)** — Full specification (Chinese)
+- **[SPECIFICATION.en.md](docs/bkn_docs/SPECIFICATION.en.md)** — English edition
 
 ### Key Concepts
 
@@ -21,7 +23,7 @@ The core documentation is the **BKN Language Specification**:
 ### File Organization
 
 ```
-docs/ontology/bkn_docs/
+docs/bkn_docs/
 ├── SPECIFICATION.md      # Full spec (CN)
 ├── SPECIFICATION.en.md   # Full spec (EN)
 ├── ARCHITECTURE.md       # Architecture overview
@@ -46,7 +48,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/ontology/bkn_docs/examples` and stores data in browser localStorage.
+Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/bkn_docs/examples` and stores data in browser localStorage.
 
 > **Note:** BKN Editor is a **demo** for exploring the specification. Production tooling should follow the spec independently.
 
