@@ -1,9 +1,6 @@
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import Anthropic from '@anthropic-ai/sdk';
 
 // Build system prompt with BKN specification summary
 function buildSystemPrompt(
@@ -168,13 +165,31 @@ ${existingFilesContext}${currentFileContext}
 7. Use consistent naming conventions (lowercase with underscores for IDs)`;
 }
 
+type AIProvider = 'openai' | 'anthropic';
+
+function getProvider(): AIProvider {
+  const provider = (process.env.AI_PROVIDER || 'openai').toLowerCase();
+  return provider === 'anthropic' ? 'anthropic' : 'openai';
+}
+
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'OPENAI_API_KEY not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+    const provider = getProvider();
+
+    if (provider === 'openai') {
+      if (!process.env.OPENAI_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: 'OPENAI_API_KEY not configured. Set OPENAI_API_KEY in .env.local or use AI_PROVIDER=anthropic with ANTHROPIC_API_KEY.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured. Set ANTHROPIC_API_KEY in .env.local or use AI_PROVIDER=openai with OPENAI_API_KEY.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     const body = await request.json();
@@ -188,32 +203,80 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildSystemPrompt(
-      context.dataSourcesSummary || '',
-      context.existingFiles || {},
-      context.currentFile
+      context?.dataSourcesSummary || '',
+      context?.existingFiles || {},
+      context?.currentFile
     );
 
-    const stream = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
-      ],
-      stream: true,
-      temperature: 0.7,
+    const encoder = new TextEncoder();
+
+    const requestSignal = request.signal;
+
+    if (provider === 'openai') {
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const stream = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
+        stream: true,
+        temperature: 0.7,
+        signal: requestSignal,
+      });
+
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || '';
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            }
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new Response(readableStream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Anthropic
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      ...(process.env.ANTHROPIC_BASE_URL && { baseURL: process.env.ANTHROPIC_BASE_URL }),
+    });
+    const messageStream = anthropic.messages.stream({
+      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    // Create a ReadableStream for streaming response
-    const encoder = new TextEncoder();
+    // Abort Anthropic stream when client disconnects
+    requestSignal?.addEventListener('abort', () => messageStream.abort());
+
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || '';
-            if (content) {
-              controller.enqueue(encoder.encode(content));
+          messageStream.on('text', (textDelta: string) => {
+            if (textDelta) {
+              controller.enqueue(encoder.encode(textDelta));
             }
-          }
+          });
+          messageStream.on('error', (err) => {
+            controller.error(err);
+          });
+          await messageStream.done();
           controller.close();
         } catch (error) {
           controller.error(error);
@@ -228,10 +291,11 @@ export async function POST(request: NextRequest) {
         'Connection': 'keep-alive',
       },
     });
-  } catch (error: any) {
-    console.error('Error generating BKN content:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error generating BKN content:', err);
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to generate content' }),
+      JSON.stringify({ error: err.message || 'Failed to generate content' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

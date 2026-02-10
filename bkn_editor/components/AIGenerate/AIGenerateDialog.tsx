@@ -440,7 +440,7 @@ network: k8s-topology
         }
         
         // Use mock mode for API key errors or 500 errors
-        if (errorMessage.includes('OPENAI_API_KEY') || response.status === 500 || response.status === 401) {
+        if (errorMessage.includes('API_KEY') || errorMessage.includes('not configured') || response.status === 500 || response.status === 401) {
           // Simulate streaming for mock content
           const mockContent = generateMockContent(prompt);
           const words = mockContent.split('');
@@ -495,7 +495,7 @@ network: k8s-topology
           await new Promise(resolve => setTimeout(resolve, 10));
         }
       } catch (mockError) {
-        setGeneratedContent(`错误: ${error.message || '生成失败，请检查 OPENAI_API_KEY 配置'}\n\n提示：当前使用模拟模式，配置 OPENAI_API_KEY 后可使用真实AI生成。`);
+        setGeneratedContent(`错误: ${error.message || '生成失败，请检查 API 配置'}\n\n提示：在 .env.local 中配置 OPENAI_API_KEY 或 ANTHROPIC_API_KEY（并设置 AI_PROVIDER）后可使用真实 AI 生成。`);
       } finally {
         setIsGenerating(false);
         abortControllerRef.current = null;
