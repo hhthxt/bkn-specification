@@ -58,6 +58,54 @@ export function AIGenerateDialog({
       .join('\n\n');
   };
 
+  // Build the full prompt (system + user) for preview
+  const buildFullPromptPreview = (): string => {
+    const allFiles = getAllFiles();
+    const currentFileContent = openFile ? getFile(openFile) : undefined;
+    const dataSourcesSummary = buildDataSourcesSummary();
+    const resolvedUserPrompt = prompt ? resolveMentions(prompt) : '（未输入提示词）';
+
+    const existingFilesContext = Object.entries(allFiles)
+      .map(([path, content]) => `\n  ## File: ${path}\n  (${content.length} 字符)`)
+      .join('\n');
+
+    const currentFileContext = currentFileContent
+      ? `\n  当前编辑文件: ${openFile}\n  (${currentFileContent.length} 字符)`
+      : '  无';
+
+    return `═══════════════════════════════════
+  SYSTEM PROMPT（系统提示词）
+═══════════════════════════════════
+
+角色: BKN (Business Knowledge Network) 专家
+
+BKN 格式规则: 
+  - Entity / Relation / Action 的 Markdown 格式
+  - Frontmatter 类型定义
+  - 表格格式规范
+
+可用数据来源:
+${dataSourcesSummary}
+
+项目文件上下文:${existingFilesContext || '\n  无'}
+
+当前编辑文件:
+${currentFileContext}
+
+输出约束:
+  1. 仅输出 BKN Markdown 内容（含 YAML frontmatter）
+  2. 不包含代码块围栏
+  3. 使用项目中已存在的实体/关系 ID
+  4. 使用中文作为显示名和描述
+  5. 确保所有必填字段存在
+
+═══════════════════════════════════
+  USER PROMPT（用户提示词）
+═══════════════════════════════════
+
+${resolvedUserPrompt}`;
+  };
+
   // Get available mentions (files and data sources)
   const availableMentions = useMemo(() => {
     const files = Object.keys(getAllFiles());
@@ -525,27 +573,25 @@ network: k8s-topology
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">生成提示</label>
-              {prompt && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowResolvedPrompt(!showResolvedPrompt)}
-                  className="h-7 text-xs"
-                  aria-label={showResolvedPrompt ? '隐藏解析后的提示词' : '查看解析后的提示词'}
-                >
-                  {showResolvedPrompt ? (
-                    <>
-                      <EyeOff className="h-3 w-3 mr-1" />
-                      隐藏提示词
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-3 w-3 mr-1" />
-                      查看提示词
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowResolvedPrompt(!showResolvedPrompt)}
+                className="h-7 text-xs"
+                aria-label={showResolvedPrompt ? '隐藏解析后的提示词' : '查看解析后的提示词'}
+              >
+                {showResolvedPrompt ? (
+                  <>
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    隐藏提示词
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3 w-3 mr-1" />
+                    查看提示词
+                  </>
+                )}
+              </Button>
             </div>
             <div className="flex flex-wrap gap-2 mb-2">
               {quickPrompts.map((qp, idx) => (
@@ -561,16 +607,16 @@ network: k8s-topology
                 </Button>
               ))}
             </div>
-            {showResolvedPrompt && prompt && (
+            {showResolvedPrompt && (
               <div className="mb-2 p-3 bg-muted/50 border rounded-md">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-muted-foreground">解析后的提示词（实际发送给AI）</span>
+                  <span className="text-xs font-medium text-muted-foreground">完整提示词（System + User）</span>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={async () => {
-                      const resolved = resolveMentions(prompt);
-                      await navigator.clipboard.writeText(resolved);
+                      const fullPrompt = buildFullPromptPreview();
+                      await navigator.clipboard.writeText(fullPrompt);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
@@ -589,9 +635,9 @@ network: k8s-topology
                     )}
                   </Button>
                 </div>
-                <ScrollArea className="max-h-48">
+                <ScrollArea className="max-h-56">
                   <pre className="text-xs font-mono whitespace-pre-wrap break-words text-foreground">
-                    {resolveMentions(prompt)}
+                    {buildFullPromptPreview()}
                   </pre>
                 </ScrollArea>
               </div>
