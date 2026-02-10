@@ -30,30 +30,38 @@ BKN (Business Knowledge Network) is a Markdown-based modeling language for busin
 
 ### Primitives (Canonical Section and Table Terms)
 
-| English (canonical) | Definition | Usage |
-|---------------------|------------|-------|
-| Entities | Section: all entity definitions in this file | `# Entities` |
-| Relations | Section: all relation definitions | `# Relations` |
-| Actions | Section: all action definitions | `# Actions` |
-| Data Source | The data view (table/view) this entity or relation maps from | `## Data Source` / `### Data Source` |
-| Data Properties | Explicit list of fields (name, type, PK, index) when not using full mapping | `### Data Properties` |
-| Primary Key | Field that uniquely identifies an instance | blockquote `**Primary Key**: \`id\``, table column |
-| Display Key | Field used for UI label / search display | blockquote `**Display Key**: \`name\`` |
-| Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
-| Logic Properties | Derived fields: metric, operator | `### Logic Properties` |
-| Endpoints | Relation endpoints: source entity, target entity, type | `## Endpoints` / table Source, Target, Type |
-| Mapping Rules | How source/target properties map (direct or via view) | `### Mapping Rules` |
-| Mapping View | For data_view relations: the join view | `### Mapping View` |
-| Source Mapping | Map source entity props to view | `### Source Mapping` |
-| Target Mapping | Map view to target entity props | `### Target Mapping` |
-| Business Semantics | Human-readable meaning of the relation/entity | `### Business Semantics` |
-| Bound Entity | Entity this action operates on | table/section `## Bound Entity` |
-| Action Type | add \| modify \| delete | table column |
-| Trigger Condition | When to run (YAML condition) | `### Trigger Condition` |
-| Tool Configuration | tool or MCP binding | `### Tool Configuration` |
-| Parameter Binding | param name, source, binding | `### Parameter Binding` |
-| Schedule | FIX_RATE or CRON | `### Schedule` |
-| Scope of Impact | What objects are affected | `### Scope of Impact` |
+The table below is organized by **heading level**. The Level column shows the canonical depth in network/fragment files.
+
+| Level | English (canonical) | Definition | Syntax |
+|:-----:|---------------------|------------|--------|
+| `#` | Entities | Section: all entity definitions in this file | `# Entities` |
+| `#` | Relations | Section: all relation definitions | `# Relations` |
+| `#` | Actions | Section: all action definitions | `# Actions` |
+| `##` | Entity | Individual entity definition | `## Entity: {id}` |
+| `##` | Relation | Individual relation definition | `## Relation: {id}` |
+| `##` | Action | Individual action definition | `## Action: {id}` |
+| `###` | Data Source | The data view this entity maps from | `### Data Source` |
+| `###` | Data Properties | Explicit list of fields (name, type, PK, index) | `### Data Properties` |
+| `###` | Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
+| `###` | Logic Properties | Derived fields: metric, operator | `### Logic Properties` |
+| `###` | Business Semantics | Human-readable meaning of the entity/relation | `### Business Semantics` |
+| `###` | Endpoints | Relation endpoints: source, target, type | `### Endpoints` |
+| `###` | Mapping Rules | How source/target properties map | `### Mapping Rules` |
+| `###` | Mapping View | For data_view relations: the join view | `### Mapping View` |
+| `###` | Source Mapping | Map source entity props to view | `### Source Mapping` |
+| `###` | Target Mapping | Map view to target entity props | `### Target Mapping` |
+| `###` | Bound Entity | Entity this action operates on | `### Bound Entity` |
+| `###` | Trigger Condition | When to run (YAML condition) | `### Trigger Condition` |
+| `###` | Tool Configuration | tool or MCP binding | `### Tool Configuration` |
+| `###` | Parameter Binding | param name, source, binding | `### Parameter Binding` |
+| `###` | Schedule | FIX_RATE or CRON | `### Schedule` |
+| `###` | Scope of Impact | What objects are affected | `### Scope of Impact` |
+| `####` | {property_name} | Individual logic property sub-section | `#### {name}` |
+| — | Primary Key | Field that uniquely identifies an instance | blockquote `**Primary Key**`, table column |
+| — | Display Key | Field used for UI label / search display | blockquote `**Display Key**`, table column |
+| — | Action Type | add \| modify \| delete | table column |
+
+> In single-file format (`type: entity/relation/action`), all levels shift up by one: `##` becomes `#`, `###` becomes `##`, `####` becomes `###`. The `#` group headings (Entities/Relations/Actions) are not used.
 
 Table column names (canonical): Type, ID, Name, Property, Display Name, Primary Key, Index, Index Config, Description; Source, Target; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Object, Impact Description.
 

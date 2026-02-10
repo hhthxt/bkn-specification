@@ -13,24 +13,9 @@ Kubernetes 集群的核心资源拓扑结构，用于运维监控和故障分析
 
 ## 网络概览
 
-```mermaid
-graph TB
-    subgraph Entities["实体"]
-        Node["Node 节点"]
-        Pod["Pod 容器组"]
-        Service["Service 服务"]
-    end
-    
-    subgraph Relations["关系"]
-        Node -->|包含| Pod
-        Service -->|路由| Pod
-    end
-    
-    subgraph Actions["行动"]
-        Pod -.->|重启| RestartPod["restart_pod"]
-        Node -.->|隔离| CordonNode["cordon_node"]
-    end
-```
+- **实体**: Node（节点）、Pod（容器组）、Service（服务）
+- **关系**: Node 包含 Pod（pod_belongs_node）、Service 路由 Pod（service_routes_pod）
+- **行动**: restart_pod（重启 Pod）、cordon_node（隔离 Node）
 
 ---
 
@@ -249,21 +234,6 @@ condition:
 | FIX_RATE | 5m | Check every 5 minutes |
 
 ### Execution Flow
-
-```mermaid
-flowchart TD
-    A[检测到异常Pod] --> B{确认状态}
-    B -->|已恢复| C[取消操作]
-    B -->|仍异常| D[执行删除]
-    D --> E{有控制器?}
-    E -->|是| F[等待重建]
-    E -->|否| G[记录告警]
-    F --> H{新Pod正常?}
-    H -->|是| I[操作成功]
-    H -->|否| J[触发告警]
-```
-
-### 执行步骤
 
 1. **确认状态**: 验证 Pod 确实处于异常状态
 2. **执行删除**: `kubectl delete pod ${pod} -n ${namespace} --grace-period=${grace_period}`

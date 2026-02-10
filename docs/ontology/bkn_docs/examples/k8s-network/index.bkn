@@ -16,24 +16,9 @@ Kubernetes 集群的核心资源拓扑结构，采用多文件组织方式。
 
 ## 网络概览
 
-```mermaid
-graph TB
-    subgraph Entities["实体 (entities.bkn)"]
-        Node["Node"]
-        Pod["Pod"]
-        Service["Service"]
-    end
-    
-    subgraph Relations["关系 (relations.bkn)"]
-        Node -->|包含| Pod
-        Service -->|路由| Pod
-    end
-    
-    subgraph Actions["行动 (actions.bkn)"]
-        Pod -.-> RestartPod["restart_pod"]
-        Node -.-> CordonNode["cordon_node"]
-    end
-```
+- **实体** (entities.bkn): Node、Pod、Service
+- **关系** (relations.bkn): Node 包含 Pod、Service 路由 Pod
+- **行动** (actions.bkn): restart_pod、cordon_node
 
 ## 文件说明
 

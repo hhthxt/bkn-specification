@@ -47,9 +47,9 @@ version: 1.0.0
 
 #### pod_metrics
 
-- **类型**: metric
-- **来源**: pod_metric (metric-model)
-- **说明**: Pod的监控指标
+- **Type**: metric
+- **Source**: pod_metric (metric-model)
+- **Description**: Pod的监控指标
 
 | Parameter | Source | Binding |
 |--------|------|--------|
