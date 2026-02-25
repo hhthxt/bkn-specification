@@ -5,32 +5,62 @@ spec_version: 1.0.0
 
 ## Overview
 
-BKN (Business Knowledge Network) is a Markdown-based modeling language for business knowledge networks, used to describe such networks. This document defines the syntax specification for BKN.
+BKN (Business Knowledge Network) is a declarative modeling language based on Markdown for defining entities, relations, and actions in business knowledge networks. BKN describes model structure and semantics only — runtime capabilities such as validation engines, data pipelines, and workflows are provided by platforms that consume BKN models.
 
-### Reader Roadmap (Where to Start)
-
-- **Business readers**: Start with the examples and tables in "Entity Definition", "Relation Definition", and "Action Definition", then read "Best Practices".
-- **Engineering readers**: Start with "Incremental Import Specification (Deterministic Semantics)" and "Validation / Failure Strategy", then review the field types.
-- **Agent / LLM**: Prefer reading by "one definition per file" to avoid loading too much content at once.
+This document defines the complete syntax specification for BKN.
 
 ### Glossary
+
+**Core Concepts**
 
 | Term | Meaning |
 |------|---------|
 | BKN | Business Knowledge Network |
-| knowledge_network / network | The overall collection of a business knowledge network |
+| knowledge_network | The overall collection of a business knowledge network |
 | entity | Business object type (e.g., Pod/Node/Service) |
 | relation | Relationship type connecting two entities (e.g., belongs_to, routes_to) |
-| action | Operation definition executed on an entity (may bind to tool/mcp) |
-| data_view | Data view (data source that entities/relations can map directly to) |
-| primary_key | Primary key field (for uniquely identifying instances) |
-| display_key | Display field (for UI / search display) |
-| fragment | Mixed fragment file (may contain multiple entities/relations/actions) |
-| delete | Delete marker file (explicitly declares definitions to be removed) |
+| action | Operation definition on an entity (can bind to tool or mcp) |
+
+**Entity Structure**
+
+| Term | Meaning |
+|------|---------|
+| data_view | Data view; the data source an entity or relation maps to |
+| data_properties | Entity property definition table; declares field types, primary key, display key, etc. |
+| property_override | Property override; special configuration for inherited properties (index, constraint) |
+| logic_properties | Logic properties; derived fields from external sources (metric / operator) |
+| primary_key | Primary key field; uniquely identifies an instance (marked YES in Data Properties) |
+| display_key | Display key field; used for UI display and search (marked YES in Data Properties) |
+| constraint | Property value constraint; declares valid ranges for instance data (e.g., `>= 0`, `in(...)`) |
+| metric | Logic property type: a measured value from an external data source |
+| operator | Logic property type: computed logic based on input parameters |
+
+**Action Structure**
+
+| Term | Meaning |
+|------|---------|
+| trigger_condition | Trigger condition; defines when an action executes automatically |
+| pre-conditions | Pre-conditions; data checks that must pass before execution (blocks if unsatisfied) |
+| tool | External tool bound to an action |
+| mcp | Model Context Protocol; MCP tool bound to an action |
+| schedule | Timing configuration (FIX_RATE or CRON) for periodic execution |
+| scope_of_impact | Scope of impact; declares objects affected by an action |
+
+**File Organization**
+
+| Term | Meaning |
+|------|---------|
+| frontmatter | YAML metadata block (wrapped in `---`) at the top of every .bkn file |
+| network | File type `type: network`; top-level container for a complete knowledge network |
+| fragment | File type `type: fragment`; mixed snippet containing multiple entity/relation/action definitions |
+| delete | File type `type: delete`; explicitly declares definitions to be removed |
+| patch | File type `type: patch`; incremental modification to an existing file |
+| namespace | Namespace; used for large-scale organization and avoiding ID conflicts |
+| spec_version | Specification version; identifies which BKN spec version a file conforms to |
 
 ### Primitives (Canonical Section and Table Terms)
 
-The table below is organized by **heading level**. The Level column shows the canonical depth in network/fragment files.
+The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / entity / relation / action).
 
 | Level | English (canonical) | Definition | Syntax |
 |:-----:|---------------------|------------|--------|
@@ -52,18 +82,17 @@ The table below is organized by **heading level**. The Level column shows the ca
 | `###` | Target Mapping | Map view to target entity props | `### Target Mapping` |
 | `###` | Bound Entity | Entity this action operates on | `### Bound Entity` |
 | `###` | Trigger Condition | When to run (YAML condition) | `### Trigger Condition` |
+| `###` | Pre-conditions | Data conditions required before action execution | `### Pre-conditions` |
 | `###` | Tool Configuration | tool or MCP binding | `### Tool Configuration` |
 | `###` | Parameter Binding | param name, source, binding | `### Parameter Binding` |
 | `###` | Schedule | FIX_RATE or CRON | `### Schedule` |
 | `###` | Scope of Impact | What objects are affected | `### Scope of Impact` |
 | `####` | {property_name} | Individual logic property sub-section | `#### {name}` |
-| — | Primary Key | Field that uniquely identifies an instance | blockquote `**Primary Key**`, table column |
-| — | Display Key | Field used for UI label / search display | blockquote `**Display Key**`, table column |
+| — | Primary Key | Field that uniquely identifies an instance | Data Properties table column |
+| — | Display Key | Field used for UI label / search display | Data Properties table column |
 | — | Action Type | add \| modify \| delete | table column |
 
-> In single-file format (`type: entity/relation/action`), all levels shift up by one: `##` becomes `#`, `###` becomes `##`, `####` becomes `###`. The `#` group headings (Entities/Relations/Actions) are not used.
-
-Table column names (canonical): Type, ID, Name, Property, Display Name, Primary Key, Index, Index Config, Description; Source, Target; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Object, Impact Description.
+Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Entity, Check, Condition, Message; Object, Impact Description.
 
 ## File Format
 
@@ -242,15 +271,24 @@ targets:                         # Definitions to delete
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **Primary Key**: `{primary_key}` | **Display Attribute**: `{display_key}`
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| {prop} | {name} | {type} | | {desc} | YES | | YES |
+| {prop} | {name} | {type} | | {desc} | | YES | |
+
+- `Primary Key`: Property marked `YES` uniquely identifies an instance; at least one required
+- `Display Key`: Property marked `YES` is used for UI display and search; at least one required
+- `Constraint` column is optional; declares valid value ranges for instance data. Leave empty for no constraint. See "Constraint Column Syntax" below for details
 
 ### Property Override
 
 (Optional) Declare only properties needing special configuration
 
-| Property | Display Name | Index Config | Description |
-|----------|--------------|--------------|-------------|
-| ... | ... | ... | ... |
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| ... | ... | ... | ... | ... |
 
 ### Logic Properties
 
@@ -270,19 +308,40 @@ targets:                         # Definitions to delete
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| entity_id | YES | Entity unique ID, lowercase letters, digits, underscores |
-| Display Name | YES | Human-readable name |
-| Data Source | YES | Mapped data view |
-| Primary Key | YES | Primary key property name |
-| Display Attribute | YES | Property used for display |
-| Property Override | NO | Properties needing special configuration |
+| {entity_id} | YES | Entity unique ID, lowercase letters, digits, underscores |
+| {display_name} | YES | Human-readable name |
+| Data Source | NO | Mapped data view; managed by the platform automatically when omitted |
+| Data Properties | YES | Property definitions; must mark Primary Key and Display Key |
+| Property Override | NO | Properties needing special configuration (index, constraints) |
 | Logic Properties | NO | Extended properties such as metrics, operators |
+
+### Data Types
+
+The `Type` column in Data Properties tables uses the following standard types. Type names are case-insensitive; the canonical forms below are recommended.
+
+| Type | Description | JSON Mapping | SQL Mapping |
+|------|-------------|-------------|-------------|
+| int32 | 32-bit signed integer | number | INT / INTEGER |
+| int64 | 64-bit signed integer | number | BIGINT |
+| float32 | 32-bit floating point | number | FLOAT / REAL |
+| float64 | 64-bit floating point | number | DOUBLE / DOUBLE PRECISION |
+| decimal(p,s) | Exact decimal; p = precision, s = scale | string / number | DECIMAL(p,s) / NUMERIC(p,s) |
+| bool | Boolean | boolean | BOOLEAN |
+| VARCHAR | Variable-length string | string | VARCHAR / TEXT |
+| TEXT | Long text | string | TEXT / CLOB |
+| DATE | Date (no time) | string (ISO 8601) | DATE |
+| TIME | Time (no date) | string (ISO 8601) | TIME |
+| TIMESTAMP | Date and time (with timezone) | string (ISO 8601) | TIMESTAMP |
+| JSON | JSON structured data | object / array | JSON / JSONB |
+| BINARY | Binary data | string (base64) | BLOB / BYTEA |
+
+> When the data source uses a type not listed above, the source-native type name may be used directly (e.g. `ARRAY<VARCHAR>`). Parsers should pass through unrecognized types as-is.
 
 ### Configuration Modes
 
-#### Mode 1: Full Mapping (Simplest)
+#### Mode 1: Mapping + Minimal Properties
 
-Map directly to view, inherit all fields automatically:
+Map to view, declare only primary key and display key:
 
 ```markdown
 ## Entity: node
@@ -295,12 +354,17 @@ Map directly to view, inherit all fields automatically:
 |------|-----|
 | data_view | view_123 |
 
-> **Primary Key**: `id` | **Display Attribute**: `node_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| node_name | | YES |
 ```
 
 #### Mode 2: Mapping + Property Override
 
-Map to view, declare only properties needing special configuration:
+Map to view, declare keys and configure properties needing special treatment:
 
 ```markdown
 ## Entity: pod
@@ -313,18 +377,23 @@ Map to view, declare only properties needing special configuration:
 |------|-----|
 | data_view | view_456 |
 
-> **Primary Key**: `id` | **Display Attribute**: `pod_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| pod_name | | YES |
 
 ### Property Override
 
-| Property | Index Config |
-|----------|--------------|
-| pod_status | fulltext + vector |
+| Property | Index Config | Constraint | Description |
+|----------|--------------|------------|-------------|
+| pod_status | fulltext + vector | in(Running,Pending,Failed,Unknown) | Full-text and semantic search |
 ```
 
 #### Mode 3: Full Definition
 
-Declare all properties explicitly:
+Declare all properties explicitly (with types, constraints, indexes):
 
 ```markdown
 ## Entity: service
@@ -339,12 +408,11 @@ Declare all properties explicitly:
 
 ### Data Properties
 
-| Property | Display Name | Type | Description | PK | Index |
-|----------|--------------|------|-------------|:--:|:-----:|
-| id | ID | int64 | Primary key | YES | YES |
-| service_name | Name | VARCHAR | Service name | | YES |
-
-> **Display Attribute**: `service_name`
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | | Primary key | YES | | YES |
+| service_name | Name | VARCHAR | not_null | Service name | | YES | YES |
+| service_type | Service Type | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service type | | | |
 ```
 
 ---
@@ -358,9 +426,14 @@ Declare all properties explicitly:
 
 **{Display Name}** - {Brief description}
 
-| Source | Target | Type |
-|--------|--------|------|
-| {source_entity} | {target_entity} | direct | data_view |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| {source_entity} | {target_entity} | direct \| data_view | YES \| NO | 0 | - |
+
+- `Required`: YES/NO, whether at least one relation must exist (from Source side)
+- `Min`: Minimum relation count, default 0
+- `Max`: Maximum relation count, `-` means unlimited
+- Required / Min / Max are optional columns; omit to apply no constraint
 
 ### Mapping Rules
 
@@ -373,17 +446,18 @@ Declare all properties explicitly:
 (Optional) Description of relation business meaning...
 ```
 
-> **Single-file format difference**: In a `type: relation` single-file, use `## Association Definition` as the section heading (H2) and `## Mapping Rules`. When embedded in network/fragment, the source/target table follows directly after `**Name**`, and use `### Mapping Rules` for the mapping section.
-
 ### Field Reference
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| relation_id | YES | Relation unique identifier |
+| {relation_id} | YES | Relation unique identifier |
 | Source | YES | Source entity ID |
 | Target | YES | Target entity ID |
 | Type | YES | `direct` (direct mapping) or `data_view` (view mapping) |
 | Mapping Rules | YES | Property mapping relationship |
+| Required | NO | Whether at least one relation must exist (from Source side) |
+| Min | NO | Minimum relation count |
+| Max | NO | Maximum relation count, `-` means unlimited |
 
 ### Relation Types
 
@@ -394,9 +468,11 @@ Associate via property value matching:
 ```markdown
 ## Relation: pod_belongs_node
 
-| Source | Target | Type |
-|--------|--------|------|
-| pod | node | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
+
+Each Pod must belong to exactly one Node.
 
 ### Mapping Rules
 
@@ -412,9 +488,9 @@ Associate via intermediate view:
 ```markdown
 ## Relation: user_likes_post
 
-| Source | Target | Type |
-|--------|--------|------|
-| user | post | data_view |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| user | post | data_view | NO | 0 | - |
 
 ### Mapping View
 
@@ -458,6 +534,19 @@ operation: == | != | > | < | >= | <= | in | not_in | exist | not_exist
 value: {value}
 ```
 
+### Pre-conditions
+
+(Optional) Data conditions required before execution; if not satisfied, action is blocked
+
+| Entity | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| {entity_id} | relation:{relation_id} | exist | Violation message |
+| {entity_id} | property:{property_name} | {op} {value} | Violation message |
+
+- `Check`: `property:{name}` or `relation:{id}`, specifies what to check
+- `Condition`: Reuses Trigger Condition operator syntax
+- Trigger determines "when to run"; Pre-conditions determine "whether execution is allowed"
+
 ### Tool Configuration
 
 | Type | Tool ID |
@@ -492,8 +581,6 @@ or
 (Optional) Detailed execution flow...
 ```
 
-> **Single-file format difference**: In a `type: action` single-file, use `## Bound Entity` as the section heading (H2) and other sections one level down. When embedded in network/fragment, the binding table follows directly after `**Name**`, and sections use `###`.
-
 ### Governance Requirements (Strongly Recommended)
 
 Action definitions connect to execution surface (tool/mcp). For stability and security, explicitly document the following in each Action and enforce through governance:
@@ -509,15 +596,18 @@ Action definitions connect to execution surface (tool/mcp). For stability and se
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| action_id | YES | Action unique identifier |
+| {action_id} | YES | Action unique identifier |
 | Bound Entity | YES | Target entity ID |
 | Action Type | YES | `add` / `modify` / `delete` |
 | Trigger Condition | NO | Conditions for automatic trigger |
+| Pre-conditions | NO | Data conditions required before execution |
 | Tool Configuration | YES | Tool or MCP to execute |
 | Parameter Binding | YES | Parameter source configuration |
 | Schedule Configuration | NO | Scheduled execution configuration |
 
 ### Trigger Condition Operators
+
+These operators apply to Trigger Condition, Pre-conditions, and the Constraint column in Data Properties / Property Override tables:
 
 | Operator | Description | Example |
 |----------|-------------|---------|
@@ -532,6 +622,56 @@ Action definitions connect to execution surface (tool/mcp). For stability and se
 | exist | Exists | (no value needed) |
 | not_exist | Does not exist | (no value needed) |
 | range | In range | `value: [0, 100]` |
+| not_null | Not null | (no value needed, constraint-specific) |
+| regex | Regex match | `value: "^[a-z]+$"` (constraint-specific) |
+
+### Constraint Column Syntax
+
+The `Constraint` column appears in the **Data Properties** and **Property Override** tables within an Entity definition. It declares valid value ranges that instance data must satisfy. The column is optional; an empty cell means no constraint.
+
+#### Format
+
+Each constraint is written in a single table cell using the format **`operator`**, **`operator(args)`**, or **`operator value`**.
+
+| Category | Syntax | Meaning | Applicable Types | Example |
+|----------|--------|---------|------------------|---------|
+| Comparison | `== value` | Equal to fixed value | Numeric, String | `== 1` |
+| Comparison | `!= value` | Not equal to fixed value | Numeric, String | `!= 0` |
+| Comparison | `> value` | Greater than | Numeric | `> 0` |
+| Comparison | `< value` | Less than | Numeric | `< 1000` |
+| Comparison | `>= value` | Greater than or equal | Numeric | `>= 0` |
+| Comparison | `<= value` | Less than or equal | Numeric | `<= 100` |
+| Range | `range(min,max)` | Closed interval [min, max] | Numeric | `range(0,100)` |
+| Enumeration | `in(v1,v2,…)` | Value must be one of the list | String, Numeric | `in(Running,Pending,Failed)` |
+| Enumeration | `not_in(v1,v2,…)` | Value must not be in the list | String, Numeric | `not_in(Deleted,Archived)` |
+| Existence | `not_null` | Value must not be null | Any | `not_null` |
+| Existence | `exist` | Property must exist | Any | `exist` |
+| Existence | `not_exist` | Property must not exist | Any | `not_exist` |
+| Pattern | `regex:pattern` | Value must match regex | String | `regex:^[a-z0-9_]+$` |
+
+#### Combining Constraints
+
+When a property requires multiple constraints, separate them with `; ` (semicolon + space):
+
+```
+not_null; >= 0
+not_null; regex:^[a-z_]+$
+>= 0; <= 100
+not_null; in(ClusterIP,NodePort,LoadBalancer)
+```
+
+Combined constraints use **logical AND** — all constraints must be satisfied simultaneously.
+
+#### Full Example
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | not_null | Primary key | YES | | YES |
+| name | Name | VARCHAR | not_null; regex:^[a-z0-9_]+$ | Unique identifier | | YES | YES |
+| quantity | Quantity | int32 | >= 0 | No negatives allowed | | | |
+| status | Status | VARCHAR | in(Active,Inactive,Archived) | Enum values | | | YES |
+| score | Score | float64 | range(0,100) | Percentage | | | |
+| priority | Priority | int32 | not_null; range(1,5) | Level 1–5 | | | |
 
 ### Parameter Sources
 
@@ -598,28 +738,19 @@ graph LR
 For key information:
 
 ```markdown
-> **Primary Key**: `id` | **Display Attribute**: `name`
+> **Note**: This entity requires an approval workflow
 ```
 
 ### Heading Levels
 
-Heading levels depend on file type, following Markdown hierarchy:
+Heading levels are consistent across all file types:
 
-#### In network / fragment files (multiple embedded definitions)
+- `#` - Document/group heading (for example network title, or `# Entities` / `# Relations` / `# Actions`)
+- `##` - Definition heading (`## Entity:` / `## Relation:` / `## Action:`)
+- `###` - In-definition sections (Data Source, Data Properties, Mapping Rules, Trigger Condition, etc.)
+- `####` - Sub-items (for example logic property names)
 
-- `#` — Network/fragment title
-- `##` — Type definition (Entity:/Relation:/Action:)
-- `###` — Section within definition (Data Source, Property Override, Logic Properties, etc.)
-- `####` — Sub-item (logic property name)
-
-#### In single-definition files (type: entity / relation / action)
-
-- `#` — Definition title (entity/relation/action name)
-- `##` — Section (Data Source, Property Override, Logic Properties, etc.)
-- `###` — Sub-item (logic property name)
-
-> Rule: Section semantics remain unchanged; heading level shifts with nesting depth. Parsers must support both patterns.
-
+> Rule: There is no longer a “single-file level shift”; all definitions use the hierarchy above.
 ---
 
 ## File Organization
@@ -697,7 +828,9 @@ name: Pod Instance
 network: k8s-network
 ---
 
-# Pod Instance
+## Entity: pod
+
+**Pod Instance**
 
 Minimal deployable unit in Kubernetes.
 
@@ -707,7 +840,12 @@ Minimal deployable unit in Kubernetes.
 |------|-----|
 | data_view | view_123 |
 
-> **Primary Key**: `id` | **Display Attribute**: `pod_name`
+## Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| pod_name | | YES |
 ```
 
 ---
@@ -791,7 +929,9 @@ name: Deployment
 network: k8s-network
 ---
 
-# Deployment
+## Entity: deployment
+
+**Deployment**
 
 Kubernetes deployment controller.
 
@@ -801,7 +941,12 @@ Kubernetes deployment controller.
 |------|-----|
 | data_view | deployment_view |
 
-> **Primary Key**: `id` | **Display Attribute**: `deployment_name`
+## Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| deployment_name | | YES |
 ```
 
 After import, `k8s-network` will include the new `deployment` entity.
@@ -818,7 +963,9 @@ name: Pod Instance (Updated)
 network: k8s-network
 ---
 
-# Pod Instance
+## Entity: pod
+
+**Pod Instance (Updated)**
 
 Updated definition...
 ```
@@ -863,7 +1010,12 @@ Add monitoring-related entities and actions.
 |------|-----|
 | data_view | alert_view |
 
-> **Primary Key**: `id` | **Display Attribute**: `alert_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| alert_name | | YES |
 
 ---
 

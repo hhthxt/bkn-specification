@@ -7,23 +7,23 @@ network: k8s-modular
 tags: [拓扑架构, 网络]
 ---
 
-# Service路由Pod
+## Relation: service_routes_pod
 
 Service 到 Pod 的流量路由关系。
 
-## Endpoints
+### Endpoints
 
-| Source | Target | Type |
-|--------|--------|------|
-| service | pod | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| service | pod | direct | NO | 0 | - |
 
-## Mapping Rules
+### Mapping Rules
 
 | Source Property | Target Property |
 |-----------------|-----------------|
 | service_name | service_name |
 
-## Business Semantics
+### Business Semantics
 
 Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 

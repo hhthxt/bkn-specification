@@ -31,26 +31,24 @@ Kubernetes 集群的核心资源拓扑结构，用于运维监控和故障分析
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **Primary Key**: `id` | **Display Key**: `pod_name`
-
 ### Data Properties
 
-| Property | Display Name | Type | Description | Primary Key | Index |
-|----------|--------------|------|-------------|:-----------:|:-----:|
-| id | ID | int64 | Primary key | YES | YES |
-| pod_name | Pod Name | VARCHAR | Pod name | | YES |
-| pod_status | Pod Status | VARCHAR | Pod status (Running/Pending/Failed) | | YES |
-| pod_node_name | Node | VARCHAR | Pod node name | | YES |
-| pod_namespace | Namespace | VARCHAR | Pod namespace | | YES |
-| pod_ip | Pod IP | VARCHAR | Pod IP address | | |
-| pod_created_at | Created At | TIMESTAMP | Pod creation time | | |
+| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | Primary key | YES | | YES |
+| pod_name | Pod Name | VARCHAR | Pod name | | YES | YES |
+| pod_status | Pod Status | VARCHAR | Pod status (Running/Pending/Failed) | | | YES |
+| pod_node_name | Node | VARCHAR | Pod node name | | | YES |
+| pod_namespace | Namespace | VARCHAR | Pod namespace | | | YES |
+| pod_ip | Pod IP | VARCHAR | Pod IP address | | | |
+| pod_created_at | Created At | TIMESTAMP | Pod creation time | | | |
 
 ### Property Override
 
-| Property | Display Name | Index Config | Description |
-|----------|--------------|--------------|-------------|
-| pod_status | Status | fulltext + vector | Full-text and semantic search |
-| pod_name | Pod Name | keyword + fulltext | Exact and fuzzy match |
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| pod_status | Status | fulltext + vector | in(Running,Pending,Failed,Unknown) | Full-text and semantic search |
+| pod_name | Pod Name | keyword + fulltext | not_null | Exact and fuzzy match |
 
 ### Logic Properties
 
@@ -96,13 +94,18 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 |------|-----|------|
 | data_view | d2mio43q6gt6p380disg | node_info_view |
 
-> **Primary Key**: `id` | **Display Key**: `node_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| node_name | | YES |
 
 ### Property Override
 
-| Property | Display Name | Description |
-|----------|--------------|-------------|
-| node_status | Node Status | Ready/NotReady/Unknown |
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| node_status | Node Status | | in(Ready,NotReady,Unknown) | Ready/NotReady/Unknown |
 
 ---
 
@@ -116,20 +119,18 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dith | service_info_view |
 
-> **Primary Key**: `id` | **Display Key**: `service_name`
-
 ### Data Properties
 
-| Property | Display Name | Type | Description | Primary Key | Index |
-|----------|--------------|------|--------------|:------------:|:-----:|
-| id | ID | int64 | Primary key ID | YES | YES |
-| service_name | Service名称 | VARCHAR | Service名称 | | YES |
-| service_namespace | 命名空间 | VARCHAR | Service所属命名空间 | | YES |
-| service_type | Service类型 | VARCHAR | Service类型 (ClusterIP/NodePort/LoadBalancer) | | |
-| service_cluster_ip | Cluster IP | VARCHAR | Cluster IP地址 | | |
-| service_ports | 端口映射 | VARCHAR | 服务端口映射 | | |
-| service_selector | Pod选择器 | VARCHAR | Pod选择器标签 | | |
-| service_created_at | 创建时间 | TIMESTAMP | Service创建时间 | | |
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | | Primary key ID | YES | | YES |
+| service_name | Service名称 | VARCHAR | not_null | Service名称 | | YES | YES |
+| service_namespace | 命名空间 | VARCHAR | | Service所属命名空间 | | | YES |
+| service_type | Service类型 | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service类型 | | | |
+| service_cluster_ip | Cluster IP | VARCHAR | | Cluster IP地址 | | | |
+| service_ports | 端口映射 | VARCHAR | | 服务端口映射 | | | |
+| service_selector | Pod选择器 | VARCHAR | | Pod选择器标签 | | | |
+| service_created_at | 创建时间 | TIMESTAMP | | Service创建时间 | | | |
 
 ---
 
@@ -139,9 +140,9 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 **Pod Belongs to Node** - Pod 与其所在物理/虚拟节点之间的归属关系
 
-| Source | Target | Type |
-|--------|--------|------|
-| pod | node | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
 
 ### Mapping Rules
 
@@ -163,9 +164,9 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 **Service Routes to Pod** - Service 到 Pod 的流量路由关系
 
-| Source | Target | Type |
-|--------|--------|------|
-| service | pod | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| service | pod | direct | NO | 0 | - |
 
 ### Mapping Rules
 
@@ -205,6 +206,12 @@ condition:
 ```
 
 > 当 Pod 状态为 Unknown 或 Failed 时触发
+
+### Pre-conditions
+
+| Entity | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| pod | relation:pod_belongs_node | exist | Pod 必须已调度到某个 Node |
 
 ### Scope of Impact
 
@@ -268,6 +275,12 @@ condition:
 ```
 
 > 当 Node 状态为 NotReady 时触发
+
+### Pre-conditions
+
+| Entity | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| node | property:node_status | != Ready | Node 状态必须为非 Ready 时才执行隔离 |
 
 ### Scope of Impact
 

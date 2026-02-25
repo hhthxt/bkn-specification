@@ -5,34 +5,64 @@ spec_version: 1.0.0
 
 ## 概述
 
-BKN (Business Knowledge Network) 是一种基于 Markdown 的业务知识网络建模语言，用于描述业务知识网络。本文档定义了 BKN 的语法规范。
+BKN (Business Knowledge Network) 是一种基于 Markdown 的声明式建模语言，用于定义业务知识网络中的实体、关系和行动。BKN 只负责描述模型结构与语义，不包含执行逻辑——校验引擎、数据管道、工作流等运行时能力由消费 BKN 模型的平台实现。
 
-### 读者路线图（先看什么）
-
-- **业务读者**：先看“实体定义规范 / 关系定义规范 / 行动定义规范”的示例与表格，再看“最佳实践”。
-- **工程读者**：先看“增量导入规范（确定性语义）”与“校验/失败策略”，再看各类型字段。
-- **Agent/大模型**：优先按“每定义一文件”组织读取，避免一次加载过多内容。
+本文档定义了 BKN 的完整语法规范。
 
 ### 术语表（Glossary）
+
+**核心概念**
 
 | 术语 | 含义 |
 |------|------|
 | BKN | Business Knowledge Network，业务知识网络 |
-| knowledge_network / 网络 | 一个业务知识网络的整体集合 |
+| knowledge_network | 一个业务知识网络的整体集合 |
 | entity | 业务对象类型（例如 Pod/Node/Service） |
 | relation | 连接两个 entity 的关系类型（例如 belongs_to/routes_to） |
-| action | 对 entity 执行的操作定义（可能绑定 tool/mcp） |
-| data_view | 数据视图（实体/关系可直接映射的数据来源） |
-| primary_key | 主键字段（用于唯一定位实例） |
-| display_key | 展示字段（用于 UI/检索显示） |
-| fragment | 混合片段文件（可包含多个 entity/relation/action） |
-| delete | 删除标记文件（显式声明要删除的定义） |
+| action | 对 entity 执行的操作定义（可绑定 tool 或 mcp） |
+
+**实体结构**
+
+| 术语 | 含义 |
+|------|------|
+| data_view | 数据视图，实体/关系可直接映射的数据来源 |
+| data_properties | 实体的属性定义表，声明字段类型、主键、展示键等 |
+| property_override | 属性覆盖，对继承属性的索引、约束等进行特殊配置 |
+| logic_properties | 逻辑属性，基于其他数据源的派生字段（metric / operator） |
+| primary_key | 主键字段，用于唯一定位实例（Data Properties 表中标记 YES） |
+| display_key | 展示字段，用于 UI 显示和检索（Data Properties 表中标记 YES） |
+| constraint | 属性值域约束，声明实例数据的合法范围（如 `>= 0`、`in(...)`） |
+| metric | 逻辑属性类型：指标，从外部数据源获取的度量值 |
+| operator | 逻辑属性类型：算子，基于输入参数的计算逻辑 |
+
+**行动结构**
+
+| 术语 | 含义 |
+|------|------|
+| trigger_condition | 触发条件，定义 action 自动执行的条件 |
+| pre-conditions | 前置条件，执行前必须满足的数据检查（不满足则阻止执行） |
+| tool | 行动绑定的外部工具 |
+| mcp | Model Context Protocol，行动绑定的 MCP 工具 |
+| schedule | 定时配置（FIX_RATE 或 CRON），用于周期性执行 |
+| scope_of_impact | 影响范围，声明行动影响的对象 |
+
+**文件组织**
+
+| 术语 | 含义 |
+|------|------|
+| frontmatter | YAML 元数据区（`---` 包裹），每个 .bkn 文件的头部 |
+| network | 文件类型 `type: network`，完整知识网络的顶层容器 |
+| fragment | 文件类型 `type: fragment`，可包含多个 entity/relation/action 的混合片段 |
+| delete | 文件类型 `type: delete`，显式声明要删除的定义 |
+| patch | 文件类型 `type: patch`，对已有文件的增量修改 |
+| namespace | 命名空间，用于大规模组织与避免 ID 冲突 |
+| spec_version | 规范版本号，标识文件遵循的 BKN 规范版本 |
 
 ### 标准原语表 (Primitives)
 
 Section 标题和表格列名的规范形式，建议使用英文。解析器应同时支持英文与中文以便兼容。
 
-下表按 **标题层级** 组织，Level 列为 network/fragment 文件中的规范层级。
+下表按 **统一标题层级** 组织，适用于所有文件类型（network / fragment / entity / relation / action）。
 
 | Level | English (canonical) | Definition | 中文 | Syntax |
 |:-----:|---------------------|------------|------|--------|
@@ -54,18 +84,17 @@ Section 标题和表格列名的规范形式，建议使用英文。解析器应
 | `###` | Target Mapping | Map view to target entity props | 终点映射 | `### Target Mapping` |
 | `###` | Bound Entity | Entity this action operates on | 绑定实体 | `### Bound Entity` |
 | `###` | Trigger Condition | When to run (YAML condition) | 触发条件 | `### Trigger Condition` |
+| `###` | Pre-conditions | Data conditions required before action execution | 前置条件 | `### Pre-conditions` |
 | `###` | Tool Configuration | tool or MCP binding | 工具配置 | `### Tool Configuration` |
 | `###` | Parameter Binding | param name, source, binding | 参数绑定 | `### Parameter Binding` |
 | `###` | Schedule | FIX_RATE or CRON | 调度配置 | `### Schedule` |
 | `###` | Scope of Impact | What objects are affected | 影响范围 | `### Scope of Impact` |
 | `####` | {property_name} | Individual logic property sub-section | — | `#### {name}` |
-| — | Primary Key | Field that uniquely identifies an instance | 主键 | blockquote `**Primary Key**`, table column |
-| — | Display Key | Field used for UI label / search display | 显示属性 | blockquote `**Display Key**`, table column |
+| — | Primary Key | Field that uniquely identifies an instance | 主键 | Data Properties table column |
+| — | Display Key | Field used for UI label / search display | 显示属性 | Data Properties table column |
 | — | Action Type | add \| modify \| delete | 行动类型 | table column |
 
-> 在单定义文件（`type: entity/relation/action`）中，所有层级上移一级：`##` 变为 `#`，`###` 变为 `##`，`####` 变为 `###`。`#` 分组标题（Entities/Relations/Actions）不使用。
-
-表格列名（canonical）：Type, ID, Name, Property, Display Name, Primary Key, Index, Index Config, Description; Source, Target; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Object, Impact Description。解析器同时接受中文列名。
+表格列名（canonical）：Type, ID, Name, Property, Display Name, Type, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Entity, Check, Condition, Message; Object, Impact Description。解析器同时接受中文列名。
 
 ## 文件格式
 
@@ -244,15 +273,24 @@ targets:                         # 要删除的定义列表
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **Primary Key**: `{primary_key}` | **Display Key**: `{display_key}`
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| {prop} | {name} | {type} | | {desc} | YES | | YES |
+| {prop} | {name} | {type} | | {desc} | | YES | |
+
+- `Primary Key`：标记为 `YES` 的属性用于唯一定位实例，至少一个
+- `Display Key`：标记为 `YES` 的属性用于 UI 展示和检索显示，至少一个
+- `Constraint` 列为可选，声明该属性在实例数据层面的合法值范围；留空表示无约束。语法见下文"Constraint 列语法"
 
 ### Property Override
 
 (optional) Declare only properties needing special configuration
 
-| Property | Display Name | Index Config | Description |
-|----------|--------------|--------------|-------------|
-| ... | ... | ... | ... |
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| ... | ... | ... | ... | ... |
 
 ### Logic Properties
 
@@ -272,19 +310,40 @@ targets:                         # 要删除的定义列表
 
 | 字段 | 必须 | 说明 |
 |------|:----:|------|
-| entity_id | YES | 实体唯一标识，小写字母、数字、下划线 |
-| display_name | YES | 人类可读名称 |
-| Data Source | YES | 映射的数据视图 |
-| Primary Key | YES | 主键属性名 |
-| Display Key | YES | 用于展示的属性名 |
-| Property Override | NO | 需要特殊配置的属性 |
+| {entity_id} | YES | 实体唯一标识，小写字母、数字、下划线 |
+| {display_name} | YES | 人类可读名称 |
+| Data Source | NO | 映射的数据视图，未设定时由平台自动管理 |
+| Data Properties | YES | 属性定义，须标记 Primary Key 和 Display Key |
+| Property Override | NO | 需要特殊配置的属性（索引、约束等） |
 | Logic Properties | NO | 指标、算子等扩展属性 |
+
+### 数据类型
+
+Data Properties 表的 `Type` 列使用以下标准类型。类型名称大小写不敏感，推荐使用下表中的规范形式。
+
+| 类型 | 说明 | JSON 对应 | SQL 对应 |
+|------|------|-----------|----------|
+| int32 | 32 位有符号整数 | number | INT / INTEGER |
+| int64 | 64 位有符号整数 | number | BIGINT |
+| float32 | 32 位浮点数 | number | FLOAT / REAL |
+| float64 | 64 位浮点数 | number | DOUBLE / DOUBLE PRECISION |
+| decimal(p,s) | 精确十进制数，p 为精度，s 为小数位 | string / number | DECIMAL(p,s) / NUMERIC(p,s) |
+| bool | 布尔值 | boolean | BOOLEAN |
+| VARCHAR | 变长字符串 | string | VARCHAR / TEXT |
+| TEXT | 长文本 | string | TEXT / CLOB |
+| DATE | 日期（无时间） | string (ISO 8601) | DATE |
+| TIME | 时间（无日期） | string (ISO 8601) | TIME |
+| TIMESTAMP | 日期时间（含时区） | string (ISO 8601) | TIMESTAMP |
+| JSON | JSON 结构数据 | object / array | JSON / JSONB |
+| BINARY | 二进制数据 | string (base64) | BLOB / BYTEA |
+
+> 当数据源使用的类型不在上表中时，可直接使用数据源原生类型名称（如 `ARRAY<VARCHAR>`），解析器应透传不识别的类型。
 
 ### 配置模式
 
-#### 模式一：完全映射（最简洁）
+#### 模式一：映射 + 最小属性声明
 
-直接映射视图，自动继承所有字段：
+映射视图，仅声明主键和展示键：
 
 ```markdown
 ## Entity: node
@@ -297,12 +356,17 @@ targets:                         # 要删除的定义列表
 |------|-----|
 | data_view | view_123 |
 
-> **Primary Key**: `id` | **Display Key**: `node_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| node_name | | YES |
 ```
 
 #### 模式二：映射 + 属性覆盖
 
-映射视图，仅声明需要特殊配置的属性：
+映射视图，声明键并配置需要特殊处理的属性：
 
 ```markdown
 ## Entity: pod
@@ -315,18 +379,23 @@ targets:                         # 要删除的定义列表
 |------|-----|
 | data_view | view_456 |
 
-> **Primary Key**: `id` | **Display Key**: `pod_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| pod_name | | YES |
 
 ### Property Override
 
-| Property | Index Config |
-|----------|--------------|
-| pod_status | fulltext + vector |
+| Property | Index Config | Constraint | Description |
+|----------|--------------|------------|-------------|
+| pod_status | fulltext + vector | in(Running,Pending,Failed,Unknown) | 支持全文和语义搜索 |
 ```
 
 #### 模式三：完整定义
 
-完整声明所有属性：
+完整声明所有属性（含类型、约束、索引）：
 
 ```markdown
 ## Entity: service
@@ -341,12 +410,11 @@ targets:                         # 要删除的定义列表
 
 ### Data Properties
 
-| Property | Display Name | Type | Description | Primary Key | Index |
-|----------|--------------|------|-------------|:-----------:|:-----:|
-| id | ID | int64 | Primary key | YES | YES |
-| service_name | Name | VARCHAR | Service name | | YES |
-
-> **Display Key**: `service_name`
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | | Primary key | YES | | YES |
+| service_name | Name | VARCHAR | not_null | Service name | | YES | YES |
+| service_type | Service Type | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service type | | | |
 ```
 
 ---
@@ -360,9 +428,14 @@ targets:                         # 要删除的定义列表
 
 **{display_name}** - {brief_description}
 
-| Source | Target | Type |
-|--------|--------|------|
-| {source_entity} | {target_entity} | direct | data_view |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| {source_entity} | {target_entity} | direct \| data_view | YES \| NO | 0 | - |
+
+- `Required`: YES/NO，是否必须存在至少一条关系（从 Source 侧看）
+- `Min`: 最小关系数，默认 0
+- `Max`: 最大关系数，`-` 表示无限制
+- Required / Min / Max 均为可选列，省略时不做约束
 
 ### Mapping Rules
 
@@ -375,17 +448,18 @@ targets:                         # 要删除的定义列表
 (optional) Human-readable meaning of the relation...
 ```
 
-> **单文件格式差异**：在 `type: relation` 单文件中，使用 `## Endpoints` 作为 section 标题（H2），`## Mapping Rules` 作为映射规则。在 network/fragment 内嵌时，Source/Target 表格直接跟在 `**名称**` 之后，使用 `### Mapping Rules`。中文标题（关联定义、映射规则）已废弃，解析器可能仍兼容。
-
 ### 字段说明
 
 | 字段 | 必须 | 说明 |
 |------|:----:|------|
-| relation_id | YES | 关系唯一标识 |
+| {relation_id} | YES | 关系唯一标识 |
 | Source | YES | 起点实体 ID |
 | Target | YES | 终点实体 ID |
 | Type | YES | `direct` (直接映射) 或 `data_view` (视图映射) |
 | Mapping Rules | YES | 属性映射关系 |
+| Required | NO | 是否必须存在至少一条关系（从 Source 侧看） |
+| Min | NO | 最小关系数 |
+| Max | NO | 最大关系数，`-` 表示无限制 |
 
 ### 关系类型
 
@@ -396,9 +470,11 @@ targets:                         # 要删除的定义列表
 ```markdown
 ## Relation: pod_belongs_node
 
-| Source | Target | Type |
-|--------|--------|------|
-| pod | node | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
+
+每个 Pod 必须属于且仅属于一个 Node。
 
 ### Mapping Rules
 
@@ -414,9 +490,9 @@ targets:                         # 要删除的定义列表
 ```markdown
 ## Relation: user_likes_post
 
-| Source | Target | Type |
-|--------|--------|------|
-| user | post | data_view |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| user | post | data_view | NO | 0 | - |
 
 ### Mapping View
 
@@ -460,6 +536,19 @@ operation: == | != | > | < | >= | <= | in | not_in | exist | not_exist
 value: {value}
 ```
 
+### Pre-conditions
+
+(optional) 执行前的数据前置条件，不满足则阻止行动执行
+
+| Entity | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| {entity_id} | relation:{relation_id} | exist | 违反时的说明 |
+| {entity_id} | property:{property_name} | {op} {value} | 违反时的说明 |
+
+- `Check`: `property:{name}` 或 `relation:{id}`，指明检查目标
+- `Condition`: 复用 Trigger Condition 操作符语法
+- Trigger 决定「何时触发」，Pre-conditions 决定「能否执行」
+
 ### Tool Configuration
 
 | Type | Tool ID |
@@ -494,8 +583,6 @@ or
 (optional) Detailed execution flow...
 ```
 
-> **单文件格式差异**：在 `type: action` 单文件中，使用 `## Bound Entity` 作为 section 标题（H2），其他 section 同理降一级。在 network/fragment 内嵌时，绑定表格直接跟在 `**名称**` 之后，section 使用 `###`。中文标题已废弃，解析器可能仍兼容。
-
 ### 治理要求（强烈建议）
 
 行动定义连接执行面（tool/mcp），为了稳定性与安全性，建议在每个 Action 中**显式写清**以下四类信息，并在工程侧落地相应治理：
@@ -511,15 +598,18 @@ or
 
 | 字段 | 必须 | 说明 |
 |------|:----:|------|
-| action_id | YES | 行动唯一标识 |
+| {action_id} | YES | 行动唯一标识 |
 | Bound Entity | YES | 目标实体 ID |
 | Action Type | YES | `add` / `modify` / `delete` |
 | Trigger Condition | NO | 自动触发的条件 |
+| Pre-conditions | NO | 执行前的数据前置条件 |
 | Tool Configuration | YES | 执行的工具或 MCP |
 | Parameter Binding | YES | 参数来源配置 |
 | Schedule | NO | 定时执行配置 |
 
 ### 触发条件操作符
+
+以下操作符适用于 Trigger Condition、Pre-conditions 以及 Data Properties / Property Override 表中的 Constraint 列：
 
 | 操作符 | 说明 | 示例 |
 |--------|------|------|
@@ -534,6 +624,56 @@ or
 | exist | 存在 | (无需 value) |
 | not_exist | 不存在 | (无需 value) |
 | range | 范围内 | `value: [0, 100]` |
+| not_null | 不为空 | (无需 value，约束专用) |
+| regex | 正则匹配 | `value: "^[a-z]+$"`（约束专用） |
+
+### Constraint 列语法
+
+`Constraint` 列出现在 Entity 的 **Data Properties** 和 **Property Override** 表格中，用于声明该属性在实例数据层面的合法值范围。该列为可选，留空表示无约束。
+
+#### 语法格式
+
+每条约束写在单个表格单元格内，格式为 **`operator`** 或 **`operator(args)`** 或 **`operator value`**。
+
+| 类别 | 语法 | 含义 | 适用类型 | 示例 |
+|------|------|------|----------|------|
+| 比较 | `== value` | 等于固定值 | 数值、字符串 | `== 1` |
+| 比较 | `!= value` | 不等于固定值 | 数值、字符串 | `!= 0` |
+| 比较 | `> value` | 大于 | 数值 | `> 0` |
+| 比较 | `< value` | 小于 | 数值 | `< 1000` |
+| 比较 | `>= value` | 大于等于 | 数值 | `>= 0` |
+| 比较 | `<= value` | 小于等于 | 数值 | `<= 100` |
+| 范围 | `range(min,max)` | 闭区间 [min, max] | 数值 | `range(0,100)` |
+| 枚举 | `in(v1,v2,…)` | 值必须为列表之一 | 字符串、数值 | `in(Running,Pending,Failed)` |
+| 枚举 | `not_in(v1,v2,…)` | 值不能为列表之一 | 字符串、数值 | `not_in(Deleted,Archived)` |
+| 存在性 | `not_null` | 值不能为空 | 任意 | `not_null` |
+| 存在性 | `exist` | 属性必须存在 | 任意 | `exist` |
+| 存在性 | `not_exist` | 属性不能存在 | 任意 | `not_exist` |
+| 正则 | `regex:pattern` | 值须匹配正则表达式 | 字符串 | `regex:^[a-z0-9_]+$` |
+
+#### 组合约束
+
+当一个属性需要多条约束时，使用 `; ` （分号 + 空格）分隔：
+
+```
+not_null; >= 0
+not_null; regex:^[a-z_]+$
+>= 0; <= 100
+not_null; in(ClusterIP,NodePort,LoadBalancer)
+```
+
+组合约束表示 **逻辑 AND**——所有约束必须同时满足。
+
+#### 完整示例
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | not_null | 主键 | YES | | YES |
+| name | 名称 | VARCHAR | not_null; regex:^[a-z0-9_]+$ | 唯一标识名 | | YES | YES |
+| quantity | 数量 | int32 | >= 0 | 不允许负数 | | | |
+| status | 状态 | VARCHAR | in(Active,Inactive,Archived) | 枚举值 | | | YES |
+| score | 评分 | float64 | range(0,100) | 百分制 | | | |
+| priority | 优先级 | int32 | not_null; range(1,5) | 1-5 级 | | | |
 
 ### 参数来源
 
@@ -600,28 +740,19 @@ graph LR
 用于关键信息高亮：
 
 ```markdown
-> **Primary Key**: `id` | **Display Key**: `name`
+> **注意**: 该实体变更需要审批流程
 ```
 
 ### 标题层级
 
-标题层级取决于文件类型，遵循 Markdown 层级递进原则：
+标题层级在所有文件类型中保持一致：
 
-#### 在 network / fragment 文件中（多定义内嵌）
+- `#` - 文档/分组标题（例如网络标题，或 `# Entities` / `# Relations` / `# Actions`）
+- `##` - 类型定义（`## Entity:` / `## Relation:` / `## Action:`）
+- `###` - 定义内 section（Data Source, Data Properties, Mapping Rules, Trigger Condition 等）
+- `####` - 子项（例如逻辑属性名）
 
-- `#` - 网络/片段标题
-- `# Entities` / `# Relations` / `# Actions` - 分组标题
-- `##` - 类型定义 (Entity:/Relation:/Action:)
-- `###` - 定义内 section（Data Source, Property Override, Logic Properties 等）
-- `####` - 子项（逻辑属性名）
-
-#### 在单定义文件中（type: entity / relation / action）
-
-- `#` - 定义标题（实体/关系/行动名称）
-- `##` - section（Data Source, Property Override, Logic Properties 等）
-- `###` - 子项（逻辑属性名）
-
-> 规则：section 语义不变，标题层级随嵌套深度偏移。解析器应同时支持英文与中文标题以兼容旧文件。
+> 规则：不再区分“单定义文件层级上移”；所有定义统一使用上述层级。
 
 ---
 
@@ -700,7 +831,9 @@ name: Pod Instance
 network: k8s-network
 ---
 
-# Pod Instance
+## Entity: pod
+
+**Pod Instance**
 
 Minimal deployable unit in Kubernetes.
 
@@ -710,7 +843,12 @@ Minimal deployable unit in Kubernetes.
 |------|-----|
 | data_view | view_123 |
 
-> **Primary Key**: `id` | **Display Key**: `pod_name`
+## Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| pod_name | | YES |
 ```
 
 ---
@@ -794,7 +932,9 @@ name: Deployment
 network: k8s-network
 ---
 
-# Deployment
+## Entity: deployment
+
+**Deployment**
 
 Kubernetes deployment controller.
 
@@ -804,7 +944,12 @@ Kubernetes deployment controller.
 |------|-----|
 | data_view | deployment_view |
 
-> **Primary Key**: `id` | **Display Key**: `deployment_name`
+## Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| deployment_name | | YES |
 ```
 
 导入后，`k8s-network` 将包含新的 `deployment` 实体。
@@ -821,7 +966,9 @@ name: Pod实例（更新版）
 network: k8s-network
 ---
 
-# Pod实例
+## Entity: pod
+
+**Pod实例（更新版）**
 
 更新后的定义...
 ```
@@ -866,7 +1013,12 @@ network: k8s-network
 |------|-----|
 | data_view | alert_view |
 
-> **Primary Key**: `id` | **Display Key**: `alert_name`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| alert_name | | YES |
 
 ---
 

@@ -7,40 +7,38 @@ network: k8s-modular
 tags: [拓扑架构, 容器, Kubernetes]
 ---
 
-# Pod实例
+## Entity: pod
 
 Kubernetes 中的最小部署单元，一个或多个容器的集合。
 
-## Data Source
+### Data Source
 
 | Type | ID | Name |
 |------|-----|------|
 | data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 
-> **Primary Key**: `id` | **Display Key**: `pod_name`
+### Data Properties
 
-## Data Properties
+| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | 主键ID | YES | | YES |
+| pod_name | Pod名称 | VARCHAR | Pod名称 | | YES | YES |
+| pod_status | Pod状态 | VARCHAR | Pod状态 (Running/Pending/Failed) | | | YES |
+| pod_node_name | 所在节点 | VARCHAR | Pod所在节点名称 | | | YES |
+| pod_namespace | 命名空间 | VARCHAR | Pod所属命名空间 | | | YES |
+| pod_ip | Pod IP | VARCHAR | Pod IP地址 | | | |
+| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | | |
 
-| Property | Display Name | Type | Description | Primary Key | Index |
-|--------|--------|------|------|:----:|:----:|
-| id | ID | int64 | 主键ID | YES | YES |
-| pod_name | Pod名称 | VARCHAR | Pod名称 | | YES |
-| pod_status | Pod状态 | VARCHAR | Pod状态 (Running/Pending/Failed) | | YES |
-| pod_node_name | 所在节点 | VARCHAR | Pod所在节点名称 | | YES |
-| pod_namespace | 命名空间 | VARCHAR | Pod所属命名空间 | | YES |
-| pod_ip | Pod IP | VARCHAR | Pod IP地址 | | |
-| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | |
+### Property Override
 
-## Property Override
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| pod_status | 状态 | fulltext + vector | in(Running,Pending,Failed,Unknown) | 支持全文和语义搜索 |
+| pod_name | Pod名称 | keyword + fulltext | not_null | 支持精确和模糊匹配 |
 
-| Property | Display Name | Index Config | Description |
-|----------|--------------|--------------|-------------|
-| pod_status | 状态 | fulltext + vector | 支持全文和语义搜索 |
-| pod_name | Pod名称 | keyword + fulltext | 支持精确和模糊匹配 |
+### Logic Properties
 
-## Logic Properties
-
-### pod_metrics
+#### pod_metrics
 
 - **Type**: metric
 - **Source**: pod_metric (metric-model)
@@ -52,11 +50,11 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 | pod_name | property | pod_name |
 | instant | input | - |
 
-## Business Semantics
+### Business Semantics
 
 Pod 是 K8s 调度的基本单位，包含共享网络和存储的容器组。
 
-### 常见状态
+#### 常见状态
 
 | 状态 | 说明 |
 |------|------|

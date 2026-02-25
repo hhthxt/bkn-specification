@@ -35,7 +35,12 @@ description: {网络描述}
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **Primary Key**: `{primary_key}` | **Display Key**: `{display_key}`
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| {primary_key} | YES | |
+| {display_key} | | YES |
 
 ### Property Override
 

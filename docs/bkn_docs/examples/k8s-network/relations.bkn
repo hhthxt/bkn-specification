@@ -16,9 +16,9 @@ version: 1.0.0
 
 **Pod属于节点** - Pod 与其所在节点之间的归属关系
 
-| Source | Target | Type |
-|--------|--------|------|
-| pod | node | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
 
 ### Mapping Rules
 
@@ -39,9 +39,9 @@ version: 1.0.0
 
 **Service路由Pod** - Service 到 Pod 的流量路由关系
 
-| Source | Target | Type |
-|--------|--------|------|
-| service | pod | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| service | pod | direct | NO | 0 | - |
 
 ### Mapping Rules
 

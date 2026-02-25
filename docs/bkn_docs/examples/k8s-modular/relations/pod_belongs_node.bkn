@@ -7,23 +7,23 @@ network: k8s-modular
 tags: [拓扑架构]
 ---
 
-# Pod属于节点
+## Relation: pod_belongs_node
 
 Pod 与其所在节点之间的归属关系。
 
-## Endpoints
+### Endpoints
 
-| Source | Target | Type |
-|--------|--------|------|
-| pod | node | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
 
-## Mapping Rules
+### Mapping Rules
 
 | Source Property | Target Property |
 |-----------------|-----------------|
 | pod_node_name | node_name |
 
-## Business Semantics
+### Business Semantics
 
 一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。
 

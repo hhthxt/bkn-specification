@@ -10,17 +10,17 @@ owner: {owner}
 tags: [{标签1}, {标签2}]
 ---
 
-# {关系名称}
+## Relation: {relation_id}
 
 {详细描述}
 
-## Endpoints
+### Endpoints
 
-| Source | Target | Type |
-|--------|--------|------|
-| {source_entity} | {target_entity} | direct |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| {source_entity} | {target_entity} | direct | YES | 1 | 1 |
 
-## Mapping Rules
+### Mapping Rules
 
 | Source Property | Target Property |
 |-----------------|-----------------|
@@ -28,32 +28,32 @@ tags: [{标签1}, {标签2}]
 
 <!-- data_view type relation (replace Endpoints and Mapping Rules above):
 
-## Endpoints
+### Endpoints
 
-| Source | Target | Type |
-|--------|--------|------|
-| {source_entity} | {target_entity} | data_view |
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| {source_entity} | {target_entity} | data_view | NO | 0 | - |
 
-## Mapping View
+### Mapping View
 
 | Type | ID |
 |------|-----|
 | data_view | {view_id} |
 
-## Source Mapping
+### Source Mapping
 
 | Source Property | View Property |
 |-----------------|----------------|
 | {source_prop} | {view_prop} |
 
-## Target Mapping
+### Target Mapping
 
 | View Property | Target Property |
 |---------------|-----------------|
 | {view_prop} | {target_prop} |
 -->
 
-## Business Semantics
+### Business Semantics
 
 {关系的业务含义说明}
 

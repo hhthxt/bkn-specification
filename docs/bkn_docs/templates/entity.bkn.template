@@ -10,39 +10,40 @@ owner: {owner}
 tags: [{标签1}, {标签2}]
 ---
 
-# {实体名称}
+## Entity: {entity_id}
 
 {详细描述}
 
-## Data Source
+### Data Source
 
 | Type | ID | Name |
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
 
-> **Primary Key**: `{primary_key}` | **Display Key**: `{display_key}`
+### Data Properties
 
-## Data Properties
+<!-- 必须：至少标记 Primary Key 和 Display Key -->
+<!-- 最简形式只需 Property | Primary Key | Display Key 三列 -->
+<!-- 完整形式可包含 Display Name | Type | Constraint | Description | Index 等列 -->
 
-<!-- 可选（模式三：完整定义）：显式声明所有属性 -->
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| {property} | {显示名} | {type} | {constraint} | {说明} | YES | | YES |
+| {property} | {显示名} | {type} | | {说明} | | YES | |
 
-| Property | Display Name | Type | Description | Primary Key | Index |
-|----------|--------------|------|--------------|:------------:|:-----:|
-| {property} | {显示名} | {type} | {说明} | | |
+### Property Override
 
-## Property Override
+<!-- 可选：仅声明需要特殊配置的属性，Constraint 列为可选，如 >= 0、in(Running,Pending,Failed)、not_null、regex:^[a-z]+$ -->
 
-<!-- 可选：仅声明需要特殊配置的属性 -->
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| {property} | {显示名} | {索引配置} | {constraint} | {说明} |
 
-| Property | Display Name | Index Config | Description |
-|----------|--------------|--------------|-------------|
-| {property} | {显示名} | {索引配置} | {说明} |
-
-## Logic Properties
+### Logic Properties
 
 <!-- 可选：指标、算子等扩展属性 -->
 
-### {logic_property_name}
+#### {logic_property_name}
 
 - **类型**: metric | operator
 - **来源**: {source_id} ({source_type})
@@ -53,6 +54,6 @@ tags: [{标签1}, {标签2}]
 | {param} | property | {property_name} |
 | {param} | input | - |
 
-## Business Semantics
+### Business Semantics
 
 {业务含义说明}

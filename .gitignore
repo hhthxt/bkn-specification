@@ -56,3 +56,6 @@ coverage/
 
 # Misc
 .cache/
+
+# ref
+ref/
