@@ -1,6 +1,6 @@
 # BKN Python SDK
 
-解析、校验与转换 [BKN 业务知识网络](../../docs/bkn_docs/SPECIFICATION.md) 文件。
+解析、校验与转换 [BKN 业务知识网络](../../docs/SPECIFICATION.md) 文件。
 
 - **English** [README.md](README.md)
 
@@ -27,7 +27,7 @@ pip install -e ".[api]"
 ```python
 from bkn import load
 
-doc = load("docs/bkn_docs/examples/supplychain-hd/entities.bkn")
+doc = load("docs/examples/supplychain-hd/entities.bkn")
 print(doc.frontmatter.type)   # fragment
 print(len(doc.entities))      # 12
 for e in doc.entities:
@@ -41,7 +41,7 @@ for e in doc.entities:
 ```python
 from bkn import load_network
 
-network = load_network("docs/bkn_docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
 print(len(network.all_entities))      # 12
@@ -57,7 +57,7 @@ print(len(network.all_actions))       # 0
 from bkn import load_network
 from bkn.transformers import KweaverTransformer
 
-network = load_network("docs/bkn_docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
 
 transformer = KweaverTransformer(
     branch="main",

@@ -4,7 +4,7 @@ import { join } from 'path';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 
-const LLM_SPEC_PATH = join(process.cwd(), '..', 'docs', 'bkn_docs', 'SPECIFICATION.llm.md');
+const LLM_SPEC_PATH = join(process.cwd(), '..', 'docs', 'SPECIFICATION.llm.md');
 
 function loadSpecForLLM(): string {
   if (existsSync(LLM_SPEC_PATH)) {

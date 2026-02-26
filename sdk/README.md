@@ -1,6 +1,6 @@
 # BKN SDK
 
-Official SDKs for parsing, validating, and transforming [BKN (Business Knowledge Network)](../docs/bkn_docs/SPECIFICATION.md) files.
+Official SDKs for parsing, validating, and transforming [BKN (Business Knowledge Network)](../docs/SPECIFICATION.md) files.
 
 - **中文** [README.zh.md](README.zh.md)
 
@@ -28,7 +28,7 @@ python -m pytest tests/ -v
 from bkn import load_network
 from bkn.transformers import KweaverTransformer
 
-network = load_network("docs/bkn_docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
 
 transformer = KweaverTransformer(id_prefix="supplychain_")
 payload = transformer.to_json(network)   # Get kweaver import JSON

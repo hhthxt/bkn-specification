@@ -1,6 +1,6 @@
 # BKN SDK
 
-解析、校验与转换 [BKN 业务知识网络](../docs/bkn_docs/SPECIFICATION.md) 的官方 SDK。
+解析、校验与转换 [BKN 业务知识网络](../docs/SPECIFICATION.md) 的官方 SDK。
 
 - **English** [README.md](README.md)
 
@@ -28,7 +28,7 @@ python -m pytest tests/ -v
 from bkn import load_network
 from bkn.transformers import KweaverTransformer
 
-network = load_network("docs/bkn_docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
 
 transformer = KweaverTransformer(id_prefix="supplychain_")
 payload = transformer.to_json(network)   # 获取 kweaver 导入 JSON
