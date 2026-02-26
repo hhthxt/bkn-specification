@@ -5,6 +5,14 @@ name: Kubernetes模块化网络
 version: 1.0.0
 tags: [Kubernetes, 拓扑架构, 运维]
 description: 采用每定义一文件的模块化组织方式，适合大规模知识网络
+includes:
+  - entities/pod.bkn
+  - entities/node.bkn
+  - entities/service.bkn
+  - relations/pod_belongs_node.bkn
+  - relations/service_routes_pod.bkn
+  - actions/restart_pod.bkn
+  - actions/cordon_node.bkn
 ---
 
 # Kubernetes模块化网络
