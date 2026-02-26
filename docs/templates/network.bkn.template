@@ -60,10 +60,10 @@ description: {网络描述}
 - **来源**: {source_id} ({source_type})
 - **说明**: {说明}
 
-| Parameter | Source | Binding |
-|-----------|--------|---------|
-| {param} | property | {property_name} |
-| {param} | input | - |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| {param} | string | property | {property_name} | {说明} |
+| {param} | string | input | - | {说明} |
 
 ---
 

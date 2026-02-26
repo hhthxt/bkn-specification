@@ -44,11 +44,11 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 - **Source**: pod_metric (metric-model)
 - **Description**: Pod monitoring metrics
 
-| Parameter | Source | Binding |
-|--------|------|--------|
-| id | property | id |
-| pod_name | property | pod_name |
-| instant | input | - |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| id | int64 | property | id | Bind Pod primary key |
+| pod_name | string | property | pod_name | Bind Pod name |
+| instant | string | input | - | Query instant |
 
 ### Business Semantics
 
