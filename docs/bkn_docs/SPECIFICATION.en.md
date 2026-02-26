@@ -92,7 +92,7 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | — | Display Key | Field used for UI label / search display | Data Properties table column |
 | — | Action Type | add \| modify \| delete | table column |
 
-Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Source, Binding; Bound Entity, Action Type; Entity, Check, Condition, Message; Object, Impact Description.
+Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Entity, Action Type; Entity, Check, Condition, Message; Object, Impact Description.
 
 ## File Format
 
@@ -265,6 +265,9 @@ targets:                         # Definitions to delete
 
 **{Display Name}** - {Brief description}
 
+- **Tags**: {tag1}, {tag2}     (optional, definition-level tags)
+- **Owner**: {owner}           (optional, owner/team)
+
 ### Data Source
 
 | Type | ID | Name |
@@ -290,6 +293,21 @@ targets:                         # Definitions to delete
 |----------|--------------|--------------|------------|-------------|
 | ... | ... | ... | ... | ... |
 
+#### Index Config Syntax
+
+The `Index Config` column supports a combined syntax; multiple index types are joined with ` + `. Optional parameters may be passed in parentheses:
+
+| Type | Syntax | Description |
+|------|--------|-------------|
+| keyword | `keyword` | Basic keyword index |
+| keyword | `keyword(max_len)` | Keyword index with ignore_above_len |
+| fulltext | `fulltext` | Full-text index, default analyzer |
+| fulltext | `fulltext(analyzer)` | Full-text index with specific analyzer (e.g. standard, ik_max_word) |
+| vector | `vector` | Vector index, default model |
+| vector | `vector(model_id)` | Vector index with specified embedding model ID |
+
+Example: `keyword(1024) + fulltext(standard) + vector(1951511856216674304)`
+
 ### Logic Properties
 
 #### {property_name}
@@ -298,11 +316,25 @@ targets:                         # Definitions to delete
 - **Source**: {source_id} ({source_type})
 - **Description**: {description}
 
-| Parameter | Source | Binding |
-|-----------|--------|---------|
-| ... | property | {property_name} |
-| ... | input | - |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| ... | string | property | {property_name} | Bind from entity property |
+| ... | array | input | - | Runtime user input |
+| ... | string | const | {value} | Constant value |
 ```
+
+- `Type`: Parameter data type (e.g. string, number, boolean, array)
+- `Source`: Value source — `property` (entity property) / `input` (user input) / `const` (constant)
+- `Binding`: When Source is property, the property name; when const, the constant value; when input, `-`
+
+### Definition-Level Metadata
+
+In the header of a `## Entity:` or `## Relation:` definition (before `### Data Source` or `### Endpoints`), optional inline metadata lines may be used:
+
+- **Tags**: Tag list for this definition (comma-separated), for categorization, filtering, and audit
+- **Owner**: Owner or team, for approval routing and audit
+
+In fragment or network files, multiple entities or relations may each have different tags and owner.
 
 ### Field Reference
 
@@ -323,9 +355,12 @@ The `Type` column in Data Properties tables uses the following standard types. T
 |------|-------------|-------------|-------------|
 | int32 | 32-bit signed integer | number | INT / INTEGER |
 | int64 | 64-bit signed integer | number | BIGINT |
+| integer | Generic integer (precision unspecified) | number | Platform-dependent (typically int64) |
 | float32 | 32-bit floating point | number | FLOAT / REAL |
 | float64 | 64-bit floating point | number | DOUBLE / DOUBLE PRECISION |
+| float | Generic floating point (precision unspecified) | number | Platform-dependent (typically float64) |
 | decimal(p,s) | Exact decimal; p = precision, s = scale | string / number | DECIMAL(p,s) / NUMERIC(p,s) |
+| decimal | Generic exact decimal (precision unspecified) | string / number | Platform-dependent |
 | bool | Boolean | boolean | BOOLEAN |
 | VARCHAR | Variable-length string | string | VARCHAR / TEXT |
 | TEXT | Long text | string | TEXT / CLOB |
@@ -388,7 +423,7 @@ Map to view, declare keys and configure properties needing special treatment:
 
 | Property | Index Config | Constraint | Description |
 |----------|--------------|------------|-------------|
-| pod_status | fulltext + vector | in(Running,Pending,Failed,Unknown) | Full-text and semantic search |
+| pod_status | fulltext(standard) + vector | in(Running,Pending,Failed,Unknown) | Full-text and semantic search |
 ```
 
 #### Mode 3: Full Definition
@@ -425,6 +460,9 @@ Declare all properties explicitly (with types, constraints, indexes):
 ## Relation: {relation_id}
 
 **{Display Name}** - {Brief description}
+
+- **Tags**: {tag1}, {tag2}     (optional, definition-level tags)
+- **Owner**: {owner}           (optional, owner/team)
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|

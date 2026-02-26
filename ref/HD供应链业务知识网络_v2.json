@@ -1,0 +1,41 @@
+{
+    "id": "supplychain_hd0202",
+    "name": "HD供应链业务知识网络_v2",
+    "tags": [],
+    "comment": "产品供应分析路径：需求预测→产品→BOM→库存→生产计划/采购申请→采购订单→供应商。 逻辑：1. 基于需求预测，结合BOM结构展开物料需求；2. 核查成品及物料库存，进行MRP运算生成建议订单；3. 根据物料属性（自制/外购），生成生产计划或采购申请；4. 采购申请转化为采购订单并由供应商执行，生产计划指导工厂生产；5. 最终输出缺口数量及补货建议，支撑供应链决策。",
+    "icon": "icon-dip-suanzigongchang",
+    "color": "#52C41A",
+    "detail": "{\"network_info\":{\"action_types_count\":0,\"concept_groups_count\":0,\"id\":\"supplychain_hd0202\",\"name\":\"HD供应链业务知识网络\",\"tags\":[],\"comment\":\"\",\"object_types_count\":11,\"relation_types_count\":11},\"object_types\":[],\"relation_types\":[],\"action_types\":[],\"concept_groups\":[]}",
+    "branch": "main",
+    "business_domain": "bd_public",
+    "creator": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+    },
+    "create_time": 1770015713131,
+    "updater": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+    },
+    "update_time": 1770015713131,
+    "module_type": "knowledge_network",
+    "statistics": {
+        "concept_groups_total": 0,
+        "object_types_total": 12,
+        "relation_types_total": 14,
+        "action_types_total": 1
+    },
+    "operations": [
+        "task_manage",
+        "modify",
+        "delete",
+        "view_detail",
+        "create",
+        "authorize",
+        "export",
+        "import",
+        "data_query"
+    ]
+}
