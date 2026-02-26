@@ -1,28 +1,28 @@
 # BKN Python SDK
 
-Parse, validate, and transform [BKN (Business Knowledge Network)](../../docs/bkn_docs/SPECIFICATION.md) files.
+解析、校验与转换 [BKN 业务知识网络](../../docs/bkn_docs/SPECIFICATION.md) 文件。
 
-- **中文** [README.zh.md](README.zh.md)
+- **English** [README.md](README.md)
 
-## Install
+## 安装
 
 ```bash
-# From repo root
+# 从仓库根目录
 cd sdk/python
 pip install -e .
 
-# Or with path
+# 或指定路径
 pip install -e path/to/bkn-specification/sdk/python
 
-# With kweaver API support
+# 含 kweaver API 调用支持
 pip install -e ".[api]"
 ```
 
-Requires Python 3.9+.
+要求 Python 3.9+。
 
-## Usage
+## 用法
 
-### 1. Parse a single file
+### 1. 解析单个文件
 
 ```python
 from bkn import load
@@ -31,12 +31,12 @@ doc = load("docs/bkn_docs/examples/supplychain-hd/entities.bkn")
 print(doc.frontmatter.type)   # fragment
 print(len(doc.entities))      # 12
 for e in doc.entities:
-    print(e.id, e.name, len(e.data_properties), "properties")
+    print(e.id, e.name, len(e.data_properties), "个属性")
 ```
 
-### 2. Load a network (with includes)
+### 2. 加载网络（含 includes）
 
-The root file references sub-files via `includes`; `load_network` resolves them recursively:
+根文件通过 `includes` 引用子文件，`load_network` 会递归解析：
 
 ```python
 from bkn import load_network
@@ -49,9 +49,9 @@ print(len(network.all_relations))     # 14
 print(len(network.all_actions))       # 0
 ```
 
-### 3. Transform to kweaver JSON
+### 3. 转换到 kweaver JSON
 
-Convert BKN models to JSON for ontology-manager API (see `ref/ontology_import_openapi_v2.json`):
+将 BKN 模型转为 ontology-manager API（见 `ref/ontology_import_openapi_v2.json`）所需 JSON：
 
 ```python
 from bkn import load_network
@@ -62,21 +62,21 @@ network = load_network("docs/bkn_docs/examples/supplychain-hd/supplychain.bkn")
 transformer = KweaverTransformer(
     branch="main",
     base_version="",
-    id_prefix="supplychain_",   # Entity/relation ID prefix, e.g. po -> supplychain_po
+    id_prefix="supplychain_",   # 实体/关系 ID 前缀，如 po -> supplychain_po
 )
 
-# Get JSON dict
+# 获取 JSON 字典
 payload = transformer.to_json(network)
-# payload["knowledge_network"]  - Create knowledge network request body
-# payload["object_types"]      - Object types (entities) list
-# payload["relation_types"]    - Relation types list
+# payload["knowledge_network"]  - 创建知识网络请求体
+# payload["object_types"]       - 对象类（实体）列表
+# payload["relation_types"]    - 关系类列表
 
-# Or write to files
+# 或写入文件
 transformer.to_files(network, "output/")
-# Creates: output/knowledge_network.json, object_types.json, relation_types.json
+# 生成: output/knowledge_network.json, object_types.json, relation_types.json
 ```
 
-### 4. Parse from string
+### 4. 从字符串解析
 
 ```python
 from bkn import parse, parse_frontmatter, parse_body
@@ -89,7 +89,7 @@ name: My Entity
 ---
 
 ## Entity: my_entity
-**My Entity** - Example entity
+**My Entity** - 示例实体
 
 ### Data Source
 | Type | ID | Name |
@@ -100,12 +100,12 @@ name: My Entity
 | Property | Display Name | Type | Primary Key | Display Key |
 |----------|--------------|------|:-----------:|:-----------:|
 | id | ID | int64 | YES | |
-| name | Name | VARCHAR | | YES |
+| name | 名称 | VARCHAR | | YES |
 """
 doc = parse(text)
 ```
 
-### 5. Access entity and relation structure
+### 5. 访问实体与关系结构
 
 ```python
 entity = network.all_entities[0]
@@ -122,24 +122,24 @@ for mr in relation.mapping_rules:
     print(mr.source_property, "->", mr.target_property)
 ```
 
-## Modules
+## 模块说明
 
-| Module | Description |
-|--------|-------------|
-| `bkn.models` | Dataclass models: BknDocument, Entity, Relation, Action, DataProperty, PropertyOverride, etc. |
-| `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
-| `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
-| `bkn.transformers.kweaver` | Transform: KweaverTransformer.to_json(), to_files(); outputs kweaver import JSON |
+| 模块 | 说明 |
+|------|------|
+| `bkn.models` | 数据模型：BknDocument、Entity、Relation、Action、DataProperty、PropertyOverride 等 |
+| `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头 |
+| `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes |
+| `bkn.transformers.kweaver` | 转换：KweaverTransformer.to_json()、to_files()，生成 kweaver 导入 JSON |
 
-## KweaverTransformer parameters
+## KweaverTransformer 参数
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `branch` | Branch name | `"main"` |
-| `base_version` | Base version string | `""` |
-| `id_prefix` | Entity/relation ID prefix (e.g. `supplychain_` makes `po` -> `supplychain_po`) | `""` |
+| 参数 | 说明 | 默认 |
+|------|------|------|
+| `branch` | 分支名 | `"main"` |
+| `base_version` | 基础版本 | `""` |
+| `id_prefix` | 实体/关系 ID 前缀（如 `supplychain_` 使 `po` 变为 `supplychain_po`） | `""` |
 
-## Testing
+## 测试
 
 ```bash
 cd sdk/python
