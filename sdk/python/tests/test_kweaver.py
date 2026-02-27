@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -15,7 +16,14 @@ EXAMPLES_DIR = REPO_ROOT / "docs" / "examples"
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from bkn.loader import load_network
-from bkn.transformers.kweaver import KweaverTransformer, _parse_index_config, _map_type
+from bkn.transformers.kweaver import (
+    ImportResult,
+    KweaverClient,
+    KweaverImportError,
+    KweaverTransformer,
+    _map_type,
+    _parse_index_config,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +187,125 @@ class TestSupplychainTransform:
                 assert f.exists()
                 data = json.loads(f.read_text(encoding="utf-8"))
                 assert data is not None
+
+
+# ---------------------------------------------------------------------------
+# KweaverClient import
+# ---------------------------------------------------------------------------
+
+class TestKweaverClient:
+    """Test KweaverClient with mocked requests."""
+
+    @pytest.fixture
+    def network(self):
+        root_path = EXAMPLES_DIR / "supplychain-hd" / "supplychain.bkn"
+        if not root_path.exists():
+            pytest.skip(f"Example file not found: {root_path}")
+        return load_network(root_path)
+
+    @pytest.fixture
+    def client(self):
+        return KweaverClient(
+            base_url="http://ontology-manager-svc:13014",
+            account_id="test_account",
+            account_type="test_type",
+            business_domain="test_domain",
+        )
+
+    def test_dry_run_returns_empty_result(self, client, network):
+        """dry_run=True should only transform, not call API."""
+        result = client.import_network(network, dry_run=True)
+        assert isinstance(result, ImportResult)
+        assert result.knowledge_network_id == ""
+        assert result.object_types_created == 0
+        assert result.relation_types_created == 0
+        assert result.success
+
+    def test_import_network_success(self, client, network):
+        """Mock successful import returns expected result."""
+        mock_responses = [
+            # createKnowledgeNetwork -> [{"id": "kn_123"}]
+            [{"id": "kn_123"}],
+            # createObjectTypes -> {created_count: 12, errors: []}
+            {"created_count": 12, "errors": []},
+            # createRelationTypes -> {created_count: 14, errors: []}
+            {"created_count": 14, "errors": []},
+        ]
+        call_idx = [0]
+
+        def mock_request(*_args, **_kwargs):
+            idx = call_idx[0]
+            call_idx[0] += 1
+            data = mock_responses[idx]
+
+            class MockResponse:
+                status_code = 201
+                content = json.dumps(data).encode()
+                text = json.dumps(data)
+
+                def json(self):
+                    return data
+
+            return MockResponse()
+
+        with patch("requests.request", side_effect=mock_request):
+            result = client.import_network(network)
+        assert result.knowledge_network_id == "kn_123"
+        assert result.object_types_created == 12
+        assert result.relation_types_created == 14
+        assert result.success
+        assert len(result.errors) == 0
+
+    def test_import_network_api_error(self, client, network):
+        """Non-2xx response raises KweaverImportError."""
+        class MockErrorResponse:
+            status_code = 400
+            content = b'{"error":"bad request"}'
+            text = '{"error":"bad request"}'
+
+            def json(self):
+                return {"error": "bad request"}
+
+        with patch("requests.request", return_value=MockErrorResponse()):
+            with pytest.raises(KweaverImportError) as exc_info:
+                client.import_network(network)
+        assert exc_info.value.status_code == 400
+        assert "bad request" in str(exc_info.value)
+
+    def test_create_knowledge_network_extracts_id(self, client):
+        """create_knowledge_network returns id from array response."""
+        class MockResponse:
+            status_code = 201
+            content = b'[{"id":"kn_abc"}]'
+
+            def json(self):
+                return [{"id": "kn_abc"}]
+
+        with patch("requests.request", return_value=MockResponse()):
+            kn_id = client.create_knowledge_network({"name": "test", "branch": "main", "base_branch": ""})
+        assert kn_id == "kn_abc"
+
+    def test_create_object_types_returns_count_and_errors(self, client):
+        """create_object_types returns (created_count, errors)."""
+        class MockResponse:
+            status_code = 201
+            content = b'{"created_count":2,"errors":["dup id"]}'
+
+            def json(self):
+                return {"created_count": 2, "errors": ["dup id"]}
+
+        with patch("requests.request", return_value=MockResponse()):
+            count, errors = client.create_object_types("kn_1", [{"id": "a"}, {"id": "b"}])
+        assert count == 2
+        assert errors == ["dup id"]
+
+    def test_create_relation_types_empty_list_skips_api(self, client):
+        """create_relation_types with empty list does not call API."""
+        with patch("requests.request") as m:
+            count, errors = client.create_relation_types("kn_1", [])
+        assert count == 0
+        assert errors == []
+        m.assert_not_called()
 
 
 if __name__ == "__main__":

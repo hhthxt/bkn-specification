@@ -11,16 +11,17 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from bkn.models import (
     BknNetwork,
-    DataProperty,
     Entity,
     Frontmatter,
     PropertyOverride,
     Relation,
 )
+
+from bkn.transformers.base import Transformer
 
 # ---------------------------------------------------------------------------
 # BKN type -> kweaver type mapping (reverse of what gen_entities_bkn.js did)
@@ -101,11 +102,7 @@ def _map_type(bkn_type: str) -> str:
     return _TYPE_TO_KWEAVER.get(bkn_type, bkn_type.lower())
 
 
-# ---------------------------------------------------------------------------
-# Transformer
-# ---------------------------------------------------------------------------
-
-class KweaverTransformer:
+class KweaverTransformer(Transformer):
     """Convert BKN models to kweaver API-compatible JSON payloads.
 
     Args:
@@ -147,7 +144,7 @@ class KweaverTransformer:
             payload["tags"] = fm.tags
         return payload
 
-    # -- Object Types (Entities) --------------------------------------------
+    # -- Object Types (Entities) ----------------------------------------------
 
     def _build_override_map(self, entity: Entity) -> dict[str, PropertyOverride]:
         """Index property overrides by property name for fast lookup."""
@@ -209,7 +206,7 @@ class KweaverTransformer:
 
         return result
 
-    # -- Relation Types -----------------------------------------------------
+    # -- Relation Types ------------------------------------------------------
 
     def transform_relation(self, relation: Relation) -> dict[str, Any]:
         """Transform a BKN Relation to a kweaver CreateRelationTypes item."""
@@ -245,7 +242,7 @@ class KweaverTransformer:
 
         return result
 
-    # -- Aggregate ----------------------------------------------------------
+    # -- Transformer interface -----------------------------------------------
 
     def to_json(self, network: BknNetwork) -> dict[str, Any]:
         """Transform a full BKN network into kweaver-compatible JSON payload.

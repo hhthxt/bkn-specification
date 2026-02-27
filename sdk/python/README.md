@@ -76,7 +76,39 @@ transformer.to_files(network, "output/")
 # Creates: output/knowledge_network.json, object_types.json, relation_types.json
 ```
 
-### 4. Parse from string
+### 4. Import to kweaver via API
+
+Import a BKN network directly to kweaver ontology-manager. Requires `pip install -e ".[api]"`:
+
+```python
+from bkn import load_network
+from bkn.transformers import KweaverClient, KweaverTransformer
+
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+
+client = KweaverClient(
+    base_url="http://ontology-manager-svc:13014",
+    account_id="your_account_id",
+    account_type="your_account_type",
+    business_domain="your_domain_id",
+)
+
+transformer = KweaverTransformer(id_prefix="supplychain_")
+result = client.import_network(network, transformer)
+# result.knowledge_network_id   -> created knowledge network ID
+# result.object_types_created   -> number of object types created
+# result.relation_types_created -> number of relation types created
+# result.errors                 -> list of errors (if any)
+# result.success                -> True if no errors
+```
+
+Dry-run mode (transform only, no API calls):
+
+```python
+result = client.import_network(network, transformer, dry_run=True)
+```
+
+### 5. Parse from string
 
 ```python
 from bkn import parse, parse_frontmatter, parse_body
@@ -105,7 +137,7 @@ name: My Entity
 doc = parse(text)
 ```
 
-### 5. Access entity and relation structure
+### 6. Access entity and relation structure
 
 ```python
 entity = network.all_entities[0]
@@ -129,7 +161,8 @@ for mr in relation.mapping_rules:
 | `bkn.models` | Dataclass models: BknDocument, Entity, Relation, Action, DataProperty, PropertyOverride, etc. |
 | `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
 | `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
-| `bkn.transformers.kweaver` | Transform: KweaverTransformer.to_json(), to_files(); outputs kweaver import JSON |
+| `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
+| `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |
 
 ## KweaverTransformer parameters
 

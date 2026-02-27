@@ -76,7 +76,39 @@ transformer.to_files(network, "output/")
 # 生成: output/knowledge_network.json, object_types.json, relation_types.json
 ```
 
-### 4. 从字符串解析
+### 4. 通过 API 导入到 kweaver
+
+将 BKN 网络直接导入到 kweaver ontology-manager。需要 `pip install -e ".[api]"`：
+
+```python
+from bkn import load_network
+from bkn.transformers import KweaverClient, KweaverTransformer
+
+network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+
+client = KweaverClient(
+    base_url="http://ontology-manager-svc:13014",
+    account_id="your_account_id",
+    account_type="your_account_type",
+    business_domain="your_domain_id",
+)
+
+transformer = KweaverTransformer(id_prefix="supplychain_")
+result = client.import_network(network, transformer)
+# result.knowledge_network_id   -> 创建的知识网络 ID
+# result.object_types_created   -> 创建的对象类数量
+# result.relation_types_created -> 创建的关系类数量
+# result.errors                 -> 错误列表（如有）
+# result.success                 -> 无错误时为 True
+```
+
+仅转换不调 API 的 dry_run 模式：
+
+```python
+result = client.import_network(network, transformer, dry_run=True)
+```
+
+### 5. 从字符串解析
 
 ```python
 from bkn import parse, parse_frontmatter, parse_body
@@ -105,7 +137,7 @@ name: My Entity
 doc = parse(text)
 ```
 
-### 5. 访问实体与关系结构
+### 6. 访问实体与关系结构
 
 ```python
 entity = network.all_entities[0]
@@ -129,7 +161,8 @@ for mr in relation.mapping_rules:
 | `bkn.models` | 数据模型：BknDocument、Entity、Relation、Action、DataProperty、PropertyOverride 等 |
 | `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头 |
 | `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes |
-| `bkn.transformers.kweaver` | 转换：KweaverTransformer.to_json()、to_files()，生成 kweaver 导入 JSON |
+| `bkn.transformers.base` | 抽象基类 `Transformer`，定义 `to_json()` 和 `to_files()` 接口 |
+| `bkn.transformers.kweaver` | KweaverTransformer、KweaverClient；输出 kweaver 导入 JSON |
 
 ## KweaverTransformer 参数
 
