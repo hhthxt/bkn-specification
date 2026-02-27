@@ -1,0 +1,31 @@
+---
+type: relation
+id: pod_belongs_node
+name: Pod属于节点
+version: 1.0.0
+network: k8s-modular
+tags: [拓扑架构]
+---
+
+## Relation: pod_belongs_node
+
+Pod 与其所在节点之间的归属关系。
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pod | node | direct | YES | 1 | 1 |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| pod_node_name | node_name |
+
+### Business Semantics
+
+一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。
+
+- **基数**: N:1 (多个 Pod 属于一个 Node)
+- **生命周期**: Pod 重新调度时关系变化

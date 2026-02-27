@@ -56,3 +56,26 @@ coverage/
 
 # Misc
 .cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.venv/
+venv/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Golang
+*.exe
+*.exe~
+*.dll
+*.test
+*.out
+/vendor/

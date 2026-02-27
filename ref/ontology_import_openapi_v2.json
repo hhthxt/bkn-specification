@@ -1,0 +1,846 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "业务知识网络导入服务",
+    "description": "业务知识网络导入服务RESTful API集合,用于将JSON格式的业务模型自动导入到业务知识网络中。支持创建对象类和关系类。",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://ontology-manager-svc:13014",
+      "description": "默认本地开发服务器"
+    }
+  ],
+  "paths": {
+    "/api/ontology-manager/in/v1/knowledge-networks": {
+      "post": {
+        "operationId": "createKnowledgeNetwork",
+        "summary": "CreateKnowledgeNetwork",
+        "description": "创建业务知识网络，为后续创建对象类和关系类做准备",
+        "parameters": [
+          {
+            "name": "x-account-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "账户ID"
+          },
+          {
+            "name": "x-account-type",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "账户类型"
+          },
+          {
+            "name": "x-business-domain",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "业务域ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "业务知识网络名称"
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "分支ID",
+                    "default": "main"
+                  },
+                  "base_branch": {
+                    "type": "string",
+                    "description": "来源分支，main分支为空字符串"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "description": "备注"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "标签列表"
+                  },
+                  "icon": {
+                    "type": "string",
+                    "description": "图标"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "颜色"
+                  }
+                },
+                "required": ["name", "branch", "base_branch"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "资源ID"
+                      }
+                    },
+                    "required": ["id"]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "错误信息"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "错误代码"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ontology-manager/in/v1/knowledge-networks/{knowledge_network_id}/object-types": {
+      "post": {
+        "operationId": "createObjectTypes",
+        "summary": "CreateObjectTypes",
+        "description": "在指定的业务知识网络中创建对象类",
+        "parameters": [
+          {
+            "name": "knowledge_network_id",
+            "in": "path",
+            "description": "业务知识网络ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-account-id",
+            "in": "header",
+            "description": "账户ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-account-type",
+            "in": "header",
+            "description": "账户类型",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-business-domain",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "业务域ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "对象类ID"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "对象类名称"
+                    },
+                    "branch": {
+                      "type": "string",
+                      "description": "分支ID",
+                      "default": "main"
+                    },
+                    "base_version": {
+                      "type": "string",
+                      "description": "基础版本"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "标签列表"
+                    },
+                    "comment": {
+                      "type": "string",
+                      "description": "备注"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "图标"
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "颜色"
+                    },
+                    "concept_groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "概念分组"
+                    },
+                    "data_source": {
+                      "type": "object",
+                      "description": "数据来源",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "description": "数据来源类型"
+                        },
+                        "id": {
+                          "type": "string",
+                          "description": "数据来源ID"
+                        }
+                      }
+                    },
+                    "data_properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "属性名称"
+                          },
+                          "display_name": {
+                            "type": "string",
+                            "description": "属性显示名"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "属性数据类型"
+                          },
+                          "comment": {
+                            "type": "string",
+                            "description": "属性描述"
+                          },
+                          "mapped_field": {
+                            "type": "object",
+                            "description": "映射字段",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "字段名称"
+                              }
+                            },
+                            "required": ["name"]
+                          }
+                        },
+                        "required": ["name", "display_name", "type", "comment"]
+                      },
+                      "description": "数据属性"
+                    },
+                    "logic_properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "逻辑属性"
+                    },
+                    "primary_keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "主键"
+                    },
+                    "display_key": {
+                      "type": "string",
+                      "description": "显示键"
+                    }
+                  },
+                  "required": ["branch", "base_version", "name", "primary_keys", "display_key", "data_properties"]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created_count": {
+                      "type": "integer",
+                      "description": "创建成功的对象类数量"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "错误信息列表"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "错误信息"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "错误代码"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ontology-manager/in/v1/knowledge-networks/{knowledge_network_id}/relation-types": {
+      "post": {
+        "operationId": "createRelationTypes",
+        "summary": "CreateRelationTypes",
+        "description": "在指定的业务知识网络中创建关系类",
+        "parameters": [
+          {
+            "name": "knowledge_network_id",
+            "in": "path",
+            "description": "业务知识网络ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-account-id",
+            "in": "header",
+            "description": "账户ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-account-type",
+            "in": "header",
+            "description": "账户类型",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-business-domain",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "业务域ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "关系类ID"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "关系类名称"
+                    },
+                    "branch": {
+                      "type": "string",
+                      "description": "分支ID",
+                      "default": "main"
+                    },
+                    "base_version": {
+                      "type": "string",
+                      "description": "基础版本"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "标签列表"
+                    },
+                    "comment": {
+                      "type": "string",
+                      "description": "备注"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "图标"
+                    },
+                    "color": {
+                      "type": "string",
+                      "description": "颜色"
+                    },
+                    "concept_groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "概念分组"
+                    },
+                    "source_object_type_id": {
+                      "type": "string",
+                      "description": "源对象类ID"
+                    },
+                    "target_object_type_id": {
+                      "type": "string",
+                      "description": "目标对象类ID"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["direct", "data_view"],
+                      "description": "关系类型",
+                      "default": "direct"
+                    },
+                    "mapping_rules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source_property": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "源属性名称"
+                              }
+                            },
+                            "required": ["name"]
+                          },
+                          "target_property": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "目标属性名称"
+                              }
+                            },
+                            "required": ["name"]
+                          }
+                        },
+                        "required": ["source_property", "target_property"]
+                      },
+                      "description": "映射规则"
+                    }
+                  },
+                  "required": ["name", "branch", "base_version"]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "created_count": {
+                      "type": "integer",
+                      "description": "创建成功的关系类数量"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "错误信息列表"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "错误信息"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "错误代码"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateKnowledgeNetworkRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "业务知识网络名称"
+          },
+          "branch": {
+            "type": "string",
+            "description": "分支ID",
+            "default": "main"
+          },
+          "base_branch": {
+            "type": "string",
+            "description": "来源分支，main分支为空字符串"
+          },
+          "comment": {
+            "type": "string",
+            "description": "备注"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "标签列表"
+          },
+          "icon": {
+            "type": "string",
+            "description": "图标"
+          },
+          "color": {
+            "type": "string",
+            "description": "颜色"
+          }
+        },
+        "required": ["name", "branch", "base_branch"]
+      },
+      "CreateObjectTypesRequest": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "对象类ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "对象类名称"
+            },
+            "branch": {
+              "type": "string",
+              "description": "分支ID",
+              "default": "main"
+            },
+            "base_version": {
+              "type": "string",
+              "description": "基础版本"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "标签列表"
+            },
+            "comment": {
+              "type": "string",
+              "description": "备注"
+            },
+            "icon": {
+              "type": "string",
+              "description": "图标"
+            },
+            "color": {
+              "type": "string",
+              "description": "颜色"
+            },
+            "concept_groups": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "概念分组"
+            },
+            "data_source": {
+              "type": "object",
+              "description": "数据来源"
+            },
+            "data_properties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "属性名称"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "属性显示名"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "属性数据类型"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "description": "属性描述"
+                  }
+                }
+              },
+              "description": "数据属性"
+            },
+            "logic_properties": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "逻辑属性"
+            },
+            "primary_keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "主键"
+            },
+            "display_key": {
+              "type": "string",
+              "description": "显示键"
+            }
+          },
+          "required": ["branch", "base_version", "name", "primary_keys", "display_key", "data_properties"]
+        }
+      },
+      "CreateRelationTypesRequest": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "关系类ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "关系类名称"
+            },
+            "branch": {
+              "type": "string",
+              "description": "分支ID",
+              "default": "main"
+            },
+            "base_version": {
+              "type": "string",
+              "description": "基础版本"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "标签列表"
+            },
+            "comment": {
+              "type": "string",
+              "description": "备注"
+            },
+            "icon": {
+              "type": "string",
+              "description": "图标"
+            },
+            "color": {
+              "type": "string",
+              "description": "颜色"
+            },
+            "concept_groups": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "概念分组"
+            },
+            "source_object_type_id": {
+              "type": "string",
+              "description": "源对象类ID"
+            },
+            "target_object_type_id": {
+              "type": "string",
+              "description": "目标对象类ID"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["direct", "data_view"],
+              "description": "关系类型",
+              "default": "direct"
+            },
+            "mapping_rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "source_property": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "源属性名称"
+                      }
+                    },
+                    "required": ["name"]
+                  },
+                  "target_property": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "目标属性名称"
+                      }
+                    },
+                    "required": ["name"]
+                  }
+                },
+                "required": ["source_property", "target_property"]
+              },
+              "description": "映射规则"
+            }
+          },
+          "required": ["name", "branch", "base_version"]
+        }
+      },
+      "CreateObjectTypesResponse": {
+        "type": "object",
+        "properties": {
+          "created_count": {
+            "type": "integer",
+            "description": "创建成功的对象类数量"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "错误信息列表"
+          }
+        }
+      },
+      "CreateRelationTypesResponse": {
+        "type": "object",
+        "properties": {
+          "created_count": {
+            "type": "integer",
+            "description": "创建成功的关系类数量"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "错误信息列表"
+          }
+        }
+      },
+      "ID": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "资源ID"
+          }
+        },
+        "required": ["id"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "错误信息"
+          },
+          "code": {
+            "type": "string",
+            "description": "错误代码"
+          }
+        },
+        "required": ["error"]
+      }
+    }
+  }
+}

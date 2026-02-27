@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bkn"
+version = "0.1.0"
+description = "BKN SDK - Parse, validate, and transform Business Knowledge Network files"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+api = ["requests>=2.28"]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

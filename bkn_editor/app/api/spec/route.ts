@@ -4,7 +4,7 @@ import { join } from 'path';
 
 export async function GET() {
   try {
-    const specPath = join(process.cwd(), '..', 'docs', 'bkn_docs', 'SPECIFICATION.md');
+    const specPath = join(process.cwd(), '..', 'docs', 'SPECIFICATION.md');
     
     if (!existsSync(specPath)) {
       return NextResponse.json({ error: 'Specification file not found' }, { status: 404 });

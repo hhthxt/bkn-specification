@@ -8,8 +8,8 @@
 
 核心文档为 **BKN 语言规范**：
 
-- **[SPECIFICATION.md](docs/bkn_docs/SPECIFICATION.md)** — 完整规范（中文）
-- **[SPECIFICATION.en.md](docs/bkn_docs/SPECIFICATION.en.md)** — 英文版
+- **[SPECIFICATION.md](docs/SPECIFICATION.md)** — 完整规范（中文）
+- **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — 英文版
 
 ### 核心概念
 
@@ -23,7 +23,7 @@
 ### 文件结构
 
 ```
-docs/bkn_docs/
+docs/
 ├── SPECIFICATION.md      # 完整规范（中文）
 ├── SPECIFICATION.en.md    # 完整规范（英文）
 ├── ARCHITECTURE.md        # 架构概览
@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `docs/bkn_docs/examples` 下的示例，数据保存在浏览器 localStorage。
+访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `docs/examples` 下的示例，数据保存在浏览器 localStorage。
 
 ### AI 生成
 

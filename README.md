@@ -8,8 +8,8 @@
 
 The core documentation is the **BKN Language Specification**:
 
-- **[SPECIFICATION.md](docs/bkn_docs/SPECIFICATION.md)** — Full specification (Chinese)
-- **[SPECIFICATION.en.md](docs/bkn_docs/SPECIFICATION.en.md)** — English edition
+- **[SPECIFICATION.md](docs/SPECIFICATION.md)** — Full specification (Chinese)
+- **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — English edition
 
 ### Key Concepts
 
@@ -23,7 +23,7 @@ The core documentation is the **BKN Language Specification**:
 ### File Organization
 
 ```
-docs/bkn_docs/
+docs/
 ├── SPECIFICATION.md      # Full spec (CN)
 ├── SPECIFICATION.en.md   # Full spec (EN)
 ├── ARCHITECTURE.md       # Architecture overview
@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/bkn_docs/examples` and stores data in browser localStorage.
+Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/examples` and stores data in browser localStorage.
 
 ### AI Generation
 

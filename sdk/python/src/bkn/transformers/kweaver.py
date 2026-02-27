@@ -1,0 +1,297 @@
+"""Transform BKN models to kweaver ontology-manager API JSON.
+
+Based on ref/ontology_import_openapi_v2.json which defines three endpoints:
+  - POST /knowledge-networks               (CreateKnowledgeNetwork)
+  - POST /knowledge-networks/{id}/object-types   (CreateObjectTypes)
+  - POST /knowledge-networks/{id}/relation-types (CreateRelationTypes)
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any, Optional
+
+from bkn.models import (
+    BknNetwork,
+    DataProperty,
+    Entity,
+    Frontmatter,
+    PropertyOverride,
+    Relation,
+)
+
+# ---------------------------------------------------------------------------
+# BKN type -> kweaver type mapping (reverse of what gen_entities_bkn.js did)
+# ---------------------------------------------------------------------------
+_TYPE_TO_KWEAVER: dict[str, str] = {
+    "VARCHAR": "string",
+    "varchar": "string",
+    "TEXT": "text",
+    "text": "text",
+    "int32": "integer",
+    "int64": "integer",
+    "integer": "integer",
+    "float32": "float",
+    "float64": "float",
+    "float": "float",
+    "bool": "boolean",
+    "DATE": "date",
+    "date": "date",
+    "TIME": "time",
+    "TIMESTAMP": "timestamp",
+    "timestamp": "timestamp",
+    "JSON": "json",
+    "BINARY": "binary",
+}
+
+_DECIMAL_RE = re.compile(r"^decimal(?:\((\d+),\s*(\d+)\))?$", re.IGNORECASE)
+
+# ---------------------------------------------------------------------------
+# Index Config parsing: "keyword(1024) + fulltext(standard) + vector(model_id)"
+# -> { keyword_config: {...}, fulltext_config: {...}, vector_config: {...} }
+# ---------------------------------------------------------------------------
+_INDEX_PART_RE = re.compile(r"(keyword|fulltext|vector)(?:\(([^)]*)\))?")
+
+
+def _parse_index_config(config_str: str) -> dict[str, Any]:
+    """Parse a BKN Index Config string into kweaver index config dicts."""
+    result: dict[str, Any] = {
+        "keyword_config": {"enabled": False, "ignore_above_len": 1024},
+        "fulltext_config": {"enabled": False, "analyzer": "standard"},
+        "vector_config": {"enabled": False, "model_id": ""},
+    }
+
+    if not config_str or not config_str.strip():
+        return result
+
+    for m in _INDEX_PART_RE.finditer(config_str):
+        idx_type = m.group(1)
+        param = (m.group(2) or "").strip()
+
+        if idx_type == "keyword":
+            result["keyword_config"]["enabled"] = True
+            if param:
+                try:
+                    result["keyword_config"]["ignore_above_len"] = int(param)
+                except ValueError:
+                    pass
+        elif idx_type == "fulltext":
+            result["fulltext_config"]["enabled"] = True
+            if param:
+                result["fulltext_config"]["analyzer"] = param
+        elif idx_type == "vector":
+            result["vector_config"]["enabled"] = True
+            if param:
+                result["vector_config"]["model_id"] = param
+
+    return result
+
+
+def _map_type(bkn_type: str) -> str:
+    """Map a BKN data type to a kweaver type string."""
+    if not bkn_type:
+        return "string"
+
+    dm = _DECIMAL_RE.match(bkn_type)
+    if dm:
+        return "decimal"
+
+    return _TYPE_TO_KWEAVER.get(bkn_type, bkn_type.lower())
+
+
+# ---------------------------------------------------------------------------
+# Transformer
+# ---------------------------------------------------------------------------
+
+class KweaverTransformer:
+    """Convert BKN models to kweaver API-compatible JSON payloads.
+
+    Args:
+        branch: Target branch name (default "main").
+        base_version: Base version string for object/relation types.
+        id_prefix: Prefix to prepend to BKN short IDs to form full kweaver IDs.
+                   For example "supplychain_hd0202_" turns "po" into
+                   "supplychain_hd0202_po".
+    """
+
+    def __init__(
+        self,
+        branch: str = "main",
+        base_version: str = "",
+        id_prefix: str = "",
+    ) -> None:
+        self.branch = branch
+        self.base_version = base_version
+        self.id_prefix = id_prefix
+
+    def _full_id(self, short_id: str) -> str:
+        """Prepend id_prefix to a short BKN ID."""
+        if self.id_prefix and not short_id.startswith(self.id_prefix):
+            return f"{self.id_prefix}{short_id}"
+        return short_id
+
+    # -- Knowledge Network --------------------------------------------------
+
+    def transform_network(self, fm: Frontmatter) -> dict[str, Any]:
+        """Transform network frontmatter to CreateKnowledgeNetwork request body."""
+        payload: dict[str, Any] = {
+            "name": fm.name or fm.id,
+            "branch": self.branch,
+            "base_branch": "",
+        }
+        if fm.description:
+            payload["comment"] = fm.description
+        if fm.tags:
+            payload["tags"] = fm.tags
+        return payload
+
+    # -- Object Types (Entities) --------------------------------------------
+
+    def _build_override_map(self, entity: Entity) -> dict[str, PropertyOverride]:
+        """Index property overrides by property name for fast lookup."""
+        return {po.property: po for po in entity.property_overrides}
+
+    def transform_entity(self, entity: Entity) -> dict[str, Any]:
+        """Transform a BKN Entity to a kweaver CreateObjectTypes item."""
+        override_map = self._build_override_map(entity)
+
+        primary_keys = [
+            dp.property for dp in entity.data_properties if dp.primary_key
+        ]
+        display_keys = [
+            dp.property for dp in entity.data_properties if dp.display_key
+        ]
+        display_key = display_keys[0] if display_keys else ""
+
+        data_props: list[dict[str, Any]] = []
+        for dp in entity.data_properties:
+            prop_dict: dict[str, Any] = {
+                "name": dp.property,
+                "display_name": dp.display_name or dp.property,
+                "type": _map_type(dp.type),
+                "comment": dp.description or "",
+                "mapped_field": {"name": dp.property},
+            }
+
+            override = override_map.get(dp.property)
+            if override and override.index_config:
+                prop_dict["index_config"] = _parse_index_config(override.index_config)
+            elif dp.index:
+                prop_dict["index_config"] = _parse_index_config("keyword")
+
+            data_props.append(prop_dict)
+
+        result: dict[str, Any] = {
+            "name": entity.name or entity.id,
+            "branch": self.branch,
+            "base_version": self.base_version,
+            "primary_keys": primary_keys,
+            "display_key": display_key,
+            "data_properties": data_props,
+        }
+
+        full_id = self._full_id(entity.id)
+        if full_id:
+            result["id"] = full_id
+
+        if entity.tags:
+            result["tags"] = entity.tags
+        if entity.description:
+            result["comment"] = entity.description
+
+        if entity.data_source:
+            result["data_source"] = {
+                "type": entity.data_source.type,
+                "id": entity.data_source.id,
+            }
+
+        return result
+
+    # -- Relation Types -----------------------------------------------------
+
+    def transform_relation(self, relation: Relation) -> dict[str, Any]:
+        """Transform a BKN Relation to a kweaver CreateRelationTypes item."""
+        result: dict[str, Any] = {
+            "name": relation.name or relation.id,
+            "branch": self.branch,
+            "base_version": self.base_version,
+        }
+
+        full_id = self._full_id(relation.id)
+        if full_id:
+            result["id"] = full_id
+
+        if relation.tags:
+            result["tags"] = relation.tags
+        if relation.description:
+            result["comment"] = relation.description
+
+        if relation.endpoints:
+            ep = relation.endpoints[0]
+            result["source_object_type_id"] = self._full_id(ep.source)
+            result["target_object_type_id"] = self._full_id(ep.target)
+            result["type"] = ep.type or "direct"
+
+        if relation.mapping_rules:
+            result["mapping_rules"] = [
+                {
+                    "source_property": {"name": mr.source_property},
+                    "target_property": {"name": mr.target_property},
+                }
+                for mr in relation.mapping_rules
+            ]
+
+        return result
+
+    # -- Aggregate ----------------------------------------------------------
+
+    def to_json(self, network: BknNetwork) -> dict[str, Any]:
+        """Transform a full BKN network into kweaver-compatible JSON payload.
+
+        Returns a dict with three keys:
+            - knowledge_network: CreateKnowledgeNetwork request body
+            - object_types: list of CreateObjectTypes items
+            - relation_types: list of CreateRelationTypes items
+        """
+        return {
+            "knowledge_network": self.transform_network(network.root.frontmatter),
+            "object_types": [
+                self.transform_entity(e) for e in network.all_entities
+            ],
+            "relation_types": [
+                self.transform_relation(r) for r in network.all_relations
+            ],
+        }
+
+    def to_files(
+        self,
+        network: BknNetwork,
+        output_dir: str | Path,
+        indent: int = 2,
+    ) -> list[Path]:
+        """Write kweaver JSON payloads to separate files.
+
+        Creates three files in output_dir:
+            - knowledge_network.json
+            - object_types.json
+            - relation_types.json
+
+        Returns list of created file paths.
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        payload = self.to_json(network)
+        created: list[Path] = []
+
+        for key in ("knowledge_network", "object_types", "relation_types"):
+            file_path = output_dir / f"{key}.json"
+            file_path.write_text(
+                json.dumps(payload[key], ensure_ascii=False, indent=indent),
+                encoding="utf-8",
+            )
+            created.append(file_path)
+
+        return created
