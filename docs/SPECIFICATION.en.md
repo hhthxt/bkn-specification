@@ -599,11 +599,11 @@ or
 
 ### Parameter Binding
 
-| Parameter | Source | Binding |
-|-----------|--------|---------|
-| {param_name} | property | {property_name} |
-| {param_name} | input | - |
-| {param_name} | const | {value} |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| {param_name} | string | property | {property_name} | {description} |
+| {param_name} | string | input | - | {description} |
+| {param_name} | string | const | {value} | {description} |
 
 ### Schedule Configuration
 

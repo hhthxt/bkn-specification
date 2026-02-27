@@ -16,6 +16,8 @@ version: 1.0.0
 
 **Pod属于节点** - Pod 与其所在节点之间的归属关系
 
+### Endpoints
+
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|
 | pod | node | direct | YES | 1 | 1 |
@@ -38,6 +40,8 @@ version: 1.0.0
 ## Relation: service_routes_pod
 
 **Service路由Pod** - Service 到 Pod 的流量路由关系
+
+### Endpoints
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|

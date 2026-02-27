@@ -64,11 +64,11 @@ condition:
 
 ### 参数绑定
 
-| 参数 | 来源 | 绑定 | 说明 |
-|------|------|------|------|
-| {param} | property | {property_name} | {说明} |
-| {param} | input | - | {说明} |
-| {param} | const | {value} | {说明} |
+| 参数 | 类型 | 来源 | 绑定 | 说明 |
+|------|------|------|------|------|
+| {param} | string | property | {property_name} | {说明} |
+| {param} | string | input | - | {说明} |
+| {param} | string | const | {value} | {说明} |
 
 ### 调度配置
 

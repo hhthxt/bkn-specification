@@ -56,9 +56,9 @@ condition:
 
 ### Parameter Binding
 
-| Parameter | Source | Binding |
-|-----------|--------|---------|
-| node | property | node_name |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| node | string | property | node_name | Node name |
 
 ### Execution Description
 

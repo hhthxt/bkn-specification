@@ -54,12 +54,12 @@ condition:
 
 ### Parameter Binding
 
-| Parameter | Source | Binding | Description |
-|-----------|--------|---------|-------------|
-| pod | property | pod_name | Pod name |
-| namespace | property | pod_namespace | Namespace |
-| grace_period | const | 30 | Grace period seconds |
-| force | input | - | Force delete |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| pod | string | property | pod_name | Pod name |
+| namespace | string | property | pod_namespace | Namespace |
+| grace_period | number | const | 30 | Grace period seconds |
+| force | boolean | input | - | Force delete |
 
 ### Schedule
 
@@ -116,9 +116,9 @@ condition:
 
 ### Parameter Binding
 
-| Parameter | Source | Binding |
-|-----------|--------|---------|
-| node | property | node_name |
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| node | string | property | node_name | Node name |
 
 ### Execution Description
 
