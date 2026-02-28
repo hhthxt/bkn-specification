@@ -23,15 +23,15 @@ The core documentation is the **BKN Language Specification**:
 ### File Organization
 
 ```
-docs/
-├── SPECIFICATION.md      # Full spec (CN)
-├── SPECIFICATION.en.md   # Full spec (EN)
-├── ARCHITECTURE.md       # Architecture overview
-├── examples/             # Example networks (Kubernetes topology)
-│   ├── k8s-topology.bkn  # Single-file example
-│   ├── k8s-network/      # Split by type (entities, relations, actions)
-│   └── k8s-modular/     # One definition per file
-└── templates/           # BKN file templates
+├── docs/
+│   ├── SPECIFICATION.md      # Full spec (CN)
+│   ├── SPECIFICATION.en.md   # Full spec (EN)
+│   ├── ARCHITECTURE.md       # Architecture overview
+│   └── templates/            # BKN file templates
+└── examples/                 # Example networks (Kubernetes topology)
+    ├── k8s-topology.bkn      # Single-file example
+    ├── k8s-network/          # Split by type (entities, relations, actions)
+    └── k8s-modular/          # One definition per file
 ```
 
 ## Demo Tool
@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `docs/examples` and stores data in browser localStorage.
+Open [http://localhost:3000](http://localhost:3000). The demo loads examples from `examples` and stores data in browser localStorage.
 
 ### AI Generation
 

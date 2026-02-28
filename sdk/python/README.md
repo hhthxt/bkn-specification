@@ -27,7 +27,7 @@ Requires Python 3.9+.
 ```python
 from bkn import load
 
-doc = load("docs/examples/supplychain-hd/entities.bkn")
+doc = load("examples/supplychain-hd/entities.bkn")
 print(doc.frontmatter.type)   # fragment
 print(len(doc.entities))      # 12
 for e in doc.entities:
@@ -41,7 +41,7 @@ The root file references sub-files via `includes`; `load_network` resolves them 
 ```python
 from bkn import load_network
 
-network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
 print(len(network.all_entities))      # 12
@@ -57,7 +57,7 @@ Convert BKN models to JSON for ontology-manager API (see `ref/ontology_import_op
 from bkn import load_network
 from bkn.transformers import KweaverTransformer
 
-network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 transformer = KweaverTransformer(
     branch="main",
@@ -84,7 +84,7 @@ Import a BKN network directly to kweaver ontology-manager. Requires `pip install
 from bkn import load_network
 from bkn.transformers import KweaverClient, KweaverTransformer
 
-network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 client = KweaverClient(
     base_url="http://ontology-manager-svc:13014",

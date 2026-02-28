@@ -23,15 +23,15 @@
 ### 文件结构
 
 ```
-docs/
-├── SPECIFICATION.md      # 完整规范（中文）
-├── SPECIFICATION.en.md    # 完整规范（英文）
-├── ARCHITECTURE.md        # 架构概览
-├── examples/              # 示例网络（Kubernetes 拓扑）
-│   ├── k8s-topology.bkn  # 单文件示例
-│   ├── k8s-network/      # 按类型拆分（entities/relations/actions）
-│   └── k8s-modular/      # 每定义一文件
-└── templates/            # BKN 文件模板
+├── docs/
+│   ├── SPECIFICATION.md      # 完整规范（中文）
+│   ├── SPECIFICATION.en.md   # 完整规范（英文）
+│   ├── ARCHITECTURE.md       # 架构概览
+│   └── templates/            # BKN 文件模板
+└── examples/                 # 示例网络（Kubernetes 拓扑）
+    ├── k8s-topology.bkn      # 单文件示例
+    ├── k8s-network/          # 按类型拆分（entities/relations/actions）
+    └── k8s-modular/          # 每定义一文件
 ```
 
 ## 演示工具
@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `docs/examples` 下的示例，数据保存在浏览器 localStorage。
+访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `examples` 下的示例，数据保存在浏览器 localStorage。
 
 ### AI 生成
 

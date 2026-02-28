@@ -79,3 +79,10 @@ venv/
 *.test
 *.out
 /vendor/
+
+# excel temp files
+~$*.xlsx
+~$*.xls
+~$*.xlsm
+~$*.xlsb
+~$*.xlsm

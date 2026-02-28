@@ -1,4 +1,4 @@
-"""Verify all docs/examples/*.bkn files load successfully with the SDK."""
+"""Verify all examples/*.bkn files load successfully with the SDK."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import pytest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-EXAMPLES_DIR = REPO_ROOT / "docs" / "examples"
+EXAMPLES_DIR = REPO_ROOT / "examples"
 
 
 def _get_all_bkn():
-    """Collect all .bkn files under docs/examples/."""
+    """Collect all .bkn files under examples/."""
     return sorted(EXAMPLES_DIR.rglob("*.bkn"))
 
 

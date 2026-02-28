@@ -28,7 +28,7 @@ python -m pytest tests/ -v
 from bkn import load_network
 from bkn.transformers import KweaverTransformer
 
-network = load_network("docs/examples/supplychain-hd/supplychain.bkn")
+network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 transformer = KweaverTransformer(id_prefix="supplychain_")
 payload = transformer.to_json(network)   # Get kweaver import JSON
