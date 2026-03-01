@@ -135,4 +135,3 @@ evaluate_risk(network, "restore_from_backup", context, risk_rules=risk_rules)  #
 
 - BKN 定义：[risk-fragment.bkn](risk-fragment.bkn)
 - 规范：`docs/SPECIFICATION.md` 中「风险相关定义」「Action risk（计算属性）」
-- 旧版示例（scenario / action_option / risk_statement）：`examples/risk_old/`

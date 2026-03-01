@@ -32,5 +32,4 @@ SDK 提供 `to_bknd()` / `to_bknd_from_table()` 将结构化数据序列化回 `
 | `security_contract_rules.json` | 安全契约矩阵规则实例（抽取为 `risk_scenario.bknd`/`risk_rule.bknd`，也可直接传给 `evaluate_risk(..., risk_rules=...)`） |
 | `scenario_activation.json` | 场景生效条件（如时间窗口） |
 
-旧模型（`scenario` / `action_option` / `risk` / `risk_statement`）保留在 `examples/risk_old/`。
 

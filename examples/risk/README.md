@@ -17,7 +17,7 @@ examples/risk/
 ├── risk-fragment.bkn   # 带 Tags: __risk__ 的实体示例（无冗余关系）
 ├── actions.bkn         # 动作定义（如 restart_erp 重启ERP）
 ├── data/
-│   ├── *.bknd                         # 旧模型 .bknd 格式示例（仅作格式参考，不参与当前网络）
+│   ├── *.bknd                         # risk_scenario / risk_rule 实例数据
 │   ├── security_contract_rules.json   # 增强版安全契约矩阵（表格转 risk_rules）
 │   └── scenario_activation.json       # 场景生效条件（如 sec_t_01 时间窗口）
 └── scripts/
@@ -63,7 +63,3 @@ result = evaluate_risk(network, action_id="restore_from_backup", context={"scena
 ```
 
 风险类的设计与交互逻辑见 [risk.md](risk.md)。
-
-## 与旧版示例的关系
-
-旧版静态风险知识（scenario / action_option / risk_statement 等）已移至 `examples/risk_old/`，可作为历史参考。`examples/risk/data/*.bknd` 为旧模型格式示例，仅用于演示 `.bknd` 文件格式与 SDK 解析；**不参与当前网络**（`risk-fragment.bkn` 定义的是 `risk_scenario` / `risk_rule`，与旧 schema 不同）。新设计使用 tag 标记风险相关定义，由 SDK 统一计算 Action 的 risk 属性。

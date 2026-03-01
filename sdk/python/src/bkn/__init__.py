@@ -28,6 +28,7 @@ from bkn.parser import (
 from bkn.loader import load, load_network
 from bkn.risk import evaluate_risk
 from bkn.serializer import to_bknd, to_bknd_from_table
+from bkn.validator import validate_data_table, validate_network_data
 
 __version__ = "0.1.0"
 
@@ -58,4 +59,6 @@ __all__ = [
     "evaluate_risk",
     "to_bknd",
     "to_bknd_from_table",
+    "validate_data_table",
+    "validate_network_data",
 ]
