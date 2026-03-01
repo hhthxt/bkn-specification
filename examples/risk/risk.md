@@ -29,12 +29,11 @@
 
 ### 2.1 实体概览
 
-| 实体 | 说明 | Tags |
-|------|------|------|
-| **risk_scenario** | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
-| **risk_rule** | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
-
-**简化**：不单独定义 rule_under_scenario 关系，以 risk_rule.scenario_id 直接关联场景即可。
+| 定义 | 类型 | 说明 | Tags |
+|------|------|------|------|
+| **risk_scenario** | Entity | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
+| **risk_rule** | Entity | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
+| **rule_under_scenario** | Relation | 规则归属场景（risk_rule → risk_scenario） | __risk__ |
 
 ### 2.2 risk_scenario（风险场景）
 
@@ -51,6 +50,13 @@
   - `allowed`：该场景下该 action 是否允许（true=allow，false=not_allow）。
 - **可选**：`reason` 等说明。
 - **语义**：一条规则即「在 scenario_id 下，对 action_id 的允许结果为 allowed」。评估时用规则实例列表（risk_rules）匹配当前 context 与待执行 action，得到 allow/not_allow。
+
+### 2.4 Relation: rule_under_scenario
+
+- **Source**: `risk_rule` → **Target**: `risk_scenario`
+- **Mapping**: `risk_rule.scenario_id` → `risk_scenario.scenario_id`
+- **基数**: N:1（多条规则属于同一场景）
+- **语义**：每条风险规则归属于一个风险场景。评估时按 context 中的 `scenario_id` 匹配场景，再查找该场景下的规则。
 
 ---
 

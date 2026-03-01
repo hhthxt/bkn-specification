@@ -21,7 +21,7 @@ def time_to_scenario_id(dt: datetime) -> str | None:
     hour = dt.hour
     minute = dt.minute
     # 28 日 23:00 起
-    if day == 28 and (hour > 23 or (hour == 23 and minute >= 0)):
+    if day == 28 and hour >= 23:
         return "sec_t_01"
     if day == 29 or day == 30:
         return "sec_t_01"

@@ -72,4 +72,29 @@ includes:
 
 - 每条规则表示：在 scenario_id 下，对 action_id 的允许结果为 allowed。
 - 风险评估模块查询带 __risk__ tag 的此类实体实例，匹配 scenario_id + action_id 得到 allow/not_allow。
-- **简化**：不单独定义 rule_under_scenario 关系，以 risk_rule.scenario_id 直接关联场景即可。
+
+---
+
+## Relation: rule_under_scenario
+
+**规则所属场景** - risk_rule 归属于 risk_scenario
+
+- **Tags**: __risk__
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| risk_rule | risk_scenario | direct | YES | 1 | 1 |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| scenario_id | scenario_id |
+
+### Business Semantics
+
+每条风险规则属于一个风险场景，通过 scenario_id 关联。评估时按 context 中的 scenario_id 匹配场景，再查找该场景下的规则。
+
+- **基数**: N:1（多条规则属于同一场景）

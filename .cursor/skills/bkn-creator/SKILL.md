@@ -86,6 +86,7 @@ Read the appropriate template before generating:
 - `templates/relation.bkn.template` — relation with Endpoints, Mapping Rules (direct and data_view)
 - `templates/action.bkn.template` — action with Trigger, Pre-conditions, Tool Configuration, Schedule
 - `templates/network.bkn.template` — network index with inline entity/relation/action definitions
+- `templates/data.bknd.template` — instance data file for entities with Data Source Type `bknd`
 
 Fill in `{placeholders}`, remove unused optional sections, and remove template comments.
 
