@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
+FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "index.bkn"
 RULES_PATH = REPO_ROOT / "examples" / "risk" / "data" / "security_contract_rules.json"
 
 # 月末封网：当月 28 日 23:00 至 31 日 04:00（含 31 日 4 点前）

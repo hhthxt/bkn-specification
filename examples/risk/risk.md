@@ -1,6 +1,6 @@
 # Risk 风险类设计与交互逻辑
 
-本文档描述 BKN 中**风险（risk）**的设计定位、风险相关实体/关系，以及风险评估与执行的交互逻辑。对应 BKN 定义见 [risk-fragment.bkn](risk-fragment.bkn)。
+本文档描述 BKN 中**风险（risk）**的设计定位、风险相关实体/关系，以及风险评估与执行的交互逻辑。对应 BKN 定义见 [index.bkn](index.bkn)（聚合 [risk-fragment.bkn](risk-fragment.bkn) 与 [actions.bkn](actions.bkn)）。
 
 ---
 
@@ -116,7 +116,7 @@ flowchart LR
 from bkn.loader import load_network
 from bkn.risk import evaluate_risk
 
-network = load_network("examples/risk/risk-fragment.bkn")
+network = load_network("examples/risk/index.bkn")
 context = {"scenario_id": "prod_db"}
 
 # 无规则时默认 allow
@@ -133,5 +133,5 @@ evaluate_risk(network, "restore_from_backup", context, risk_rules=risk_rules)  #
 
 ## 5. 参考
 
-- BKN 定义：[risk-fragment.bkn](risk-fragment.bkn)
+- BKN 定义：[index.bkn](index.bkn)、[risk-fragment.bkn](risk-fragment.bkn)、[actions.bkn](actions.bkn)
 - 规范：`docs/SPECIFICATION.md` 中「风险相关定义」「Action risk（计算属性）」

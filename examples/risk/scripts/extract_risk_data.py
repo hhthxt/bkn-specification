@@ -13,6 +13,7 @@ SCENARIO_COLUMNS = [
     "category",
     "primary_object",
     "description",
+    "activation_rule",
 ]
 
 RULE_COLUMNS = [
@@ -78,9 +79,32 @@ def _write_bknd(
     out_path.write_text(content, encoding="utf-8")
 
 
-def _build_rows(input_json: Path) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+def _load_activation_rules(activation_json: Path | None) -> dict[str, str]:
+    """Load scenario_id -> activation_rule from scenario_activation.json."""
+    if not activation_json or not activation_json.exists():
+        return {}
+    payload = json.loads(activation_json.read_text(encoding="utf-8"))
+    result: dict[str, str] = {}
+    for s in payload.get("scenarios", []):
+        sid = str(s.get("scenario_id", "")).strip()
+        if not sid:
+            continue
+        # Prefer time_window_rule (structured), fallback to time_window (human-readable)
+        rule = str(s.get("time_window_rule", "")).strip() or str(
+            s.get("time_window", "")
+        ).strip()
+        if rule:
+            result[sid] = rule
+    return result
+
+
+def _build_rows(
+    input_json: Path,
+    activation_json: Path | None = None,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     payload = json.loads(input_json.read_text(encoding="utf-8"))
     rules = payload.get("risk_rules", [])
+    activation_rules = _load_activation_rules(activation_json)
 
     scenarios: dict[str, dict[str, str]] = {}
     rule_rows: list[dict[str, str]] = []
@@ -106,14 +130,17 @@ def _build_rows(input_json: Path) -> tuple[list[dict[str, str]], list[dict[str, 
                 "category": category,
                 "primary_object": primary_object,
                 "description": trigger_condition,
+                "activation_rule": activation_rules.get(scenario_id, ""),
             }
 
         allowed_raw = item.get("allowed", False)
         allowed = "true" if bool(allowed_raw) else "false"
-        base_rule_id = str(item.get("rule_id", scenario_id)).strip() or scenario_id
+        rule_id = str(item.get("rule_id", "")).strip()
+        if not rule_id or "_" not in rule_id:
+            rule_id = f"{scenario_id}_{action_id}"
         rule_rows.append(
             {
-                "rule_id": f"{base_rule_id}_{action_id}",
+                "rule_id": rule_id,
                 "scenario_id": scenario_id,
                 "action_id": action_id,
                 "allowed": allowed,
@@ -128,7 +155,13 @@ def _build_rows(input_json: Path) -> tuple[list[dict[str, str]], list[dict[str, 
     return scenario_rows, rule_rows
 
 
-def convert(input_json: Path, output_dir: Path, network: str, source: str) -> None:
+def convert(
+    input_json: Path,
+    output_dir: Path,
+    network: str,
+    source: str,
+    activation_json: Path | None = None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     # Remove legacy old-model files to avoid mixed schemas under examples/risk/data.
     for legacy_name in (
@@ -144,7 +177,7 @@ def convert(input_json: Path, output_dir: Path, network: str, source: str) -> No
         if legacy_path.exists():
             legacy_path.unlink()
 
-    scenario_rows, rule_rows = _build_rows(input_json)
+    scenario_rows, rule_rows = _build_rows(input_json, activation_json)
     _write_bknd(
         out_path=output_dir / "risk_scenario.bknd",
         network=network,
@@ -167,12 +200,19 @@ def main() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     default_input = repo_root / "examples" / "risk" / "data" / "security_contract_rules.json"
     default_output = repo_root / "examples" / "risk" / "data"
+    default_activation = repo_root / "examples" / "risk" / "data" / "scenario_activation.json"
 
     parser = argparse.ArgumentParser(
         description="Extract risk_scenario/risk_rule .bknd files from rules JSON."
     )
     parser.add_argument("--input-json", type=Path, default=default_input)
     parser.add_argument("--output-dir", type=Path, default=default_output)
+    parser.add_argument(
+        "--activation-json",
+        type=Path,
+        default=default_activation,
+        help="scenario_activation.json for activation_rule merge",
+    )
     parser.add_argument("--network", default="recoverable-network")
     parser.add_argument(
         "--source",
@@ -186,6 +226,7 @@ def main() -> None:
         output_dir=args.output_dir,
         network=args.network,
         source=args.source,
+        activation_json=args.activation_json,
     )
 
     print(f"Generated risk_scenario/risk_rule .bknd files in {args.output_dir}")

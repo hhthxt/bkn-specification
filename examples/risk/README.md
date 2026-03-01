@@ -14,6 +14,7 @@
 examples/risk/
 ├── README.md           # 本说明
 ├── risk.md             # 风险类设计与交互逻辑
+├── index.bkn           # 网络入口（聚合 risk-fragment + actions）
 ├── risk-fragment.bkn   # 带 Tags: __risk__ 的实体示例（无冗余关系）
 ├── actions.bkn         # 动作定义（如 restart_erp 重启ERP）
 ├── data/
@@ -53,7 +54,7 @@ python examples/risk/scripts/eval_security_contract_demo.py
 from bkn.loader import load_network
 from bkn.risk import evaluate_risk
 
-network = load_network("examples/risk/risk-fragment.bkn")
+network = load_network("examples/risk/index.bkn")
 result = evaluate_risk(network, action_id="restore_from_backup", context={"scenario_id": "prod_db"})
 # result == "allow" or "not_allow"
 

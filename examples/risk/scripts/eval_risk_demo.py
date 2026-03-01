@@ -10,9 +10,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-# Fragment path: examples/risk/risk-fragment.bkn (relative to repo root)
+# Network path: examples/risk/index.bkn (relative to repo root)
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
+FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "index.bkn"
 
 
 def main() -> None:

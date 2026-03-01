@@ -7,16 +7,16 @@ source: security_contract_rules.json
 
 # risk_scenario
 
-| scenario_id | name | category | primary_object | description |
-|-------------|------|----------|----------------|-------------|
-| sec_b_01 | SEC-B-01: 高危操作前置备份熔断 | integrity | 核心配置文件, 生产数据库 | AI 准备执行 UPDATE/DELETE 或覆盖配置前，发现近 1 小时内无有效快照。 |
-| sec_c_02 | SEC-C-02: 雪崩防波及驱逐限制 | availability | 生产环境K8s, API网关 | AI试图一次性重启或驱逐大于20%的可用计算节点。 |
-| sec_d_03 | SEC-D-03: 核心商业机密防外泄 | security | 报表系统, 数据库日志 | 查询结果命中BOM配方、核心工艺参数或员工隐私数据。 |
-| sec_f_01 | SEC-F-01: 大规格算力申请限额 | dependency | 云平台API, IaC编排流 | 算力申请规格>16C64G，或预估月度成本>5000元。 |
-| sec_l_02 | SEC-L-02: API 调用速率防拖死 | performance | 内部 Open API, 核心接口 | AI 在执行大批量自动化修复脚本时，API 调用并发频率超过 100次/秒。 |
-| sec_n_01 | SEC-N-01: 跨网段网络隔离红线 | dependency | 办公网(OA), 生产网(OT) | 尝试开通源IP为“办公网”、目标IP为“生产网”的白名单。 |
-| sec_o_01 | SEC-O-01: 边缘设备固件变更冻结 | availability | 边缘计算网关, 产线PLC | 尝试下发底层固件升级指令，或修改核心设备运转频率参数。 |
-| sec_p_01 | SEC-P-01: Root/Admin 提权阻断 | security | IAM中心, 堡垒机, 主机 | AI 自身或响应用户意图，尝试赋予某个账号 root 或 Domain Admin 等超级权限。 |
-| sec_r_01 | SEC-R-01: 核心产线防危化拦截 | integrity | MES系统, SCADA网关 | 出现DROP、TRUNCATE或无WHERE条件的高危写操作。 |
-| sec_t_01 | SEC-T-01: 月末财务绝对封网 | availability | ERP核心库, WMS核心库 | 每月28日23点至31日4点，尝试执行重启、缩容或DDL操作。 |
-| sec_v_01 | SEC-V-01: 驻场设备商临时通道管控 | dependency | VPN网关, 零信任边界 | 外部设备供应商（如西门子/ABB）通过工单申请生产环境的远程排障通道。 |
+| scenario_id | name | category | primary_object | description | activation_rule |
+|-------------|------|----------|----------------|-------------|-----------------|
+| sec_b_01 | SEC-B-01: 高危操作前置备份熔断 | integrity | 核心配置文件, 生产数据库 | AI 准备执行 UPDATE/DELETE 或覆盖配置前，发现近 1 小时内无有效快照。 |  |
+| sec_c_02 | SEC-C-02: 雪崩防波及驱逐限制 | availability | 生产环境K8s, API网关 | AI试图一次性重启或驱逐大于20%的可用计算节点。 |  |
+| sec_d_03 | SEC-D-03: 核心商业机密防外泄 | security | 报表系统, 数据库日志 | 查询结果命中BOM配方、核心工艺参数或员工隐私数据。 |  |
+| sec_f_01 | SEC-F-01: 大规格算力申请限额 | dependency | 云平台API, IaC编排流 | 算力申请规格>16C64G，或预估月度成本>5000元。 |  |
+| sec_l_02 | SEC-L-02: API 调用速率防拖死 | performance | 内部 Open API, 核心接口 | AI 在执行大批量自动化修复脚本时，API 调用并发频率超过 100次/秒。 |  |
+| sec_n_01 | SEC-N-01: 跨网段网络隔离红线 | dependency | 办公网(OA), 生产网(OT) | 尝试开通源IP为“办公网”、目标IP为“生产网”的白名单。 |  |
+| sec_o_01 | SEC-O-01: 边缘设备固件变更冻结 | availability | 边缘计算网关, 产线PLC | 尝试下发底层固件升级指令，或修改核心设备运转频率参数。 |  |
+| sec_p_01 | SEC-P-01: Root/Admin 提权阻断 | security | IAM中心, 堡垒机, 主机 | AI 自身或响应用户意图，尝试赋予某个账号 root 或 Domain Admin 等超级权限。 |  |
+| sec_r_01 | SEC-R-01: 核心产线防危化拦截 | integrity | MES系统, SCADA网关 | 出现DROP、TRUNCATE或无WHERE条件的高危写操作。 |  |
+| sec_t_01 | SEC-T-01: 月末财务绝对封网 | availability | ERP核心库, WMS核心库 | 每月28日23点至31日4点，尝试执行重启、缩容或DDL操作。 | day in [28,29,30] with hour>=23 on 28th; day 31 with hour<4 |
+| sec_v_01 | SEC-V-01: 驻场设备商临时通道管控 | dependency | VPN网关, 零信任边界 | 外部设备供应商（如西门子/ABB）通过工单申请生产环境的远程排障通道。 |  |

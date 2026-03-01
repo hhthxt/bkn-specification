@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
+FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "index.bkn"
 RULES_PATH = REPO_ROOT / "examples" / "risk" / "data" / "security_contract_rules.json"
 
 

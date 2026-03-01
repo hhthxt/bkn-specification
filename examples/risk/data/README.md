@@ -1,6 +1,6 @@
 # Risk Data (`.bknd` + JSON)
 
-本目录已切换到 `examples/risk/risk-fragment.bkn` 的新模型（`risk_scenario` / `risk_rule`）。
+本目录已切换到 `examples/risk/index.bkn` 网络下的新模型（`risk_scenario` / `risk_rule`）。
 
 ## `.bknd` 文件格式
 

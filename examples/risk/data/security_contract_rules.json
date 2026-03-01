@@ -3,7 +3,7 @@
   "description": "增强版安全契约矩阵 - 规则实例，用于 evaluate_risk 的 risk_rules 参数。每条对应表格一行。",
   "risk_rules": [
     {
-      "rule_id": "sec_t_01",
+      "rule_id": "sec_t_01_restart_pod",
       "scenario_id": "sec_t_01",
       "action_id": "restart_pod",
       "allowed": false,
@@ -15,7 +15,7 @@
       "auth_level": "无审批 (系统红线)"
     },
     {
-      "rule_id": "sec_t_01",
+      "rule_id": "sec_t_01_ddl_alter",
       "scenario_id": "sec_t_01",
       "action_id": "ddl_alter",
       "allowed": false,
@@ -27,7 +27,7 @@
       "auth_level": "无审批 (系统红线)"
     },
     {
-      "rule_id": "sec_t_01",
+      "rule_id": "sec_t_01_restart_erp",
       "scenario_id": "sec_t_01",
       "action_id": "restart_erp",
       "allowed": false,
@@ -39,7 +39,7 @@
       "auth_level": "无审批 (系统红线)"
     },
     {
-      "rule_id": "sec_r_01",
+      "rule_id": "sec_r_01_execute_sql",
       "scenario_id": "sec_r_01",
       "action_id": "execute_sql",
       "allowed": false,
@@ -51,7 +51,7 @@
       "auth_level": "强拦截"
     },
     {
-      "rule_id": "sec_c_02",
+      "rule_id": "sec_c_02_batch_restart_nodes",
       "scenario_id": "sec_c_02",
       "action_id": "batch_restart_nodes",
       "allowed": true,
@@ -63,7 +63,7 @@
       "auth_level": "HotL (纠偏后放行)"
     },
     {
-      "rule_id": "sec_f_01",
+      "rule_id": "sec_f_01_request_large_compute",
       "scenario_id": "sec_f_01",
       "action_id": "request_large_compute",
       "allowed": false,
@@ -75,7 +75,7 @@
       "auth_level": "HitL (需总监同意)"
     },
     {
-      "rule_id": "sec_d_03",
+      "rule_id": "sec_d_03_query_sensitive_data",
       "scenario_id": "sec_d_03",
       "action_id": "query_sensitive_data",
       "allowed": true,
@@ -87,7 +87,7 @@
       "auth_level": "HotL (脱敏后放行)"
     },
     {
-      "rule_id": "sec_n_01",
+      "rule_id": "sec_n_01_open_firewall_rule",
       "scenario_id": "sec_n_01",
       "action_id": "open_firewall_rule",
       "allowed": false,
@@ -99,7 +99,7 @@
       "auth_level": "强拦截"
     },
     {
-      "rule_id": "sec_b_01",
+      "rule_id": "sec_b_01_update_or_delete",
       "scenario_id": "sec_b_01",
       "action_id": "update_or_delete",
       "allowed": false,
@@ -111,7 +111,7 @@
       "auth_level": "HotL (补偿后放行)"
     },
     {
-      "rule_id": "sec_p_01",
+      "rule_id": "sec_p_01_grant_root_admin",
       "scenario_id": "sec_p_01",
       "action_id": "grant_root_admin",
       "allowed": false,
@@ -123,7 +123,7 @@
       "auth_level": "强拦截"
     },
     {
-      "rule_id": "sec_v_01",
+      "rule_id": "sec_v_01_open_vpn_channel",
       "scenario_id": "sec_v_01",
       "action_id": "open_vpn_channel",
       "allowed": false,
@@ -135,7 +135,7 @@
       "auth_level": "HitL (需车间主任同意)"
     },
     {
-      "rule_id": "sec_o_01",
+      "rule_id": "sec_o_01_deploy_firmware",
       "scenario_id": "sec_o_01",
       "action_id": "deploy_firmware",
       "allowed": false,
@@ -147,7 +147,7 @@
       "auth_level": "强拦截"
     },
     {
-      "rule_id": "sec_l_02",
+      "rule_id": "sec_l_02_high_freq_api_call",
       "scenario_id": "sec_l_02",
       "action_id": "high_freq_api_call",
       "allowed": true,
