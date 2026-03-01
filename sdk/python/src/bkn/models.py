@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 @dataclass
 class Frontmatter:
-    """YAML frontmatter metadata for a .bkn file."""
+    """YAML frontmatter metadata for a .bkn/.bknd file."""
     type: str = ""
     id: str = ""
     name: str = ""
@@ -23,6 +23,9 @@ class Frontmatter:
     enabled: Optional[bool] = None
     risk_level: str = ""
     requires_approval: Optional[bool] = None
+    entity: str = ""
+    relation: str = ""
+    source: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -162,15 +165,35 @@ class Action:
     schedule: Optional[Schedule] = None
     scope_of_impact: list[dict[str, str]] = field(default_factory=list)
     execution_description: str = ""
+    # Runtime/computed by risk assessment module: "allow" | "not_allow"; not read from BKN
+    risk: str = ""
+
+
+@dataclass
+class DataTable:
+    """A data table parsed from a .bknd (type: data) document."""
+
+    entity_or_relation: str = ""
+    is_relation: bool = False
+    columns: list[str] = field(default_factory=list)
+    rows: list[dict[str, str]] = field(default_factory=list)
+    source_path: str = ""
+    network: str = ""
+
+    def to_bknd(self, network: str | None = None, source: str | None = None) -> str:
+        """Serialize this table to .bknd Markdown format."""
+        from bkn.serializer import to_bknd_from_table
+        return to_bknd_from_table(self, network=network, source=source)
 
 
 @dataclass
 class BknDocument:
-    """A parsed .bkn file: frontmatter + body definitions."""
+    """A parsed .bkn/.bknd file: frontmatter + body definitions/data tables."""
     frontmatter: Frontmatter = field(default_factory=Frontmatter)
     entities: list[Entity] = field(default_factory=list)
     relations: list[Relation] = field(default_factory=list)
     actions: list[Action] = field(default_factory=list)
+    data_tables: list[DataTable] = field(default_factory=list)
     source_path: str = ""
 
 
@@ -199,4 +222,11 @@ class BknNetwork:
         result = list(self.root.actions)
         for doc in self.includes:
             result.extend(doc.actions)
+        return result
+
+    @property
+    def all_data_tables(self) -> list[DataTable]:
+        result = list(self.root.data_tables)
+        for doc in self.includes:
+            result.extend(doc.data_tables)
         return result

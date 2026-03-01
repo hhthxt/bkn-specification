@@ -1,0 +1,28 @@
+---
+type: fragment
+id: risk-actions
+name: Risk-Related Actions
+version: 1.0.0
+network: recoverable-network
+namespace: resilience.dr
+owner: sre-team
+---
+
+# Actions（风险相关）
+
+本片段定义与风险规则关联的动作，供 evaluate_risk 的 action_id 引用。
+
+---
+
+## Action: restart_erp
+
+**重启ERP** - 重启 ERP 系统或 ERP 核心服务
+
+| Bound Entity | Action Type |
+|--------------|-------------|
+| erp_system | modify |
+
+### Business Semantics
+
+- 在 SEC-T-01 月末财务绝对封网场景（每月28日23:00至31日04:00）下，该动作为 not_allow。
+- 风险评估由 bkn.risk.evaluate_risk 根据 risk_rules 计算。

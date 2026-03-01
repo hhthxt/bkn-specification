@@ -1,205 +1,132 @@
-# DR Static Risk Knowledge - 参考文档
+# Risk 风险类设计与交互逻辑
 
-本文档对 [risk-fragment.bkn](risk-fragment.bkn) 中定义的静态风险知识模型进行说明，便于理解实体、关系及业务语义。
+本文档描述 BKN 中**风险（risk）**的设计定位、风险相关实体/关系，以及风险评估与执行的交互逻辑。对应 BKN 定义见 [risk-fragment.bkn](risk-fragment.bkn)。
 
-## 模型概述
+---
 
-静态风险知识不描述 incident / risk event，不记录风险事件，只为风险操作提供参考。风险以「动作 × 场景 × 风险类型」的断言形式存在，由 `risk_statement` 表达。
+## 1. 风险类的设计定位
 
-## 实体关系图
+### 1.1 内置 tag `__risk__`（保留，用户不得使用）
+
+- **`__risk__`** 为规范**内置保留** tag，仅用于参与「内置风险评估」的实体与关系；**用户不得将 `__risk__` 用于自定义用途**。
+- 凡参与**内置**风险评估的定义，在头部增加 **`- **Tags**: __risk__`**。AI 应用与内置评估模块通过该 tag 识别风险相关定义。
+
+### 1.2 与 Action 的关系
+
+- **Action** 拥有**运行时/计算属性** `risk`，取值仅 **`allow`** 或 **`not_allow`**。
+- 该属性**不写入 BKN 文件**，可由**内置或用户提供的风险评估函数**根据「当前场景 + 带 `__risk__` tag 的知识（规则实例）」计算得出。
+- 规范中 Action 的静态 **`risk_level`**（low/medium/high）与动态 **`risk`**（allow/not_allow）分离：前者用于展示与审批，后者用于执行门控。
+
+### 1.3 开放性：自定义风险类与评估函数
+
+- 用户可按需求定义**自己的风险类**：使用**非保留** tag（如 `compliance`、`audit`）定义实体/关系，不参与内置评估，由用户自己的逻辑消费。
+- 用户可提供**自己的风险评估函数**：签名与内置 `evaluate_risk` 兼容（如 `(network, action_id, context, **kwargs) -> str`），在运行时替换或与内置评估组合使用。
+- 内置的 `__risk__` 与默认 `evaluate_risk` 仅为一种可选实现，不排斥用户扩展或替换。
+
+---
+
+## 2. 风险相关实体与关系
+
+### 2.1 实体概览
+
+| 实体 | 说明 | Tags |
+|------|------|------|
+| **risk_scenario** | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
+| **risk_rule** | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
+
+**简化**：不单独定义 rule_under_scenario 关系，以 risk_rule.scenario_id 直接关联场景即可。
+
+### 2.2 risk_scenario（风险场景）
+
+- **主键**：`scenario_id`
+- **主要属性**：`name`、`category`、`primary_object`、`description`
+- **语义**：描述「在什么情况下」需要做风险判断（例如：某系统、某时段、某环境）。评估时通过 **context** 中的 `scenario_id` 与场景对应。
+
+### 2.3 risk_rule（风险规则）
+
+- **主键**：`rule_id`
+- **核心属性**：
+  - `scenario_id`：适用场景；
+  - `action_id`：涉及的 Action ID；
+  - `allowed`：该场景下该 action 是否允许（true=allow，false=not_allow）。
+- **可选**：`reason` 等说明。
+- **语义**：一条规则即「在 scenario_id 下，对 action_id 的允许结果为 allowed」。评估时用规则实例列表（risk_rules）匹配当前 context 与待执行 action，得到 allow/not_allow。
+
+---
+
+## 3. 交互逻辑
+
+### 3.1 评估流程概览
 
 ```mermaid
-classDiagram
-  direction LR
-
-  class scenario {
-    +scenario_id (PK)
-    +name
-    +category
-    +primary_object
-    +description?
-  }
-
-  class action_option {
-    +action_id (PK)
-    +name
-    +action_type
-    +reversibility
-    +runbook_ref?
-    +description?
-  }
-
-  class risk {
-    +risk_id (PK)
-    +name
-    +risk_type
-    +description?
-  }
-
-  class risk_statement {
-    +rs_id (PK)
-    +name
-    +status
-    +context_key?
-    +scenario_id (FK)
-    +action_id (FK)
-    +risk_id (FK)
-    +likelihood_level? (1..5)
-    +business_impact (1..5)
-    +data_impact (1..5)
-    +compliance_impact (1..5)
-    +notes?
-    +mitigation_pre?
-    +mitigation_pro?
-  }
-
-  risk_statement "1" --> "1" scenario : rs_under_scenario
-  risk_statement "1" --> "1" action_option : rs_about_action
-  risk_statement "1" --> "1" risk : rs_asserts_risk
+flowchart LR
+  subgraph input [输入]
+    A[action_id]
+    B[context]
+    C[risk_rules]
+  end
+  subgraph eval [风险评估]
+    D[evaluate_risk]
+  end
+  subgraph output [输出]
+    E["allow / not_allow"]
+  end
+  A --> D
+  B --> D
+  C --> D
+  D --> E
 ```
 
-## 实体与字段说明
+- **输入**：待执行的 `action_id`、当前 **context**（至少包含 `scenario_id`）、以及可选规则实例列表 **risk_rules**（来自图库/API/配置）。
+- **输出**：**allow** 或 **not_allow**，供执行侧决定是否放行该 action。
 
-### scenario — 风险场景
+### 3.2 context（上下文）
 
-风险发生的场景，是「情况类型」，可被多个 RiskStatement 复用。Scenario 不包含阈值、触发器与执行策略。
+- 通常为键值对，至少包含 **`scenario_id`**，用于与 risk_rule 的 `scenario_id` 匹配。
+- 可扩展其他键（如 `region`、`env`），供未来规则或策略使用；当前 SDK 仅使用 `scenario_id`。
 
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|:----:|------|------|
-| scenario_id | VARCHAR | 是 | `not_null; regex:^[a-z0-9_\\-]+$` | 场景唯一标识，主键 |
-| name | VARCHAR | 是 | `not_null` | 场景名称，展示键 |
-| category | VARCHAR | 是 | `in(availability, integrity, security, performance, dependency, operator)` | 场景分类，用于分组和筛选 |
-| primary_object | VARCHAR | 是 | `not_null` | 主要影响对象，如某个系统、资源或数据域的引用 |
-| description | TEXT | 否 | — | 场景的详细说明，支持全文检索 |
+### 3.3 risk_rules（规则实例）
 
-**category 取值**：
+- **来源**：BKN 只定义 risk_scenario / risk_rule 的**结构**；规则**实例数据**由上层从图库、数据库或配置中加载，并以列表形式传入 `evaluate_risk`。
+- **每条规则**至少需包含：`scenario_id`、`action_id`、**`allowed`**（bool）。可选包含 `rule_id`、`reason` 等，供日志与展示。
+- **匹配规则**：当某条规则的 `action_id` 与入参一致，且 `scenario_id` 与 context 中的一致（或 context 未提供 scenario_id 时不按场景过滤）时，该条规则参与判定。
 
-| 值 | 含义 |
-|----|------|
-| availability | 可用性相关场景（如服务中断、节点不可达） |
-| integrity | 完整性相关场景（如数据损坏、校验失败） |
-| security | 安全相关场景（如未授权访问、凭证泄露） |
-| performance | 性能相关场景（如延迟飙升、资源耗尽） |
-| dependency | 依赖相关场景（如上游服务故障、第三方不可用） |
-| operator | 操作人员相关场景（如误操作、配置变更） |
+### 3.4 评估结果规则
 
----
+- 若存在**任意一条**匹配规则且 **`allowed == False`**，则返回 **not_allow**。
+- 否则（无匹配规则，或所有匹配规则均为 allowed=True）返回 **allow**。
+- **默认策略**：当未传入 risk_rules 或没有任何规则匹配时，结果为 **allow**（默认放行）；显式禁止依赖「存在 allowed=False 的规则」。
 
-### action_option — 动作选项
+### 3.5 与执行侧的交互
 
-风险发生后可执行的动作选项，是「策略选项/手段词条」，不是一次具体执行事件。不包含「是否应该执行」的判断，判断由 RiskStatement/Policy 等上层对象承担。
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|:----:|------|------|
-| action_id | VARCHAR | 是 | `not_null; regex:^[a-z0-9_\\-]+$` | 动作唯一标识，主键 |
-| name | VARCHAR | 是 | `not_null` | 动作名称（如 failover / wait / restore），展示键 |
-| action_type | VARCHAR | 是 | `in(failover, wait, restore, rollback, degrade, isolate, rebuild)` | 动作类型，用于分类和 Agent 决策 |
-| reversibility | VARCHAR | 是 | `in(reversible, partially_reversible, irreversible)` | 可逆性，Agent 评估风险时的关键因素 |
-| runbook_ref | VARCHAR | 否 | — | 可选的 Runbook 或操作流程引用链接，支持精确匹配 |
-| description | TEXT | 否 | — | 动作的详细说明，支持全文检索 |
-
-**action_type 取值**：
-
-| 值 | 含义 |
-|----|------|
-| failover | 故障转移（切换到备用系统） |
-| wait | 等待/观察（不主动干预） |
-| restore | 恢复（从备份恢复） |
-| rollback | 回滚（撤销变更） |
-| degrade | 降级（减少功能保核心可用） |
-| isolate | 隔离（切断故障域扩散） |
-| rebuild | 重建（销毁并重新创建） |
-
-**reversibility 取值**：
-
-| 值 | 含义 |
-|----|------|
-| reversible | 完全可逆，可安全撤销 |
-| partially_reversible | 部分可逆，可能有残留影响 |
-| irreversible | 不可逆，执行后无法恢复原状 |
+- **allow**：执行侧可以执行该 Action；若规则中带有额外约束（如限流、脱敏），由执行侧根据规则元数据自行处理。
+- **not_allow**：执行侧应阻断该 Action，并可按规则原因或策略 ID 做告警、审批流转等。
 
 ---
 
-### risk — 风险类型
+## 4. SDK 用法简述
 
-静态风险类型定义，只定义「风险是什么」，不定义「在什么条件下发生」。「在某场景执行某动作会引入某风险」由 RiskStatement 表达。
+```python
+from bkn.loader import load_network
+from bkn.risk import evaluate_risk
 
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|:----:|------|------|
-| risk_id | VARCHAR | 是 | `not_null; regex:^[a-z0-9_\\-]+$` | 风险唯一标识，主键 |
-| name | VARCHAR | 是 | `not_null` | 风险名称（如数据回滚、数据不一致），展示键 |
-| risk_type | VARCHAR | 是 | `in(data_loss, inconsistency, availability, security, compliance, financial, reputation)` | 风险类型 |
-| description | TEXT | 否 | — | 风险的定义与边界说明，支持全文检索 |
+network = load_network("examples/risk/risk-fragment.bkn")
+context = {"scenario_id": "prod_db"}
 
-**risk_type 取值**：
+# 无规则时默认 allow
+evaluate_risk(network, "restore_from_backup", context)  # -> "allow"
 
-| 值 | 含义 |
-|----|------|
-| data_loss | 数据丢失 |
-| inconsistency | 数据不一致 |
-| availability | 可用性下降或中断 |
-| security | 安全风险 |
-| compliance | 合规风险 |
-| financial | 财务损失 |
-| reputation | 声誉影响 |
-
----
-
-### risk_statement — 风险断言
-
-静态风险断言（组合对象）：在某场景下执行某动作会引入某类风险。是表达「某个 action 的风险」的最小主语对象，可版本化、可评审、可退役，不代表风险已发生。
-
-| 字段 | 类型 | 必填 | 约束 | 说明 |
-|------|------|:----:|------|------|
-| rs_id | VARCHAR | 是 | `not_null; regex:^[a-z0-9_\\-]+$` | 风险断言唯一标识，主键 |
-| name | VARCHAR | 是 | `not_null` | 断言名称，展示键 |
-| status | VARCHAR | 是 | `in(active, retired, draft)` | 生命周期状态 |
-| context_key | VARCHAR | 否 | — | 可选上下文限定（如 `order-db/prod/eu-central-1`），用于约束断言的生效范围 |
-| scenario_id | VARCHAR | 是 | `not_null` | 关联场景的外键，指向 `scenario.scenario_id` |
-| action_id | VARCHAR | 是 | `not_null` | 关联动作的外键，指向 `action_option.action_id` |
-| risk_id | VARCHAR | 是 | `not_null` | 关联风险类型的外键，指向 `risk.risk_id` |
-| likelihood_level | int32 | 否 | `range(1,5)` | 经验发生倾向（1=极低, 5=极高），基于经验判断而非统计概率 |
-| business_impact | int32 | 否 | `range(1,5)` | 业务影响等级（1=可忽略, 5=灾难性） |
-| data_impact | int32 | 否 | `range(1,5)` | 数据影响等级（1=可忽略, 5=灾难性） |
-| compliance_impact | int32 | 否 | `range(1,5)` | 合规影响等级（1=可忽略, 5=灾难性） |
-| notes | TEXT | 否 | — | 解释、证据或经验记录，支持全文检索 |
-| mitigation_pre | TEXT | 否 | — | 事前缓解措施建议 |
-| mitigation_pro | TEXT | 否 | — | 事后缓解措施建议 |
-
-**status 取值**：
-
-| 值 | 含义 |
-|----|------|
-| active | 生效中，Agent 决策时应参考 |
-| draft | 草稿，待评审确认 |
-| retired | 已退役，仅保留历史参考 |
-
-**影响等级量表** (likelihood_level / business_impact / data_impact / compliance_impact)：
-
-| 等级 | 含义 |
-|------|------|
-| 1 | 可忽略 |
-| 2 | 轻微 |
-| 3 | 中等 |
-| 4 | 严重 |
-| 5 | 灾难性 |
-
-## 关系说明
-
-```mermaid
-erDiagram
-  risk_statement }o--|| scenario : rs_under_scenario
-  risk_statement }o--|| action_option : rs_about_action
-  risk_statement }o--|| risk : rs_asserts_risk
+# 传入规则实例后按规则判定
+risk_rules = [
+    {"scenario_id": "prod_db", "action_id": "restore_from_backup", "allowed": False},
+]
+evaluate_risk(network, "restore_from_backup", context, risk_rules=risk_rules)  # -> "not_allow"
 ```
 
-| 关系 | 说明 |
-|------|------|
-| **rs_under_scenario** | 每个 risk_statement 必须关联且仅关联一个 scenario |
-| **rs_about_action** | 每个 risk_statement 必须关联且仅关联一个 action_option |
-| **rs_asserts_risk** | 每个 risk_statement 必须关联且仅关联一个 risk |
+---
 
-## 参考
+## 5. 参考
 
 - BKN 定义：[risk-fragment.bkn](risk-fragment.bkn)
-- 网络：`recoverable-network`，命名空间：`resilience.dr`
+- 规范：`docs/SPECIFICATION.md` 中「风险相关定义」「Action risk（计算属性）」
+- 旧版示例（scenario / action_option / risk_statement）：`examples/risk_old/`

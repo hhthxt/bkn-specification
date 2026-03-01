@@ -17,6 +17,24 @@
 | action | 单个行动定义 |
 | network | 含多个定义的网络文件 |
 | fragment | 混合片段 |
+| data | 数据文件（建议 `.bknd`，承载实体/关系实例行） |
+
+## `.bknd` 数据文件（type: data）
+
+用于承载**知识原生**实例数据，不承载 schema 定义。仅当 Entity 的 Data Source 为 `bknd` 或未指定 data_view 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的实体数据来自外部系统，不可用 `.bknd` 编辑。
+
+Frontmatter 示例：
+
+```yaml
+---
+type: data
+network: recoverable-network
+entity: scenario   # 或 relation: rs_under_scenario（二选一）
+source: PFMEA模板.xlsx   # 可选，数据来源
+---
+```
+
+正文使用「一个标题 + 一个 Markdown 表格」，列名需与目标实体 Data Properties（或关系映射字段）保持一致。
 
 ## 实体 (Entity)
 

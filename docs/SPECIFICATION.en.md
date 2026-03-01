@@ -53,6 +53,7 @@ This document defines the complete syntax specification for BKN.
 | frontmatter | YAML metadata block (wrapped in `---`) at the top of every .bkn file |
 | network | File type `type: network`; top-level container for a complete knowledge network |
 | fragment | File type `type: fragment`; mixed snippet containing multiple entity/relation/action definitions |
+| data | File type `type: data`; instance data file (recommended `.bknd` extension) |
 | delete | File type `type: delete`; explicitly declares definitions to be removed |
 | patch | File type `type: patch`; incremental modification to an existing file |
 | namespace | Namespace; used for large-scale organization and avoiding ID conflicts |
@@ -60,7 +61,7 @@ This document defines the complete syntax specification for BKN.
 
 ### Primitives (Canonical Section and Table Terms)
 
-The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / entity / relation / action).
+The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / entity / relation / action / data).
 
 | Level | English (canonical) | Definition | Syntax |
 |:-----:|---------------------|------------|--------|
@@ -98,7 +99,8 @@ Table column names (canonical): Type, ID, Name, Property, Display Name, Constrai
 
 ### File Extension
 
-- `.bkn` — BKN file
+- `.bkn` — BKN schema/definition file
+- `.bknd` — BKN data file (instance data)
 
 ### File Encoding
 
@@ -162,6 +164,7 @@ To support scalable collaboration, approval, and audit, use the following fields
 | `relation` | Single relation definition | Standalone relation file, directly importable |
 | `action` | Single action definition | Standalone action file, directly importable |
 | `fragment` | Mixed fragment | Contains multiple types of partial definitions |
+| `data` | Data file | Carries instance rows for entity/relation definitions (recommended `.bknd`) |
 | `delete` | Delete marker | Marks definitions to be deleted |
 
 ### Network File (type: network)
@@ -220,10 +223,12 @@ network: string                  # Network ID (recommended required for import d
 namespace: string                # Optional, namespace/package
 owner: string                    # Optional, owner/team
 enabled: boolean                 # Optional, whether enabled (default false recommended)
-risk_level: low | medium | high  # Optional, risk level
+risk_level: low | medium | high  # Optional, static risk level
 requires_approval: boolean       # Optional, whether approval required
 ---
 ```
+
+> **Dynamic risk property**: The Action runtime property `risk` (values `allow` | `not_allow`) is computed by the built-in or a user-provided risk evaluation function from the current scenario and knowledge tagged with `__risk__`; it is not declared in this frontmatter.
 
 ### Mixed Fragment (type: fragment)
 
@@ -253,6 +258,45 @@ targets:                         # Definitions to delete
   - action: restart_pod
 ---
 ```
+
+---
+
+## Data Files (`.bknd` / `type: data`)
+
+`.bknd` files use the same Markdown syntax as `.bkn`, but the body carries instance rows instead of entity/relation/action definitions.
+
+### Frontmatter
+
+```yaml
+---
+type: data
+network: recoverable-network
+entity: scenario            # mutually exclusive with relation
+source: PFMEA模板.xlsx      # optional data provenance
+---
+```
+
+- `type` must be `data`
+- `entity` or `relation` must be set (mutually exclusive), pointing to an ID defined in `.bkn`
+- `network` is recommended for consistency with schema files
+- `source` is optional provenance metadata
+
+### Body
+
+Use one heading (`#` or `##`) plus one GFM table. Table headers should align with target entity Data Properties (or relation mapping fields).
+
+```markdown
+# scenario
+
+| scenario_id | name | category | primary_object | description |
+|-------------|------|----------|----------------|-------------|
+| ops-rm-rf | rm -rf 删除备份存储 | integrity | backup_system | 直接销毁备份数据 |
+```
+
+### Constraints
+
+- Column names should align with schema definitions to avoid implicit fields
+- A single `type: data` file should contain one table for better versioning and auditing
 
 ---
 
@@ -335,6 +379,14 @@ In the header of a `## Entity:` or `## Relation:` definition (before `### Data S
 - **Owner**: Owner or team, for approval routing and audit
 
 In fragment or network files, multiple entities or relations may each have different tags and owner.
+
+### Risk-Related Definitions
+
+- **Reserved tag**: **`__risk__`** is a built-in reserved tag used only for entities and relations that participate in the built-in risk assessment. **Users must not use `__risk__` for custom purposes**, to avoid conflicting with built-in behavior.
+- Add `- **Tags**: __risk__` in the definition header of entities and relations that participate in the built-in risk evaluation. AI applications and the built-in evaluator use this tag to identify risk-related definitions.
+- Actions have a **runtime/computed property** `risk` (see Action definition section), with values `allow` | `not_allow`, computed by the built-in or a user-provided risk evaluation function from the current scenario and data tagged with `__risk__`; it is **not written in BKN files**.
+
+**Openness**: Users may define **their own risk-like classes** (using **non-reserved** tags, e.g. `compliance`, `audit`) and **their own risk evaluation functions**; the built-in `__risk__` and default evaluator are one optional implementation and do not preclude extension or replacement.
 
 ### Field Reference
 
@@ -642,6 +694,7 @@ Action definitions connect to execution surface (tool/mcp). For stability and se
 | Tool Configuration | YES | Tool or MCP to execute |
 | Parameter Binding | YES | Parameter source configuration |
 | Schedule Configuration | NO | Scheduled execution configuration |
+| risk (computed) | - | Runtime property: `allow` \| `not_allow`, computed by built-in or user-provided evaluator from scenario and data tagged with `__risk__`; not written in BKN |
 
 ### Trigger Condition Operators
 

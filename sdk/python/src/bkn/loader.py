@@ -1,8 +1,7 @@
-"""Load .bkn files from disk, resolving network includes."""
+"""Load .bkn/.bknd files from disk, resolving network includes."""
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from bkn.models import BknDocument, BknNetwork
@@ -10,10 +9,10 @@ from bkn.parser import parse
 
 
 def load(path: str | Path) -> BknDocument:
-    """Load and parse a single .bkn file.
+    """Load and parse a single .bkn/.bknd file.
 
     Args:
-        path: Path to the .bkn file.
+        path: Path to the .bkn or .bknd file.
 
     Returns:
         Parsed BknDocument.
@@ -25,6 +24,9 @@ def load(path: str | Path) -> BknDocument:
 
 def load_network(root_path: str | Path) -> BknNetwork:
     """Load a network .bkn file and recursively resolve its includes.
+
+    Only files listed in frontmatter `includes` are loaded. .bknd files may be
+    loaded by explicitly including them (e.g. includes: [data/scenario.bknd]).
 
     Args:
         root_path: Path to the root .bkn file (type: network).

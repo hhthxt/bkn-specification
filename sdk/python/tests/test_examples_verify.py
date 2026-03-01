@@ -14,15 +14,36 @@ def _get_all_bkn():
     return sorted(EXAMPLES_DIR.rglob("*.bkn"))
 
 
+def _get_all_bknd():
+    """Collect all .bknd files under examples/."""
+    return sorted(EXAMPLES_DIR.rglob("*.bknd"))
+
+
 class TestLoadSingleFiles:
     """Every .bkn file must parse with load()."""
 
-    @pytest.mark.parametrize("path", _get_all_bkn(), ids=lambda p: str(p.relative_to(EXAMPLES_DIR)))
+    @pytest.mark.parametrize(
+        "path",
+        _get_all_bkn(),
+        ids=lambda p: str(p.relative_to(EXAMPLES_DIR)),
+    )
     def test_load_single_file(self, path: Path):
         from bkn import load
         doc = load(path)
         assert doc is not None
         assert doc.frontmatter is not None
+
+    @pytest.mark.parametrize(
+        "path",
+        _get_all_bknd(),
+        ids=lambda p: str(p.relative_to(EXAMPLES_DIR)),
+    )
+    def test_load_single_data_file(self, path: Path):
+        from bkn import load
+        doc = load(path)
+        assert doc is not None
+        assert doc.frontmatter.type == "data"
+        assert len(doc.data_tables) >= 1
 
 
 class TestLoadNetworks:
@@ -59,3 +80,10 @@ class TestLoadNetworks:
         assert len(net.all_entities) == 3
         assert len(net.all_relations) == 2
         assert len(net.all_actions) == 2
+
+    def test_risk_network_explicit_includes_only(self):
+        """load_network loads only includes; risk-fragment has no .bknd includes."""
+        from bkn import load_network
+        path = EXAMPLES_DIR / "risk" / "risk-fragment.bkn"
+        net = load_network(path)
+        assert len(net.all_data_tables) == 0

@@ -13,7 +13,7 @@ EXAMPLES_DIR = REPO_ROOT / "docs" / "examples"
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from bkn.parser import parse, parse_frontmatter, parse_body
+from bkn.parser import parse, parse_frontmatter, parse_body, parse_data_tables
 from bkn.loader import load, load_network
 from bkn.models import BknDocument, BknNetwork
 
@@ -249,6 +249,106 @@ id: test
         assert r.endpoints[0].source == "entity_a"
         assert len(r.mapping_rules) == 1
         assert r.mapping_rules[0].source_property == "a_id"
+
+    def test_parse_data_file(self):
+        text = """---
+type: data
+network: recoverable-network
+entity: scenario
+source: PFMEA模板.xlsx
+---
+
+# scenario
+
+| scenario_id | name | category |
+|-------------|------|----------|
+| s1 | 场景1 | integrity |
+| s2 | 场景2 | availability |
+"""
+        fm = parse_frontmatter(text)
+        assert fm.type == "data"
+        assert fm.entity == "scenario"
+        assert fm.source == "PFMEA模板.xlsx"
+
+        tables = parse_data_tables(text, frontmatter=fm)
+        assert len(tables) == 1
+        table = tables[0]
+        assert table.entity_or_relation == "scenario"
+        assert table.is_relation is False
+        assert table.columns == ["scenario_id", "name", "category"]
+        assert len(table.rows) == 2
+        assert table.rows[0]["scenario_id"] == "s1"
+
+        doc = parse(text, source_path="/fake/scenario.bknd")
+        assert len(doc.entities) == 0
+        assert len(doc.relations) == 0
+        assert len(doc.actions) == 0
+        assert len(doc.data_tables) == 1
+        table = doc.data_tables[0]
+        assert table.source_path == "/fake/scenario.bknd"
+        assert table.network == "recoverable-network"
+
+    def test_parse_data_file_entity_relation_both_raises(self):
+        """type: data with both entity and relation raises ValueError."""
+        text = """---
+type: data
+entity: scenario
+relation: rs_under_scenario
+network: n
+---
+
+# scenario
+| col |
+|-----|
+| v   |
+"""
+        with pytest.raises(ValueError, match="exactly one of entity or relation"):
+            parse_data_tables(text)
+
+    def test_parse_data_file_entity_relation_neither_raises(self):
+        """type: data with neither entity nor relation raises ValueError."""
+        text = """---
+type: data
+network: n
+---
+
+# scenario
+| col |
+|-----|
+| v   |
+"""
+        with pytest.raises(ValueError, match="got neither"):
+            parse_data_tables(text)
+
+    def test_parse_data_file_no_heading_raises(self):
+        """type: data with no heading raises ValueError."""
+        text = """---
+type: data
+entity: scenario
+network: n
+---
+
+| col |
+|-----|
+| v   |
+"""
+        with pytest.raises(ValueError, match="must have a heading"):
+            parse_data_tables(text)
+
+    def test_parse_data_file_no_table_raises(self):
+        """type: data with heading but no valid table raises ValueError."""
+        text = """---
+type: data
+entity: scenario
+network: n
+---
+
+# scenario
+
+Some text, no table.
+"""
+        with pytest.raises(ValueError, match="valid GFM table"):
+            parse_data_tables(text)
 
 
 if __name__ == "__main__":

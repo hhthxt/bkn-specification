@@ -1,4 +1,4 @@
-"""Parse .bkn files: YAML frontmatter + Markdown body with sections and tables."""
+"""Parse .bkn/.bknd files: YAML frontmatter + Markdown body sections and tables."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import yaml
 from bkn.models import (
     Action,
     BknDocument,
+    DataTable,
     DataProperty,
     DataSource,
     Endpoint,
@@ -206,6 +207,33 @@ def _extract_sections(body: str, level: str = "###") -> dict[str, str]:
 def _extract_sub_sections(text: str) -> dict[str, str]:
     """Extract #### sub-sections (used for Logic Properties)."""
     return _extract_sections(text, level="####")
+
+
+def _extract_first_table_lines(text: str) -> list[str]:
+    """Extract the first contiguous markdown table block from text."""
+    lines = text.splitlines()
+    table_lines: list[str] = []
+    started = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("|"):
+            table_lines.append(stripped)
+            started = True
+        elif started:
+            break
+    return table_lines
+
+
+def _parse_table_columns(table_lines: list[str]) -> list[str]:
+    """Parse table header columns from raw markdown table lines."""
+    if not table_lines:
+        return []
+    header = table_lines[0].strip()
+    if header.startswith("|"):
+        header = header[1:]
+    if header.endswith("|"):
+        header = header[:-1]
+    return [_normalize_column(c.strip()) for c in header.split("|")]
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +512,9 @@ def parse_frontmatter(text: str) -> Frontmatter:
         owner=str(data.get("owner", "")),
         spec_version=str(data.get("spec_version", "")),
         risk_level=str(data.get("risk_level", "")),
+        entity=str(data.get("entity", "")),
+        relation=str(data.get("relation", "")),
+        source=str(data.get("source", "")),
     )
 
     if "tags" in data and isinstance(data["tags"], list):
@@ -499,6 +530,7 @@ def parse_frontmatter(text: str) -> Frontmatter:
         "type", "id", "name", "version", "tags", "description",
         "includes", "network", "namespace", "owner", "spec_version",
         "enabled", "risk_level", "requires_approval",
+        "entity", "relation", "source",
     }
     fm.extra = {k: v for k, v in data.items() if k not in known_keys}
 
@@ -534,14 +566,79 @@ def parse_body(text: str) -> tuple[list[Entity], list[Relation], list[Action]]:
     return entities, relations, actions
 
 
+def parse_data_tables(
+    text: str,
+    frontmatter: Frontmatter | None = None,
+    source_path: str = "",
+) -> list[DataTable]:
+    """Parse .bknd body into DataTable list.
+
+    Raises:
+        ValueError: If entity and relation are both set or both empty (must be
+            mutually exclusive). If no valid table header or table is found.
+    """
+    fm = frontmatter or parse_frontmatter(text)
+    _, body = _split_frontmatter(text)
+
+    has_entity = bool(fm.entity.strip())
+    has_relation = bool(fm.relation.strip())
+    if has_entity and has_relation:
+        raise ValueError(
+            "type: data frontmatter must have exactly one of entity or relation, "
+            f"got both: entity={fm.entity!r}, relation={fm.relation!r}"
+        )
+    if not has_entity and not has_relation:
+        raise ValueError(
+            "type: data frontmatter must have exactly one of entity or relation, "
+            "got neither"
+        )
+
+    heading_match = re.search(r"^#{1,2}\s+(.+)$", body, re.MULTILINE)
+    if not heading_match:
+        raise ValueError("type: data body must have a heading (# or ##) followed by a table")
+
+    heading_name = heading_match.group(1).strip()
+    table_text = body[heading_match.end():]
+    raw_table_lines = _extract_first_table_lines(table_text)
+    rows = _parse_table(raw_table_lines)
+    columns = _parse_table_columns(raw_table_lines)
+
+    if len(raw_table_lines) < 2 or not columns:
+        raise ValueError(
+            "type: data body must have a valid GFM table (header + separator + rows)"
+        )
+
+    is_relation = has_relation
+    entity_or_relation = fm.relation if is_relation else fm.entity
+
+    return [
+        DataTable(
+            entity_or_relation=entity_or_relation,
+            is_relation=is_relation,
+            columns=columns,
+            rows=rows,
+            source_path=source_path,
+            network=fm.network,
+        )
+    ]
+
+
 def parse(text: str, source_path: str = "") -> BknDocument:
     """Parse a complete .bkn file into a BknDocument."""
     frontmatter = parse_frontmatter(text)
-    entities, relations, actions = parse_body(text)
+    entities: list[Entity] = []
+    relations: list[Relation] = []
+    actions: list[Action] = []
+    data_tables: list[DataTable] = []
+    if frontmatter.type == "data":
+        data_tables = parse_data_tables(text, frontmatter=frontmatter, source_path=source_path)
+    else:
+        entities, relations, actions = parse_body(text)
     return BknDocument(
         frontmatter=frontmatter,
         entities=entities,
         relations=relations,
         actions=actions,
+        data_tables=data_tables,
         source_path=source_path,
     )

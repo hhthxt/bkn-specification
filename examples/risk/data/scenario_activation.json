@@ -1,0 +1,11 @@
+{
+  "description": "场景生效条件：何时 scenario_id 被激活，供时间→场景解析使用。",
+  "scenarios": [
+    {
+      "scenario_id": "sec_t_01",
+      "name": "月末财务绝对封网",
+      "time_window": "每月28日23:00至31日04:00",
+      "time_window_rule": "day in [28,29,30] with hour>=23 on 28th; day 31 with hour<4"
+    }
+  ]
+}

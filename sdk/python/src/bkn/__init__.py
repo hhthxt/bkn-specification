@@ -3,6 +3,7 @@
 from bkn.models import (
     BknDocument,
     BknNetwork,
+    DataTable,
     DataProperty,
     DataSource,
     Endpoint,
@@ -18,14 +19,22 @@ from bkn.models import (
     PreCondition,
     Schedule,
 )
-from bkn.parser import parse, parse_frontmatter, parse_body
+from bkn.parser import (
+    parse,
+    parse_frontmatter,
+    parse_body,
+    parse_data_tables,
+)
 from bkn.loader import load, load_network
+from bkn.risk import evaluate_risk
+from bkn.serializer import to_bknd, to_bknd_from_table
 
 __version__ = "0.1.0"
 
 __all__ = [
     "BknDocument",
     "BknNetwork",
+    "DataTable",
     "DataProperty",
     "DataSource",
     "Endpoint",
@@ -43,6 +52,10 @@ __all__ = [
     "parse",
     "parse_frontmatter",
     "parse_body",
+    "parse_data_tables",
     "load",
     "load_network",
+    "evaluate_risk",
+    "to_bknd",
+    "to_bknd_from_table",
 ]

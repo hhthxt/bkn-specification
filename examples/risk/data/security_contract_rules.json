@@ -1,0 +1,162 @@
+{
+  "source": "https://docs.google.com/spreadsheets/d/1zdJx6arbu_u7DiC7c9BatTD0Z1nDTkiRD1aDHg8S7Lw/edit?gid=1197712390",
+  "description": "增强版安全契约矩阵 - 规则实例，用于 evaluate_risk 的 risk_rules 参数。每条对应表格一行。",
+  "risk_rules": [
+    {
+      "rule_id": "sec_t_01",
+      "scenario_id": "sec_t_01",
+      "action_id": "restart_pod",
+      "allowed": false,
+      "rule_name": "SEC-T-01: 月末财务绝对封网",
+      "category": "时空管控",
+      "primary_object": "ERP核心库, WMS核心库",
+      "trigger_condition": "每月28日23点至31日4点，尝试执行重启、缩容或DDL操作。",
+      "control_action": "absolute_block",
+      "auth_level": "无审批 (系统红线)"
+    },
+    {
+      "rule_id": "sec_t_01",
+      "scenario_id": "sec_t_01",
+      "action_id": "ddl_alter",
+      "allowed": false,
+      "rule_name": "SEC-T-01: 月末财务绝对封网",
+      "category": "时空管控",
+      "primary_object": "ERP核心库, WMS核心库",
+      "trigger_condition": "每月28日23点至31日4点，尝试执行重启、缩容或DDL操作。",
+      "control_action": "absolute_block",
+      "auth_level": "无审批 (系统红线)"
+    },
+    {
+      "rule_id": "sec_t_01",
+      "scenario_id": "sec_t_01",
+      "action_id": "restart_erp",
+      "allowed": false,
+      "rule_name": "SEC-T-01: 月末财务绝对封网",
+      "category": "时空管控",
+      "primary_object": "ERP核心库, WMS核心库",
+      "trigger_condition": "每月28日23点至31日4点，尝试执行重启、缩容或DDL操作。",
+      "control_action": "absolute_block",
+      "auth_level": "无审批 (系统红线)"
+    },
+    {
+      "rule_id": "sec_r_01",
+      "scenario_id": "sec_r_01",
+      "action_id": "execute_sql",
+      "allowed": false,
+      "rule_name": "SEC-R-01: 核心产线防危化拦截",
+      "category": "爆炸半径",
+      "primary_object": "MES系统, SCADA网关",
+      "trigger_condition": "出现DROP、TRUNCATE或无WHERE条件的高危写操作。",
+      "control_action": "snapshot_block",
+      "auth_level": "强拦截"
+    },
+    {
+      "rule_id": "sec_c_02",
+      "scenario_id": "sec_c_02",
+      "action_id": "batch_restart_nodes",
+      "allowed": true,
+      "rule_name": "SEC-C-02: 雪崩防波及驱逐限制",
+      "category": "高危并发",
+      "primary_object": "生产环境K8s, API网关",
+      "trigger_condition": "AI试图一次性重启或驱逐大于20%的可用计算节点。",
+      "control_action": "throttle",
+      "auth_level": "HotL (纠偏后放行)"
+    },
+    {
+      "rule_id": "sec_f_01",
+      "scenario_id": "sec_f_01",
+      "action_id": "request_large_compute",
+      "allowed": false,
+      "rule_name": "SEC-F-01: 大规格算力申请限额",
+      "category": "成本风控",
+      "primary_object": "云平台API, IaC编排流",
+      "trigger_condition": "算力申请规格>16C64G，或预估月度成本>5000元。",
+      "control_action": "require_approval",
+      "auth_level": "HitL (需总监同意)"
+    },
+    {
+      "rule_id": "sec_d_03",
+      "scenario_id": "sec_d_03",
+      "action_id": "query_sensitive_data",
+      "allowed": true,
+      "rule_name": "SEC-D-03: 核心商业机密防外泄",
+      "category": "数据隐私",
+      "primary_object": "报表系统, 数据库日志",
+      "trigger_condition": "查询结果命中BOM配方、核心工艺参数或员工隐私数据。",
+      "control_action": "force_desensitize",
+      "auth_level": "HotL (脱敏后放行)"
+    },
+    {
+      "rule_id": "sec_n_01",
+      "scenario_id": "sec_n_01",
+      "action_id": "open_firewall_rule",
+      "allowed": false,
+      "rule_name": "SEC-N-01: 跨网段网络隔离红线",
+      "category": "拓扑依赖",
+      "primary_object": "办公网(OA), 生产网(OT)",
+      "trigger_condition": "尝试开通源IP为“办公网”、目标IP为“生产网”的白名单。",
+      "control_action": "direct_reject",
+      "auth_level": "强拦截"
+    },
+    {
+      "rule_id": "sec_b_01",
+      "scenario_id": "sec_b_01",
+      "action_id": "update_or_delete",
+      "allowed": false,
+      "rule_name": "SEC-B-01: 高危操作前置备份熔断",
+      "category": "前置校验",
+      "primary_object": "核心配置文件, 生产数据库",
+      "trigger_condition": "AI 准备执行 UPDATE/DELETE 或覆盖配置前，发现近 1 小时内无有效快照。",
+      "control_action": "suspend_and_compensate",
+      "auth_level": "HotL (补偿后放行)"
+    },
+    {
+      "rule_id": "sec_p_01",
+      "scenario_id": "sec_p_01",
+      "action_id": "grant_root_admin",
+      "allowed": false,
+      "rule_name": "SEC-P-01: Root/Admin 提权阻断",
+      "category": "零信任权限",
+      "primary_object": "IAM中心, 堡垒机, 主机",
+      "trigger_condition": "AI 自身或响应用户意图，尝试赋予某个账号 root 或 Domain Admin 等超级权限。",
+      "control_action": "absolute_block",
+      "auth_level": "强拦截"
+    },
+    {
+      "rule_id": "sec_v_01",
+      "scenario_id": "sec_v_01",
+      "action_id": "open_vpn_channel",
+      "allowed": false,
+      "rule_name": "SEC-V-01: 驻场设备商临时通道管控",
+      "category": "供应商管控",
+      "primary_object": "VPN网关, 零信任边界",
+      "trigger_condition": "外部设备供应商（如西门子/ABB）通过工单申请生产环境的远程排障通道。",
+      "control_action": "require_approval",
+      "auth_level": "HitL (需车间主任同意)"
+    },
+    {
+      "rule_id": "sec_o_01",
+      "scenario_id": "sec_o_01",
+      "action_id": "deploy_firmware",
+      "allowed": false,
+      "rule_name": "SEC-O-01: 边缘设备固件变更冻结",
+      "category": "工控冻结",
+      "primary_object": "边缘计算网关, 产线PLC",
+      "trigger_condition": "尝试下发底层固件升级指令，或修改核心设备运转频率参数。",
+      "control_action": "block_and_schedule",
+      "auth_level": "强拦截"
+    },
+    {
+      "rule_id": "sec_l_02",
+      "scenario_id": "sec_l_02",
+      "action_id": "high_freq_api_call",
+      "allowed": true,
+      "rule_name": "SEC-L-02: API 调用速率防拖死",
+      "category": "流量熔断",
+      "primary_object": "内部 Open API, 核心接口",
+      "trigger_condition": "AI 在执行大批量自动化修复脚本时，API 调用并发频率超过 100次/秒。",
+      "control_action": "rate_limit",
+      "auth_level": "HotL (限流调控)"
+    }
+  ]
+}
