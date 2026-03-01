@@ -174,9 +174,9 @@ for mr in relation.mapping_rules:
 ```python
 from bkn import load
 
-doc = load("examples/risk/data/scenario.bknd")
+doc = load("examples/risk/data/risk_scenario.bknd")
 table = doc.data_tables[0]
-print(table.entity_or_relation)  # scenario
+print(table.entity_or_relation)  # risk_scenario
 print(table.columns)             # ["scenario_id", "name", ...]
 print(len(table.rows))           # 数据行数
 ```

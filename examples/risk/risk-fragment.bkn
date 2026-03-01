@@ -6,6 +6,9 @@ version: 1.0.0
 network: recoverable-network
 namespace: resilience.dr
 owner: sre-team
+includes:
+  - data/risk_scenario.bknd
+  - data/risk_rule.bknd
 ---
 
 # Risk-Related Definitions (Tag-Based)
@@ -19,6 +22,12 @@ owner: sre-team
 **Risk Scenario** - 风险发生的场景（内置 __risk__）
 
 - **Tags**: __risk__
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| bknd | risk_scenario | risk_scenario data |
 
 ### Data Properties
 
@@ -42,6 +51,12 @@ owner: sre-team
 **Risk Rule** - 风险规则：某场景下某 action 是否禁止执行（内置 __risk__）
 
 - **Tags**: __risk__
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| bknd | risk_rule | risk_rule data |
 
 ### Data Properties
 

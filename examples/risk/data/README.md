@@ -1,9 +1,6 @@
 # Risk Data (`.bknd` + JSON)
 
-本目录同时包含两类数据：
-
-1. **旧模型 `.bknd` 样例**：用于演示 `type: data` 数据文件格式。对应 schema 定义于 `examples/risk_old/risk-fragment.bkn`（scenario / action_option / risk_statement 等）。**不参与当前 `examples/risk/risk-fragment.bkn` 网络**（该网络使用 risk_scenario / risk_rule 新模型）。
-2. **安全契约规则样例（`.json`）**：用于 `evaluate_risk(..., risk_rules=...)` 演示脚本。
+本目录已切换到 `examples/risk/risk-fragment.bkn` 的新模型（`risk_scenario` / `risk_rule`）。
 
 ## `.bknd` 文件格式
 
@@ -11,21 +8,16 @@
 
 仅当 Entity 的 Data Source 为 `bknd` 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的实体数据来自外部系统，不可用 `.bknd` 编辑。
 
-## 文件列表
+## 文件列表（新模型）
 
 | 文件 | 类型 | 对应 schema ID |
 |------|------|----------------|
-| `scenario.bknd` | entity data | `scenario` |
-| `action_option.bknd` | entity data | `action_option` |
-| `risk.bknd` | entity data | `risk` |
-| `risk_statement.bknd` | entity data | `risk_statement` |
-| `rs_under_scenario.bknd` | relation data | `rs_under_scenario` |
-| `rs_about_action.bknd` | relation data | `rs_about_action` |
-| `rs_asserts_risk.bknd` | relation data | `rs_asserts_risk` |
+| `risk_scenario.bknd` | entity data | `risk_scenario` |
+| `risk_rule.bknd` | entity data | `risk_rule` |
 
 ## 生成与序列化
 
-从 CSV 转换生成 `.bknd`：
+从 `security_contract_rules.json` 生成新模型 `.bknd`：
 
 ```bash
 python examples/risk/scripts/extract_risk_data.py
@@ -37,6 +29,8 @@ SDK 提供 `to_bknd()` / `to_bknd_from_table()` 将结构化数据序列化回 `
 
 | 文件 | 说明 |
 |------|------|
-| `security_contract_rules.json` | 安全契约矩阵规则实例（传给 `risk_rules`） |
+| `security_contract_rules.json` | 安全契约矩阵规则实例（抽取为 `risk_scenario.bknd`/`risk_rule.bknd`，也可直接传给 `evaluate_risk(..., risk_rules=...)`） |
 | `scenario_activation.json` | 场景生效条件（如时间窗口） |
+
+旧模型（`scenario` / `action_option` / `risk` / `risk_statement`）保留在 `examples/risk_old/`。
 

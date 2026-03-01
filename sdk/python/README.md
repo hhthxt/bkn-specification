@@ -174,9 +174,9 @@ for mr in relation.mapping_rules:
 ```python
 from bkn import load
 
-doc = load("examples/risk/data/scenario.bknd")
+doc = load("examples/risk/data/risk_scenario.bknd")
 table = doc.data_tables[0]
-print(table.entity_or_relation)  # scenario
+print(table.entity_or_relation)  # risk_scenario
 print(table.columns)             # ["scenario_id", "name", ...]
 print(len(table.rows))           # number of data rows
 ```
@@ -187,15 +187,15 @@ print(len(table.rows))           # number of data rows
 from bkn import to_bknd, to_bknd_from_table, load
 
 # From structured data
-md = to_bknd(entity_id="scenario", rows=[{"scenario_id": "s1", "name": "Test", ...}], network="recoverable-network")
+md = to_bknd(entity_id="risk_scenario", rows=[{"scenario_id": "s1", "name": "Test", ...}], network="recoverable-network")
 
 # From a parsed DataTable (round-trip)
-doc = load("examples/risk/data/scenario.bknd")
+doc = load("examples/risk/data/risk_scenario.bknd")
 table = doc.data_tables[0]
 md = table.to_bknd()
 ```
 
-`load_network()` loads only files listed in frontmatter `includes`; to load `.bknd` files, add them explicitly (e.g. `includes: [data/scenario.bknd]`). Data tables are aggregated in `network.all_data_tables`.
+`load_network()` loads only files listed in frontmatter `includes`; to load `.bknd` files, add them explicitly (e.g. `includes: [data/risk_scenario.bknd]`). Data tables are aggregated in `network.all_data_tables`.
 
 ### 7. Risk assessment
 

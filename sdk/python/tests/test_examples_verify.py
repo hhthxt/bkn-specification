@@ -81,9 +81,11 @@ class TestLoadNetworks:
         assert len(net.all_relations) == 2
         assert len(net.all_actions) == 2
 
-    def test_risk_network_explicit_includes_only(self):
-        """load_network loads only includes; risk-fragment has no .bknd includes."""
+    def test_risk_network_includes_bknd(self):
+        """risk-fragment includes risk_scenario/risk_rule .bknd data files."""
         from bkn import load_network
         path = EXAMPLES_DIR / "risk" / "risk-fragment.bkn"
         net = load_network(path)
-        assert len(net.all_data_tables) == 0
+        assert len(net.all_data_tables) == 2
+        ids = {t.entity_or_relation for t in net.all_data_tables}
+        assert ids == {"risk_scenario", "risk_rule"}
