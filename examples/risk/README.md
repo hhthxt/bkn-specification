@@ -2,12 +2,12 @@
 
 **English**: [README.en.md](README.en.md)
 
-本示例展示基于 **tag** 的风险相关定义与 Action 的 **动态 risk 属性**（allow / not_allow）。
+本示例展示基于 **tag** 的风险相关定义与 Action 的 **动态 risk 属性**（allow / not_allow / unknown）。
 
 ## 设计要点
 
 1. **内置 tag `__risk__`**：`__risk__` 为规范保留 tag，仅用于参与内置风险评估的实体/关系；用户不得使用。通过 `- **Tags**: __risk__` 标记；用户可自定义其他 tag 的风险类及自己的评估函数。
-2. **Action 的 risk 属性**：Action 拥有运行时/计算属性 `risk`，取值仅 `allow` | `not_allow`，由 **SDK 风险评估模块** 根据当前场景与带 `risk` tag 的实体/关系数据计算得出，不写入 BKN 文件。
+2. **Action 的 risk 属性**：Action 拥有运行时/计算属性 `risk`，取值为 `allow` | `not_allow` | `unknown`，由 **SDK 风险评估模块** 根据当前场景与带 `__risk__` tag 的实体/关系数据计算得出，不写入 BKN 文件。无规则或无匹配时返回 `unknown`，由执行侧按业务策略处理。
 3. **风险评估模块**：SDK 提供 `bkn.risk.evaluate_risk(network, action_id, context)`，在给定场景（context）下判断某 action 是否允许执行。
 
 ## 目录结构
@@ -39,7 +39,7 @@ examples/risk/
 python examples/risk/scripts/eval_security_contract_demo.py
 ```
 
-将按表格中的多条策略（如 SEC-T-01 月末封网、SEC-R-01 核心产线防危化、SEC-C-02 雪崩防波及等）输出对应 scenario + action 的 allow/not_allow 结果。
+将按表格中的多条策略（如 SEC-T-01 月末封网、SEC-R-01 核心产线防危化、SEC-C-02 雪崩防波及等）输出对应 scenario + action 的 allow/not_allow/unknown 结果。
 
 ## 模拟：2026-02-28 23:00 重启ERP → not_allow
 
@@ -58,9 +58,9 @@ from bkn.risk import evaluate_risk
 
 network = load_network("examples/risk/index.bkn")
 
-# 无规则时默认 allow
+# 无规则时返回 unknown（信息不足）
 result = evaluate_risk(network, action_id="restart_erp", context={"scenario_id": "sec_t_01"})
-# result == "allow"
+# result == "unknown"
 
 # 传入规则实例（如从 security_contract_rules.json 加载）得到门控结果
 risk_rules = [{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False}]

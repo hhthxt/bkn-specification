@@ -2,12 +2,12 @@
 
 **中文**: [README.md](README.md)
 
-This example demonstrates **tag-based** risk definitions and the **dynamic risk attribute** (allow / not_allow) of Actions.
+This example demonstrates **tag-based** risk definitions and the **dynamic risk attribute** (allow / not_allow / unknown) of Actions.
 
 ## Design Highlights
 
 1. **Built-in tag `__risk__`**: `__risk__` is a reserved tag for entities/relations participating in built-in risk assessment; users must not use it. Marked via `- **Tags**: __risk__`; users may define custom risk classes with other tags and their own evaluation functions.
-2. **Action risk attribute**: Actions have a runtime/computed attribute `risk`, with values `allow` | `not_allow`, computed by the **SDK risk module** from the current scenario and risk-tagged entity/relation data; it is not stored in BKN files.
+2. **Action risk attribute**: Actions have a runtime/computed attribute `risk`, with values `allow` | `not_allow` | `unknown`, computed by the **SDK risk module** from the current scenario and risk-tagged entity/relation data; it is not stored in BKN files. Returns `unknown` when no rules are provided or no rule matches, leaving the decision to the caller's business policy.
 3. **Risk evaluation module**: The SDK provides `bkn.risk.evaluate_risk(network, action_id, context)` to determine whether an action is allowed in a given scenario (context).
 
 ## Directory Structure
@@ -40,7 +40,7 @@ Run the demo (from repo root):
 python examples/risk/scripts/eval_security_contract_demo.py
 ```
 
-Outputs allow/not_allow for each scenario + action per the matrix (e.g. SEC-T-01 month-end lockdown, SEC-R-01 core production hazard prevention, SEC-C-02 avalanche mitigation).
+Outputs allow/not_allow/unknown for each scenario + action per the matrix (e.g. SEC-T-01 month-end lockdown, SEC-R-01 core production hazard prevention, SEC-C-02 avalanche mitigation).
 
 ## Simulate: 2026-02-28 23:00 Restart ERP → not_allow
 
@@ -59,9 +59,9 @@ from bkn.risk import evaluate_risk
 
 network = load_network("examples/risk/index.bkn")
 
-# No rules -> default allow
+# No rules -> unknown (insufficient info)
 result = evaluate_risk(network, action_id="restart_erp", context={"scenario_id": "sec_t_01"})
-# result == "allow"
+# result == "unknown"
 
 # Pass rule instances (e.g. from security_contract_rules.json) for gating
 risk_rules = [{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False}]

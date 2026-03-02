@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Demo: call SDK risk assessment to get allow/not_allow for an action in a given context.
+Demo: call SDK risk assessment to get allow/not_allow/unknown for an action in a given context.
 Usage (from repo root):
   python examples/risk/scripts/eval_risk_demo.py
-  python examples/risk/scripts/eval_risk_demo.py --action restore_from_backup --scenario prod_db
+  python examples/risk/scripts/eval_risk_demo.py --action restart_erp --scenario sec_t_01
 """
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ FRAGMENT_PATH = REPO_ROOT / "examples" / "risk" / "index.bkn"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate risk for an action in a scenario")
-    parser.add_argument("--action", default="restore_from_backup", help="Action ID")
-    parser.add_argument("--scenario", default="prod_db", help="Scenario ID (context)")
+    parser.add_argument("--action", default="restart_erp", help="Action ID")
+    parser.add_argument("--scenario", default="sec_t_01", help="Scenario ID (context)")
     parser.add_argument("--bkn", type=Path, default=FRAGMENT_PATH, help="Path to BKN fragment/network")
     args = parser.parse_args()
 

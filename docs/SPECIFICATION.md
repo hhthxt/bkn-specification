@@ -230,7 +230,7 @@ requires_approval: boolean       # 可选，是否需要审批
 ---
 ```
 
-> **动态 risk 属性**：Action 的运行时属性 `risk`（取值 `allow` | `not_allow`）由内置或用户提供的风险评估函数根据当前场景与带 `__risk__` tag 的知识计算，不在此 frontmatter 中声明。
+> **动态 risk 属性**：Action 的运行时属性 `risk`（取值 `allow` | `not_allow` | `unknown`）由内置或用户提供的风险评估函数根据当前场景与带 `__risk__` tag 的知识计算，不在此 frontmatter 中声明。无规则或无匹配时返回 `unknown`，由执行侧按业务策略处理。
 
 ### 混合片段 (type: fragment)
 
@@ -403,7 +403,7 @@ source: PFMEA模板.xlsx      # 可选，数据来源
 
 - **保留标签**：**`__risk__`** 为规范内置保留 tag，仅用于参与「内置风险评估」的实体与关系；**用户不得将 `__risk__` 用于自定义用途**，以避免与内置逻辑冲突。
 - 在需要参与**内置**风险评估的实体、关系定义头部增加 `- **Tags**: __risk__`。AI 应用与内置评估模块通过该 tag 识别风险相关定义。
-- Action 拥有**运行时/计算属性** `risk`（见「行动定义规范」），取值 `allow` | `not_allow`，可由内置或用户提供的风险评估函数根据当前场景与带 `__risk__` tag 的数据计算得出，**不写入 BKN 文件**。
+- Action 拥有**运行时/计算属性** `risk`（见「行动定义规范」），取值 `allow` | `not_allow` | `unknown`，可由内置或用户提供的风险评估函数根据当前场景与带 `__risk__` tag 的数据计算得出，**不写入 BKN 文件**。无规则或无匹配时返回 `unknown`。
 
 **开放性**：用户可按自身需求定义**自己的风险类**（使用**非保留** tag，如 `compliance`、`audit` 等）及**自己的风险评估函数**；内置的 `__risk__` 与默认评估逻辑仅为一种可选实现，不排斥用户扩展或替换。
 
@@ -713,7 +713,7 @@ or
 | Tool Configuration | YES | 执行的工具或 MCP |
 | Parameter Binding | YES | 参数来源配置 |
 | Schedule | NO | 定时执行配置 |
-| risk（计算属性） | - | 运行时属性，取值 `allow` \| `not_allow`，由内置或用户提供的风险评估函数根据场景与带 `__risk__` tag 的实体/关系计算，不写入 BKN |
+| risk（计算属性） | - | 运行时属性，取值 `allow` \| `not_allow` \| `unknown`，由内置或用户提供的风险评估函数根据场景与带 `__risk__` tag 的实体/关系计算，不写入 BKN。无规则或无匹配时返回 `unknown` |
 
 ### 触发条件操作符
 

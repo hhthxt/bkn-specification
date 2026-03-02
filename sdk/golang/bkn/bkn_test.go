@@ -204,30 +204,44 @@ func TestToBkndRoundTrip(t *testing.T) {
 
 func TestEvaluateRisk(t *testing.T) {
 	net := &BknNetwork{}
-	// No rules -> allow
-	if got := EvaluateRisk(net, "any_action", map[string]any{"scenario_id": "any"}, nil); got != "allow" {
-		t.Errorf("expected allow, got %q", got)
+	// No rules -> unknown
+	if got := EvaluateRisk(net, "any_action", map[string]any{"scenario_id": "any"}, nil); got != Unknown {
+		t.Errorf("expected unknown, got %q", got)
 	}
 	// Rule forbids -> not_allow
 	rules := []map[string]any{
-		{"scenario_id": "prod_db", "action_id": "restore_from_backup", "allowed": false},
+		{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": false},
 	}
-	if got := EvaluateRisk(net, "restore_from_backup", map[string]any{"scenario_id": "prod_db"}, rules); got != "not_allow" {
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules); got != NotAllow {
 		t.Errorf("expected not_allow, got %q", got)
 	}
 	// Rule allows -> allow
 	rulesAllow := []map[string]any{
-		{"scenario_id": "prod_db", "action_id": "restore_from_backup", "allowed": true},
+		{"scenario_id": "sec_c_02", "action_id": "batch_restart_nodes", "allowed": true},
 	}
-	if got := EvaluateRisk(net, "restore_from_backup", map[string]any{"scenario_id": "prod_db"}, rulesAllow); got != "allow" {
+	if got := EvaluateRisk(net, "batch_restart_nodes", map[string]any{"scenario_id": "sec_c_02"}, rulesAllow); got != Allow {
 		t.Errorf("expected allow, got %q", got)
 	}
-	// No match -> allow
+	// No match -> unknown
 	rulesOther := []map[string]any{
 		{"scenario_id": "other", "action_id": "other_action", "allowed": false},
 	}
-	if got := EvaluateRisk(net, "restore_from_backup", map[string]any{"scenario_id": "prod_db"}, rulesOther); got != "allow" {
-		t.Errorf("expected allow (no match), got %q", got)
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rulesOther); got != Unknown {
+		t.Errorf("expected unknown (no match), got %q", got)
+	}
+	// No scenario in context -> match by action_id only
+	rulesGlobal := []map[string]any{
+		{"action_id": "grant_root_admin", "allowed": false},
+	}
+	if got := EvaluateRisk(net, "grant_root_admin", map[string]any{}, rulesGlobal); got != NotAllow {
+		t.Errorf("expected not_allow (no scenario filter), got %q", got)
+	}
+	if got := EvaluateRisk(net, "grant_root_admin", nil, rulesGlobal); got != NotAllow {
+		t.Errorf("expected not_allow (nil context), got %q", got)
+	}
+	// Scenario in context filters out rules with different scenario
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_c_02"}, rules); got != Unknown {
+		t.Errorf("expected unknown (scenario mismatch), got %q", got)
 	}
 }
 
