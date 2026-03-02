@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from bkn.models import (
+    Action,
     BknNetwork,
     Entity,
     Frontmatter,
@@ -164,12 +165,17 @@ class KweaverTransformer(Transformer):
 
         data_props: list[dict[str, Any]] = []
         for dp in entity.data_properties:
+            kweaver_type = _map_type(dp.type)
             prop_dict: dict[str, Any] = {
                 "name": dp.property,
                 "display_name": dp.display_name or dp.property,
-                "type": _map_type(dp.type),
+                "type": kweaver_type,
                 "comment": dp.description or "",
-                "mapped_field": {"name": dp.property},
+                "mapped_field": {
+                    "name": dp.property,
+                    "type": kweaver_type,
+                    "display_name": dp.display_name or dp.property,
+                },
             }
 
             override = override_map.get(dp.property)
@@ -199,9 +205,11 @@ class KweaverTransformer(Transformer):
             result["comment"] = entity.description
 
         if entity.data_source:
+            ds = entity.data_source
             result["data_source"] = {
-                "type": entity.data_source.type,
-                "id": entity.data_source.id,
+                "type": ds.type,
+                "id": ds.id,
+                "name": ds.name or entity.name or entity.id,
             }
 
         return result
@@ -232,6 +240,9 @@ class KweaverTransformer(Transformer):
             result["type"] = ep.type or "direct"
 
         if relation.mapping_rules:
+            # OpenAPI import spec accepts a flat array of {source_property, target_property}.
+            # Kweaver export format uses nested source_mapping_rules/target_mapping_rules;
+            # the import API accepts this flat format for direct relations.
             result["mapping_rules"] = [
                 {
                     "source_property": {"name": mr.source_property},
@@ -242,15 +253,67 @@ class KweaverTransformer(Transformer):
 
         return result
 
+    # -- Action Types --------------------------------------------------------
+
+    def transform_action(self, action: Action) -> dict[str, Any]:
+        """Transform a BKN Action to a kweaver action_type item."""
+        result: dict[str, Any] = {
+            "name": action.name or action.id,
+            "branch": self.branch,
+            "base_version": self.base_version,
+            "action_type": action.action_type or "add",
+            "object_type_id": self._full_id(action.bound_entity) if action.bound_entity else "",
+            "schedule": {"type": "", "expression": ""},
+        }
+
+        full_id = self._full_id(action.id)
+        if full_id:
+            result["id"] = full_id
+        if action.description:
+            result["comment"] = action.description
+
+        if action.tool_config:
+            result["action_source"] = {
+                "type": action.tool_config.type or "tool",
+                "box_id": "",
+                "tool_id": action.tool_config.tool_id,
+            }
+        else:
+            result["action_source"] = {"type": "tool", "box_id": "", "tool_id": ""}
+
+        parameters: list[dict[str, Any]] = []
+        for pb in action.parameter_binding:
+            source = (pb.get("Source") or "input").strip()
+            value_from = "const" if source.lower() == "const" else "input"
+            value = pb.get("Binding") if value_from == "const" else None
+            parameters.append({
+                "name": pb.get("Parameter", ""),
+                "type": (pb.get("Type") or "string").lower(),
+                "source": source if source else "Body",
+                "operation": "",
+                "value_from": value_from,
+                "value": value,
+            })
+        result["parameters"] = parameters
+
+        if action.schedule:
+            result["schedule"] = {
+                "type": action.schedule.type or "",
+                "expression": action.schedule.expression or "",
+            }
+
+        return result
+
     # -- Transformer interface -----------------------------------------------
 
     def to_json(self, network: BknNetwork) -> dict[str, Any]:
         """Transform a full BKN network into kweaver-compatible JSON payload.
 
-        Returns a dict with three keys:
+        Returns a dict with four keys:
             - knowledge_network: CreateKnowledgeNetwork request body
             - object_types: list of CreateObjectTypes items
             - relation_types: list of CreateRelationTypes items
+            - action_types: list of action_type items
         """
         return {
             "knowledge_network": self.transform_network(network.root.frontmatter),
@@ -259,6 +322,9 @@ class KweaverTransformer(Transformer):
             ],
             "relation_types": [
                 self.transform_relation(r) for r in network.all_relations
+            ],
+            "action_types": [
+                self.transform_action(a) for a in network.all_actions
             ],
         }
 
@@ -270,10 +336,11 @@ class KweaverTransformer(Transformer):
     ) -> list[Path]:
         """Write kweaver JSON payloads to separate files.
 
-        Creates three files in output_dir:
+        Creates four files in output_dir:
             - knowledge_network.json
             - object_types.json
             - relation_types.json
+            - action_types.json
 
         Returns list of created file paths.
         """
@@ -283,7 +350,12 @@ class KweaverTransformer(Transformer):
         payload = self.to_json(network)
         created: list[Path] = []
 
-        for key in ("knowledge_network", "object_types", "relation_types"):
+        for key in (
+            "knowledge_network",
+            "object_types",
+            "relation_types",
+            "action_types",
+        ):
             file_path = output_dir / f"{key}.json"
             file_path.write_text(
                 json.dumps(payload[key], ensure_ascii=False, indent=indent),

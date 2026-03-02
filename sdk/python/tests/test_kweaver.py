@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-EXAMPLES_DIR = REPO_ROOT / "docs" / "examples"
+EXAMPLES_DIR = REPO_ROOT / "examples"
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -182,11 +182,63 @@ class TestSupplychainTransform:
     def test_to_files(self, network, transformer):
         with tempfile.TemporaryDirectory() as tmpdir:
             files = transformer.to_files(network, tmpdir)
-            assert len(files) == 3
+            assert len(files) == 4
+            assert (Path(tmpdir) / "knowledge_network.json").exists()
+            assert (Path(tmpdir) / "object_types.json").exists()
+            assert (Path(tmpdir) / "relation_types.json").exists()
+            assert (Path(tmpdir) / "action_types.json").exists()
             for f in files:
                 assert f.exists()
                 data = json.loads(f.read_text(encoding="utf-8"))
                 assert data is not None
+
+    def test_data_source_has_name(self, payload):
+        """data_source in object_types includes name field."""
+        for ot in payload["object_types"]:
+            if "data_source" in ot:
+                assert "name" in ot["data_source"]
+
+    def test_mapped_field_has_type_and_display_name(self, payload):
+        """mapped_field in data_properties includes type and display_name."""
+        for ot in payload["object_types"]:
+            for dp in ot.get("data_properties", []):
+                mf = dp.get("mapped_field", {})
+                assert "type" in mf
+                assert "display_name" in mf
+
+    def test_action_types_exported(self, payload):
+        """action_types are included in payload."""
+        assert "action_types" in payload
+        assert isinstance(payload["action_types"], list)
+        # supplychain-hd has no actions, so list may be empty
+
+
+class TestK8sTopologyTransform:
+    """Test transforming k8s-topology (has actions) to kweaver JSON."""
+
+    @pytest.fixture
+    def network(self):
+        root_path = EXAMPLES_DIR / "k8s-topology.bkn"
+        if not root_path.exists():
+            pytest.skip(f"Example file not found: {root_path}")
+        return load_network(str(root_path))
+
+    @pytest.fixture
+    def payload(self, network):
+        return KweaverTransformer(branch="main", base_version="").to_json(network)
+
+    def test_action_types_populated(self, payload):
+        """action_types contains transformed actions when network has actions."""
+        actions = payload["action_types"]
+        assert len(actions) >= 2
+        restart = next((a for a in actions if "restart" in a.get("id", "").lower()), None)
+        assert restart is not None
+        assert restart["name"]
+        assert restart["action_type"] in ("add", "modify", "delete")
+        assert "object_type_id" in restart
+        assert "action_source" in restart
+        assert "parameters" in restart
+        assert "schedule" in restart
 
 
 # ---------------------------------------------------------------------------

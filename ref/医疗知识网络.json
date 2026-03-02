@@ -1,0 +1,5240 @@
+{
+  "id": "kn_medical",
+  "name": "医疗知识网络",
+  "tags": [],
+  "comment": "医疗知识网络支持从多维度对疾病进行深入分析，包括症状、并发症、检查项目、治疗方案及药物等。在药物分析方面，系统能够详细解析药物的类型、剂型、生产厂商等信息，为疾病治疗提供更精准的决策支持。",
+  "icon": "icon-dip-suanziguanli",
+  "color": "#9254DE",
+  "detail": "{\"network_info\": {\"action_types_count\": 2, \"concept_groups_count\": 0, \"id\": \"kn_medical\", \"name\": \"医疗知识网络\", \"tags\": [], \"comment\": \"医疗知识网络支持从多维度对疾病进行深入分析，包括症状、并发症、检查项目、治疗方案及药物等。在药物分析方面，系统能够详细解析药物的类型、剂型、生产厂商等信息，为疾病治疗提供更精准的决策支持。\", \"object_types_count\": 16, \"relation_types_count\": 17}, \"object_types\": [{\"id\": \"alias\", \"name\": \"疾病别名\", \"tags\": [\"疾病别名\"], \"comment\": \"疾病别名\"}, {\"id\": \"department\", \"name\": \"科室\", \"tags\": [\"医疗科室\", \"科室\"], \"comment\": \"科室\"}, {\"id\": \"drug_class\", \"name\": \"药物用途分类\", \"tags\": [\"药物用途\", \"药物用途分类\"], \"comment\": \"药物用途分类\"}, {\"id\": \"drug_product_new\", \"name\": \"药物产品新\", \"tags\": [\"新版\", \"药物产品\"], \"comment\": \"药物产品新\"}, {\"id\": \"facility\", \"name\": \"设备\", \"tags\": [\"医疗设备\", \"器材\", \"设备\"], \"comment\": \"设备，科室具有的设备，例如微波治疗仪\"}, {\"id\": \"drug_product\", \"name\": \"药物产品\", \"tags\": [\"药物产品\"], \"comment\": \"药物产品\"}, {\"id\": \"executive_standard\", \"name\": \"药品执行标准表\", \"tags\": [\"药品执行标准\"], \"comment\": \"药品执行标准表，记录药品执行标准的详细信息\"}, {\"id\": \"checklist\", \"name\": \"检查项目\", \"tags\": [\"检查项\", \"检查项目\"], \"comment\": \"检查项目\"}, {\"id\": \"disease\", \"name\": \"疾病\", \"tags\": [\"疾病\"], \"comment\": \"疾病\"}, {\"id\": \"drug_product_type\", \"name\": \"药品剂型表\", \"tags\": [\"药品剂型\"], \"comment\": \"药品剂型表\"}, {\"id\": \"procompany\", \"name\": \"药物生产商\", \"tags\": [], \"comment\": \"\"}, {\"id\": \"supervision_unit\", \"name\": \"监管单位\", \"tags\": [\"监管单位\", \"监管部门\"], \"comment\": \"监管单位\"}, {\"id\": \"bodypart\", \"name\": \"身体部位\", \"tags\": [\"身体部位\"], \"comment\": \"身体部位\"}, {\"id\": \"drug_product_class\", \"name\": \"药品分类\", \"tags\": [\"药品分类\", \"药品类别\"], \"comment\": \"药品分类\"}, {\"id\": \"drugs\", \"name\": \"药物\", \"tags\": [\"药物\"], \"comment\": \"药物，一种药物可以对应多种药物产品\"}, {\"id\": \"symptom\", \"name\": \"症状\", \"tags\": [\"症状\", \"表现\"], \"comment\": \"症状\"}], \"relation_types\": [{\"id\": \"is_a_level3\", \"name\": \"用途分类\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物\", \"target_object_type_name\": \"药物用途分类\"}, {\"id\": \"cures\", \"name\": \"可用药物\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"药物\"}, {\"id\": \"has_complication\", \"name\": \"并发症\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"疾病\"}, {\"id\": \"has_symptom\", \"name\": \"疾病症状\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"症状\"}, {\"id\": \"is_a_drug\", \"name\": \"可用药品\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"药物产品\"}, {\"id\": \"produces\", \"name\": \"生产药品\", \"tags\": [\"制造\", \"生产\"], \"comment\": \"该关系类，主要描述（药物生产厂商，生产，药品）的关系\", \"source_object_type_name\": \"药物生产商\", \"target_object_type_name\": \"药物产品\"}, {\"id\": \"is_a_level\", \"name\": \"包含\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物用途分类\", \"target_object_type_name\": \"药物用途分类\"}, {\"id\": \"is_form\", \"name\": \"药品剂型\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物产品\", \"target_object_type_name\": \"药品剂型表\"}, {\"id\": \"shown_on\", \"name\": \"体征\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"身体部位\"}, {\"id\": \"supervises\", \"name\": \"监管单位\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物产品\", \"target_object_type_name\": \"监管单位\"}, {\"id\": \"belongs_to\", \"name\": \"药品分类\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物产品\", \"target_object_type_name\": \"药品分类\"}, {\"id\": \"checks\", \"name\": \"检查项\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"检查项目\"}, {\"id\": \"comly_with\", \"name\": \"执行标准\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"药物产品\", \"target_object_type_name\": \"药品执行标准表\"}, {\"id\": \"department_2_facility\", \"name\": \"配置设备\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"科室\", \"target_object_type_name\": \"设备\"}, {\"id\": \"designated_to\", \"name\": \"分诊科室\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"科室\"}, {\"id\": \"has_alias\", \"name\": \"别名\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"疾病\", \"target_object_type_name\": \"疾病别名\"}, {\"id\": \"is_a_facility\", \"name\": \"所属科室\", \"tags\": [], \"comment\": \"\", \"source_object_type_name\": \"科室\", \"target_object_type_name\": \"科室\"}], \"action_types\": [{\"id\": \"d59ljbmbco5i640uvsr0\", \"name\": \"给患者开处方\", \"tags\": [], \"comment\": \"给患者开处方\", \"object_type_name\": \"疾病\"}, {\"id\": \"generate_treatment_plan\", \"name\": \"生成治疗方案\", \"tags\": [], \"comment\": \"基于疾病ID或疾病名称，生成个性化的治疗方案。\\n支持通过疾病ID或疾病名称查询，如果提供患者信息（年龄、性别、既往病史等），可以生成更个性化的治疗方案。\", \"object_type_name\": \"疾病\"}], \"concept_groups\": []}",
+  "branch": "main",
+  "business_domain": "bd_public",
+  "concept_groups": [
+    {
+      "id": "d5fn1b151opae7o9ac00",
+      "name": "药品",
+      "tags": [],
+      "comment": "与药品相关的分组",
+      "icon": "icon-dip-fenzu",
+      "color": "#1890ff",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+      },
+      "create_time": 1767862444129,
+      "updater": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+      },
+      "update_time": 1767862444129,
+      "module_type": "concept_group",
+      "statistics": {
+        "concept_groups_total": 0,
+        "object_types_total": 6,
+        "relation_types_total": 0,
+        "action_types_total": 0
+      }
+    },
+    {
+      "id": "d5fn1oh51opae7o9ac70",
+      "name": "疾病",
+      "tags": [],
+      "comment": "与疾病相关的分组",
+      "icon": "icon-dip-fenzu",
+      "color": "#36CFC9",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+      },
+      "create_time": 1767862498289,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767862667536,
+      "module_type": "concept_group",
+      "statistics": {
+        "concept_groups_total": 0,
+        "object_types_total": 2,
+        "relation_types_total": 1,
+        "action_types_total": 2
+      }
+    },
+    {
+      "id": "d5fn1tp51opae7o9ac80",
+      "name": "政策",
+      "tags": [],
+      "comment": "与医疗政策相关的分组",
+      "icon": "icon-dip-fenzu",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+      },
+      "create_time": 1767862519836,
+      "updater": {
+        "id": "488c973e-6f67-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "颜梦玲（Vania）"
+      },
+      "update_time": 1767862544252,
+      "module_type": "concept_group",
+      "statistics": {
+        "concept_groups_total": 0,
+        "object_types_total": 0,
+        "relation_types_total": 0,
+        "action_types_total": 0
+      }
+    }
+  ],
+  "object_types": [
+    {
+      "id": "alias",
+      "name": "疾病别名",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773133479937",
+        "name": "疾病别名"
+      },
+      "data_properties": [
+        {
+          "name": "disease_alias_id",
+          "display_name": "疾病别名ID",
+          "type": "string",
+          "comment": "疾病别名ID",
+          "mapped_field": {
+            "name": "disease_alias_id",
+            "type": "string",
+            "display_name": "疾病别名ID"
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "disease_alias_name",
+          "display_name": "疾病别名",
+          "type": "string",
+          "comment": "疾病别名",
+          "mapped_field": {
+            "name": "disease_alias_name",
+            "type": "string",
+            "display_name": "疾病别名"
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "disease_alias_id"
+      ],
+      "display_key": "disease_alias_name",
+      "incremental_key": "",
+      "tags": [
+        "疾病别名"
+      ],
+      "comment": "疾病别名",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-alias-d5es2u151opae7o9aap0",
+        "index_available": true,
+        "doc_count": 8031,
+        "storage_size": 2173352,
+        "update_time": 1767752066556
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767677816842,
+      "module_type": "object_type"
+    },
+    {
+      "id": "bodypart",
+      "name": "身体部位",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773397721090",
+        "name": "身体部位"
+      },
+      "data_properties": [
+        {
+          "name": "bodypart_id",
+          "display_name": "身体部位ID",
+          "type": "string",
+          "comment": "身体部位id",
+          "mapped_field": {
+            "name": "bodypart_id",
+            "type": "string",
+            "display_name": "身体部位id"
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "bodypart_name",
+          "display_name": "身体部位名",
+          "type": "string",
+          "comment": "身体部位名",
+          "mapped_field": {
+            "name": "bodypart_name",
+            "type": "string",
+            "display_name": "身体部位名"
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "bodypart_id"
+      ],
+      "display_key": "bodypart_name",
+      "incremental_key": "",
+      "tags": [
+        "身体部位"
+      ],
+      "comment": "身体部位",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-bodypart-d5es2u151opae7o9aal0",
+        "index_available": true,
+        "doc_count": 81,
+        "storage_size": 24084,
+        "update_time": 1767752065351
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678005813,
+      "module_type": "object_type"
+    },
+    {
+      "id": "checklist",
+      "name": "检查项目",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773448052737",
+        "name": "检查项目"
+      },
+      "data_properties": [
+        {
+          "name": "check_item_id",
+          "display_name": "检查项ID",
+          "type": "string",
+          "comment": "检查项ID",
+          "mapped_field": {
+            "name": "check_itme_id",
+            "type": "string",
+            "display_name": "检查项ID"
+          },
+          "condition_operations": [
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in"
+          ]
+        },
+        {
+          "name": "check_item",
+          "display_name": "检查项名称",
+          "type": "string",
+          "comment": "检查项名称",
+          "mapped_field": {
+            "name": "check_item",
+            "type": "string",
+            "display_name": "检查项名称"
+          },
+          "condition_operations": [
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">="
+          ]
+        }
+      ],
+      "primary_keys": [
+        "check_item_id"
+      ],
+      "display_key": "check_item",
+      "incremental_key": "",
+      "tags": [
+        "检查项",
+        "检查项目"
+      ],
+      "comment": "检查项目",
+      "icon": "icon-dip-youhuabuju",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-checklist-d5es2u151opae7o9aalg",
+        "index_available": true,
+        "doc_count": 2625,
+        "storage_size": 208,
+        "update_time": 1767752059450
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767677993512,
+      "module_type": "object_type"
+    },
+    {
+      "id": "department",
+      "name": "科室",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773393526785",
+        "name": "科室"
+      },
+      "data_properties": [
+        {
+          "name": "department_id",
+          "display_name": "科室ID",
+          "type": "string",
+          "comment": "科室id",
+          "mapped_field": {
+            "name": "department_id",
+            "type": "string",
+            "display_name": "科室id"
+          },
+          "condition_operations": [
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like"
+          ]
+        },
+        {
+          "name": "department_name",
+          "display_name": "科室名",
+          "type": "string",
+          "comment": "科室名",
+          "mapped_field": {
+            "name": "department_name",
+            "type": "string",
+            "display_name": "科室名"
+          },
+          "condition_operations": [
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "=="
+          ]
+        }
+      ],
+      "primary_keys": [
+        "department_id"
+      ],
+      "display_key": "department_name",
+      "incremental_key": "",
+      "tags": [
+        "医疗科室",
+        "科室"
+      ],
+      "comment": "科室",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-department-d5es2u151opae7o9aar0",
+        "index_available": true,
+        "doc_count": 159,
+        "storage_size": 44298,
+        "update_time": 1767752062084
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767677978196,
+      "module_type": "object_type"
+    },
+    {
+      "id": "disease",
+      "name": "疾病",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773435469826",
+        "name": "疾病"
+      },
+      "data_properties": [
+        {
+          "name": "age",
+          "display_name": "发病年龄段，表示发病年龄群体",
+          "type": "string",
+          "comment": "发病年龄段，表示发病年龄群体",
+          "mapped_field": {
+            "name": "age",
+            "type": "string",
+            "display_name": "发病年龄段表示发病年龄群体"
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "disease_english_name",
+          "display_name": "疾病英文名",
+          "type": "string",
+          "comment": "疾病英文名",
+          "mapped_field": {
+            "name": "disease_english_name",
+            "type": "string",
+            "display_name": "疾病英文名"
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "disease_id",
+          "display_name": "疾病编号",
+          "type": "string",
+          "comment": "疾病编号",
+          "mapped_field": {
+            "name": "disease_id",
+            "type": "string",
+            "display_name": "疾病编号"
+          },
+          "condition_operations": [
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in"
+          ]
+        },
+        {
+          "name": "disease_name",
+          "display_name": "疾病名称",
+          "type": "string",
+          "comment": "疾病名称",
+          "mapped_field": {
+            "name": "disease_name",
+            "type": "string",
+            "display_name": "疾病名称"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "icd_id",
+          "display_name": "国际疾病分类ID，这里采用的是ICD-10\n",
+          "type": "string",
+          "comment": "国际疾病分类ID，这里采用的是ICD-10\n",
+          "mapped_field": {
+            "name": "icd_id",
+            "type": "string",
+            "display_name": "国际疾病分类ID这里采用的是ICD-10"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "infection",
+          "display_name": "是否传染病，表示是否具有传染性或者传播途径",
+          "type": "string",
+          "comment": "是否传染病，表示是否具有传染性或者传播途径",
+          "mapped_field": {
+            "name": "infection",
+            "type": "string",
+            "display_name": "是否传染病表示是否具有传染性或者传播途径"
+          },
+          "condition_operations": [
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "=="
+          ]
+        },
+        {
+          "name": "insurance",
+          "display_name": "是否支持医保",
+          "type": "string",
+          "comment": "是否支持医保",
+          "mapped_field": {
+            "name": "insurance",
+            "type": "string",
+            "display_name": "是否支持医保"
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "money",
+          "display_name": "治疗费用",
+          "type": "string",
+          "comment": "治疗费用",
+          "mapped_field": {
+            "name": "money",
+            "type": "string",
+            "display_name": "治疗费用"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "period",
+          "display_name": "治疗周期",
+          "type": "string",
+          "comment": "治疗周期",
+          "mapped_field": {
+            "name": "period",
+            "type": "string",
+            "display_name": "治疗周期"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "rate",
+          "display_name": "治愈率",
+          "type": "string",
+          "comment": "治愈率",
+          "mapped_field": {
+            "name": "rate",
+            "type": "string",
+            "display_name": "治愈率"
+          },
+          "condition_operations": [
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">"
+          ]
+        },
+        {
+          "name": "treatment",
+          "display_name": "治疗方案",
+          "type": "string",
+          "comment": "治疗方案",
+          "mapped_field": {
+            "name": "treatment",
+            "type": "string",
+            "display_name": "治疗方案"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        }
+      ],
+      "logic_properties": [
+        {
+          "name": "disease_priority_score",
+          "display_name": "疾病治疗优先级评分",
+          "type": "operator",
+          "comment": "疾病治疗优先级评分",
+          "index": false,
+          "data_source": {
+            "type": "operator",
+            "id": "6dd4840f-3d7d-45ad-bda3-249ff0f8bceb",
+            "name": "计算疾病治疗优先级评分"
+          },
+          "parameters": [
+            {
+              "name": "disease_id",
+              "type": "string",
+              "source": "Path",
+              "operation": "",
+              "value_from": "property",
+              "value": "disease_id"
+            },
+            {
+              "name": "mode",
+              "type": "string",
+              "source": "Query",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "weight",
+              "type": "number",
+              "source": "Query",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "X-Hospital-Code",
+              "type": "string",
+              "source": "Header",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "X-Request-Id",
+              "type": "string",
+              "source": "Header",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "weight",
+              "type": "string",
+              "source": "Header",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "factors.age_sensitivity_weight",
+              "type": "number",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "factors.cure_rate_weight",
+              "type": "number",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "factors.infection_weight",
+              "type": "number",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "is_emergency",
+              "type": "boolean",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "patient_age",
+              "type": "integer",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            },
+            {
+              "name": "weight",
+              "type": "number",
+              "source": "Body",
+              "operation": "",
+              "value_from": "input",
+              "value": ""
+            }
+          ]
+        }
+      ],
+      "primary_keys": [
+        "disease_id",
+        "disease_name"
+      ],
+      "display_key": "disease_name",
+      "incremental_key": "",
+      "tags": [
+        "疾病"
+      ],
+      "comment": "疾病",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1oh51opae7o9ac70",
+          "name": "疾病",
+          "tags": [],
+          "comment": "与疾病相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#36CFC9",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-disease-d5es2u151opae7o9aapg",
+        "index_available": true,
+        "doc_count": 8256,
+        "storage_size": 3359468,
+        "update_time": 1767752063030
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767694764248,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drug_class",
+      "name": "药物用途分类",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773452247042",
+        "name": "药物用途分类"
+      },
+      "data_properties": [
+        {
+          "name": "drug_class_id",
+          "display_name": "类型编号",
+          "type": "string",
+          "comment": "类型编号",
+          "mapped_field": {
+            "name": "drug_class_id",
+            "type": "string",
+            "display_name": "类型编号"
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "drug_class_name",
+          "display_name": "药物类型名",
+          "type": "string",
+          "comment": "药物类型名",
+          "mapped_field": {
+            "name": "drug_class_name",
+            "type": "string",
+            "display_name": "药物类型名"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_class_id"
+      ],
+      "display_key": "drug_class_name",
+      "incremental_key": "",
+      "tags": [
+        "药物用途",
+        "药物用途分类"
+      ],
+      "comment": "药物用途分类",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drug_class-d5es2u151opae7o9aam0",
+        "index_available": true,
+        "doc_count": 129,
+        "storage_size": 208,
+        "update_time": 1767752059881
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767677833232,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drug_product",
+      "name": "药物产品",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773439664129",
+        "name": "药物产品"
+      },
+      "data_properties": [
+        {
+          "name": "drug_name",
+          "display_name": "药品名",
+          "type": "string",
+          "comment": "药品名",
+          "mapped_field": {
+            "name": "drug_name",
+            "type": "string",
+            "display_name": "药品名"
+          },
+          "condition_operations": [
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range"
+          ]
+        },
+        {
+          "name": "drug_product_id",
+          "display_name": "药物产品id",
+          "type": "string",
+          "comment": "药物产品id",
+          "mapped_field": {
+            "name": "drug_product_id",
+            "type": "string",
+            "display_name": "drug_product_id"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "calssify",
+          "display_name": "药品分类，如化学药品、中药、生物制品等",
+          "type": "string",
+          "comment": "药品分类，如化学药品、中药、生物制品等",
+          "mapped_field": {
+            "name": "分类",
+            "type": "string",
+            "display_name": "药品分类如化学药品中药生物制品等"
+          },
+          "condition_operations": [
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range"
+          ]
+        },
+        {
+          "name": "dosage_form",
+          "display_name": "剂型（Dosage Form),药品的给药形式（如片剂、胶囊、注射剂等）",
+          "type": "string",
+          "comment": "剂型（Dosage Form),药品的给药形式（如片剂、胶囊、注射剂等）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "packaging_specification",
+          "display_name": "'包装规格，指药品的包装单位和数量（如10片/盒、100ml/瓶等）",
+          "type": "string",
+          "comment": "'包装规格，指药品的包装单位和数量（如10片/盒、100ml/瓶等）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">"
+          ]
+        },
+        {
+          "name": "original_drug_approval_number",
+          "display_name": "原药品批准文号，用于关联原研药或参比制剂",
+          "type": "string",
+          "comment": "原药品批准文号，用于关联原研药或参比制剂",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range"
+          ]
+        },
+        {
+          "name": "trade_name",
+          "display_name": "商品名/品牌名,企业注册的品牌名称，用于商业推广（如琦玥）",
+          "type": "string",
+          "comment": "商品名/品牌名（Trade Name）,企业注册的品牌名称，用于商业推广（如琦玥）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like"
+          ]
+        },
+        {
+          "name": "nmpa_drug",
+          "display_name": "国家药品监督管理局药品编码或相关标识",
+          "type": "string",
+          "comment": "国家药品监督管理局药品编码或相关标识",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "implementation_standard",
+          "display_name": "药品执行的标准，如《中国药典》或企业标准",
+          "type": "string",
+          "comment": "药品执行的标准，如《中国药典》或企业标准",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "approval_date",
+          "display_name": "药品批准日期，Unix时间戳格式",
+          "type": "integer",
+          "comment": "药品批准日期，Unix时间戳格式",
+          "mapped_field": {
+            "name": ""
+          }
+        },
+        {
+          "name": "standard_number",
+          "display_name": "执行标准的编号或版本号",
+          "type": "string",
+          "comment": "执行标准的编号或版本号",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "first_registration_date",
+          "display_name": "药品第一次注册日期",
+          "type": "string",
+          "comment": "药品第一次注册日期",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "english_or_latin_name",
+          "display_name": "英文名称拉丁名",
+          "type": "string",
+          "comment": "英文名称拉丁名",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "drug_approval_number",
+          "display_name": "国家药品监督管理局颁发的药品批准文号，用于标识药品的合法性",
+          "type": "string",
+          "comment": "国家药品监督管理局颁发的药品批准文号，用于标识药品的合法性",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "specification",
+          "display_name": "药品规格，指药品的含量、剂量或单位（如100mg、10ml等）",
+          "type": "string",
+          "comment": "药品规格，指药品的含量、剂量或单位（如100mg、10ml等）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_product_id"
+      ],
+      "display_key": "drug_name",
+      "incremental_key": "",
+      "tags": [
+        "药物产品"
+      ],
+      "comment": "药物产品",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drug_product-d5es2u151opae7o9aamg",
+        "index_available": true,
+        "doc_count": 4077,
+        "storage_size": 1015301,
+        "update_time": 1767752063037
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678316557,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drug_product_class",
+      "name": "药品分类",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773112508417",
+        "name": "药品分类"
+      },
+      "data_properties": [
+        {
+          "name": "drug_product_class_id",
+          "display_name": "药品分类主键ID",
+          "type": "integer",
+          "comment": "药品分类主键ID",
+          "mapped_field": {
+            "name": "drug_product_class_id",
+            "type": "integer",
+            "display_name": "药品分类主键ID"
+          }
+        },
+        {
+          "name": "drug_class",
+          "display_name": "药品分类名称",
+          "type": "string",
+          "comment": "药品分类名称",
+          "mapped_field": {
+            "name": "药品分类",
+            "type": "string",
+            "display_name": "药品分类名称"
+          },
+          "condition_operations": [
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_product_class_id"
+      ],
+      "display_key": "drug_class",
+      "incremental_key": "",
+      "tags": [
+        "药品分类",
+        "药品类别"
+      ],
+      "comment": "药品分类",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drug_product_class-d5es2u151opae7o9aarg",
+        "index_available": true,
+        "doc_count": 10,
+        "storage_size": 7312,
+        "update_time": 1767752066497
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678359940,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drug_product_new",
+      "name": "药物产品新",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773469024257",
+        "name": "药物产品新表新版"
+      },
+      "data_properties": [
+        {
+          "name": "drug_name",
+          "display_name": "药品通用名称（Generic Name），药品的正式化学名称",
+          "type": "string",
+          "comment": "药品通用名称（Generic Name），药品的正式化学名称",
+          "mapped_field": {
+            "name": "drug_name",
+            "type": "string",
+            "display_name": "药品通用名称GenericName药品的正式化学名称"
+          },
+          "condition_operations": [
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like"
+          ]
+        },
+        {
+          "name": "drug_product_id",
+          "display_name": "药物产品唯一标识ID",
+          "type": "string",
+          "comment": "药物产品唯一标识ID",
+          "mapped_field": {
+            "name": "drug_product_id",
+            "type": "string",
+            "display_name": "药物产品唯一标识ID"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "category",
+          "display_name": "药品分类，如化学药品、中药、生物制品、抗生素等",
+          "type": "string",
+          "comment": "药品分类，如化学药品、中药、生物制品、抗生素等",
+          "mapped_field": {
+            "name": "分类",
+            "type": "string",
+            "display_name": "药品分类如化学药品中药生物制品抗生素等"
+          },
+          "condition_operations": [
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in"
+          ]
+        },
+        {
+          "name": "dosage_form",
+          "display_name": "剂型（Dosage Form），药品的给药形式（如片剂、胶囊、注射剂、分散片等）",
+          "type": "string",
+          "comment": "剂型（Dosage Form），药品的给药形式（如片剂、胶囊、注射剂、分散片等）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like"
+          ]
+        },
+        {
+          "name": "approval_date",
+          "display_name": "药品批准日期，通常为YYYY-MM-DD格式",
+          "type": "string",
+          "comment": "药品批准日期，通常为YYYY-MM-DD格式",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like"
+          ]
+        },
+        {
+          "name": "standard_number",
+          "display_name": "执行标准的编号或版本号（如WS1-XG-001-2020）",
+          "type": "string",
+          "comment": "执行标准的编号或版本号（如WS1-XG-001-2020）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<"
+          ]
+        },
+        {
+          "name": "first_registration_date",
+          "display_name": "药品第一次注册日期",
+          "type": "string",
+          "comment": "药品第一次注册日期",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "english_name_latin_name",
+          "display_name": "药品的英文名称或拉丁学名",
+          "type": "string",
+          "comment": "药品的英文名称或拉丁学名",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "drug_approval_number",
+          "display_name": "国家药品监督管理局颁发的药品批准文号，用于标识药品的合法性和批次",
+          "type": "string",
+          "comment": "国家药品监督管理局颁发的药品批准文号，用于标识药品的合法性和批次",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "specification",
+          "display_name": "药品规格，指药品的含量、剂量或单位（如100mg、10ml、0.25g/片等）",
+          "type": "string",
+          "comment": "药品规格，指药品的含量、剂量或单位（如100mg、10ml、0.25g/片等）",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match"
+          ]
+        },
+        {
+          "name": "execution_standard",
+          "display_name": "执行标准",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "packaging_specification",
+          "display_name": "包装规格",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "original_drug_approval_number",
+          "display_name": "原药品批准文号",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "trade_name",
+          "display_name": "商品名",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": ""
+          },
+          "condition_operations": [
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!="
+          ]
+        },
+        {
+          "name": "nmpa_drug",
+          "display_name": "国家药品监督管理局药",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": "国家药品监督管理局药",
+            "type": "string",
+            "display_name": "国家药品监督管理局药品编码或相关标识信息"
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_product_id"
+      ],
+      "display_key": "drug_name",
+      "incremental_key": "",
+      "tags": [
+        "新版",
+        "药物产品"
+      ],
+      "comment": "药物产品新",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drug_product_new-d5es2u151opae7o9aan0",
+        "index_available": true,
+        "doc_count": 4077,
+        "storage_size": 1061145,
+        "update_time": 1767752064830
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767752048896,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drug_product_type",
+      "name": "药品剂型表",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773431275521",
+        "name": "药品剂型表"
+      },
+      "data_properties": [
+        {
+          "name": "drug_product_type_id",
+          "display_name": "剂型ID",
+          "type": "string",
+          "comment": "剂型ID，主键",
+          "mapped_field": {
+            "name": "drug_product_type_id",
+            "type": "string",
+            "display_name": "剂型ID主键"
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "dosage_form_name",
+          "display_name": "剂型名称",
+          "type": "string",
+          "comment": "剂型名称，如片剂、胶囊、注射剂、分散片等",
+          "mapped_field": {
+            "name": "剂型",
+            "type": "string",
+            "display_name": "剂型名称如片剂胶囊注射剂分散片等"
+          },
+          "condition_operations": [
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_product_type_id",
+        "dosage_form_name"
+      ],
+      "display_key": "dosage_form_name",
+      "incremental_key": "",
+      "tags": [
+        "药品剂型"
+      ],
+      "comment": "药品剂型表",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drug_product_type-d5es2u151opae7o9aang",
+        "index_available": true,
+        "doc_count": 85,
+        "storage_size": 26290,
+        "update_time": 1767752061513
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767750535365,
+      "module_type": "object_type"
+    },
+    {
+      "id": "drugs",
+      "name": "药物",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773443858434",
+        "name": "药物一种药物可以对应多种药物产品"
+      },
+      "data_properties": [
+        {
+          "name": "drug_id",
+          "display_name": "药物ID",
+          "type": "string",
+          "comment": "药物id",
+          "mapped_field": {
+            "name": "drug_id",
+            "type": "string",
+            "display_name": "药物id"
+          },
+          "condition_operations": [
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!="
+          ]
+        },
+        {
+          "name": "drug_name",
+          "display_name": "药物名",
+          "type": "string",
+          "comment": "药物名",
+          "mapped_field": {
+            "name": "drug_name",
+            "type": "string",
+            "display_name": "药物名"
+          },
+          "condition_operations": [
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<="
+          ]
+        }
+      ],
+      "primary_keys": [
+        "drug_id"
+      ],
+      "display_key": "drug_name",
+      "incremental_key": "",
+      "tags": [
+        "药物"
+      ],
+      "comment": "药物，一种药物可以对应多种药物产品",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-drugs-d5es2u151opae7o9aao0",
+        "index_available": true,
+        "doc_count": 5490,
+        "storage_size": 1441207,
+        "update_time": 1767752064290
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678388254,
+      "module_type": "object_type"
+    },
+    {
+      "id": "executive_standard",
+      "name": "药品执行标准表",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773053788161",
+        "name": "药品执行标准表"
+      },
+      "data_properties": [
+        {
+          "name": "executive_standard_id",
+          "display_name": "执行标准ID",
+          "type": "string",
+          "comment": "执行标准ID，主键",
+          "mapped_field": {
+            "name": "executive_standard_id",
+            "type": "string",
+            "display_name": "执行标准ID主键"
+          },
+          "condition_operations": [
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like"
+          ]
+        },
+        {
+          "name": "executive_standard_name",
+          "display_name": "执行标准名称",
+          "type": "string",
+          "comment": "执行标准名称，如《中国药典》2020年版",
+          "mapped_field": {
+            "name": "executive_standard_name",
+            "type": "string",
+            "display_name": "执行标准名称如中国药典2020年版"
+          },
+          "condition_operations": [
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in"
+          ]
+        },
+        {
+          "name": "volume",
+          "display_name": "册数",
+          "type": "string",
+          "comment": "标准册数或版本号，如2020年版、一部、二部等",
+          "mapped_field": {
+            "name": "册数",
+            "type": "string",
+            "display_name": "标准册数或版本号如2020年版一部二部等"
+          },
+          "condition_operations": [
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<="
+          ]
+        }
+      ],
+      "primary_keys": [
+        "executive_standard_id"
+      ],
+      "display_key": "executive_standard_name",
+      "incremental_key": "",
+      "tags": [
+        "药品执行标准"
+      ],
+      "comment": "药品执行标准表，记录药品执行标准的详细信息",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-executive_standard-d5es2u151opae7o9aaog",
+        "index_available": true,
+        "doc_count": 59,
+        "storage_size": 208,
+        "update_time": 1767752059263
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767751710582,
+      "module_type": "object_type"
+    },
+    {
+      "id": "facility",
+      "name": "设备",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773473218561",
+        "name": "设备科室具有的设备例如微波治疗仪"
+      },
+      "data_properties": [
+        {
+          "name": "facility_id",
+          "display_name": "设备ID",
+          "type": "string",
+          "comment": "设备ID，主键",
+          "mapped_field": {
+            "name": "facility_id",
+            "type": "string",
+            "display_name": "设备ID主键"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        },
+        {
+          "name": "facility_name",
+          "display_name": "设备名称",
+          "type": "string",
+          "comment": "设备名称",
+          "mapped_field": {
+            "name": "facility_name",
+            "type": "string",
+            "display_name": "设备名称"
+          },
+          "condition_operations": [
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "facility_id"
+      ],
+      "display_key": "facility_name",
+      "incremental_key": "",
+      "tags": [
+        "医疗设备",
+        "器材",
+        "设备"
+      ],
+      "comment": "设备，科室具有的设备，例如微波治疗仪",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-facility-d5es2u151opae7o9aas0",
+        "index_available": true,
+        "doc_count": 364,
+        "storage_size": 100911,
+        "update_time": 1767752067066
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678448389,
+      "module_type": "object_type"
+    },
+    {
+      "id": "procompany",
+      "name": "药物生产厂商",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773385138177",
+        "name": "药物生厂商"
+      },
+      "data_properties": [
+        {
+          "name": "company_address",
+          "display_name": "公司地址",
+          "type": "string",
+          "comment": "公司地址",
+          "mapped_field": {
+            "name": "company_address",
+            "type": "string",
+            "display_name": "公司地址"
+          },
+          "condition_operations": [
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in"
+          ]
+        },
+        {
+          "name": "company_id",
+          "display_name": "公司id",
+          "type": "string",
+          "comment": "公司id",
+          "mapped_field": {
+            "name": "company_id",
+            "type": "string",
+            "display_name": "公司id"
+          },
+          "condition_operations": [
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<"
+          ]
+        },
+        {
+          "name": "company_name",
+          "display_name": "药企名称",
+          "type": "string",
+          "comment": "药企名称",
+          "mapped_field": {
+            "name": "company_name",
+            "type": "string",
+            "display_name": "药企名称"
+          },
+          "condition_operations": [
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range"
+          ]
+        }
+      ],
+      "logic_properties": [
+        {
+          "name": "produced_drug_count",
+          "display_name": "生产药品总数",
+          "type": "metric",
+          "comment": "生产药品总数",
+          "index": false,
+          "data_source": {
+            "type": "metric",
+            "id": "produced_drug_count",
+            "name": "生产的药品总数"
+          },
+          "parameters": [
+            {
+              "name": "company_name",
+              "type": "string",
+              "source": "",
+              "operation": "==",
+              "value_from": "property",
+              "value": "company_name"
+            },
+            {
+              "name": "instant",
+              "type": "boolean",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "start",
+              "type": "integer",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "end",
+              "type": "integer",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "step",
+              "type": "string",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            }
+          ]
+        },
+        {
+          "name": "approved_drug_count",
+          "display_name": "药品上市数量",
+          "type": "metric",
+          "comment": "药品上市数量",
+          "index": false,
+          "data_source": {
+            "type": "metric",
+            "id": "approved_drug_metric",
+            "name": "药品上市数量"
+          },
+          "parameters": [
+            {
+              "name": "company_id",
+              "type": "string",
+              "source": "",
+              "operation": "==",
+              "value_from": "property",
+              "value": "company_id"
+            },
+            {
+              "name": "company_name",
+              "type": "string",
+              "source": "",
+              "operation": "==",
+              "value_from": "property",
+              "value": "company_name"
+            },
+            {
+              "name": "instant",
+              "type": "boolean",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "start",
+              "type": "integer",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "end",
+              "type": "integer",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            },
+            {
+              "name": "step",
+              "type": "string",
+              "source": "",
+              "operation": "==",
+              "value_from": "input",
+              "value": null,
+              "if_system_generate": true
+            }
+          ]
+        }
+      ],
+      "primary_keys": [
+        "company_id",
+        "company_name"
+      ],
+      "display_key": "company_name",
+      "incremental_key": "",
+      "tags": [],
+      "comment": "",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "concept_groups": [
+        {
+          "id": "d5fn1b151opae7o9ac00",
+          "name": "药品",
+          "tags": [],
+          "comment": "与药品相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#1890ff",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        },
+        {
+          "id": "d5fn1oh51opae7o9ac70",
+          "name": "疾病",
+          "tags": [],
+          "comment": "与疾病相关的分组",
+          "icon": "icon-dip-fenzu",
+          "color": "#36CFC9",
+          "detail": "",
+          "kn_id": "kn_medical",
+          "branch": "main",
+          "creator": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "updater": {
+            "id": "",
+            "type": "",
+            "name": ""
+          },
+          "module_type": "concept_group"
+        }
+      ],
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-procompany-d5es2u151opae7o9aasg",
+        "index_available": true,
+        "doc_count": 192,
+        "storage_size": 69154,
+        "update_time": 1767752067584
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767678196707,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767696719622,
+      "module_type": "object_type"
+    },
+    {
+      "id": "supervision_unit",
+      "name": "监管单位",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773427081218",
+        "name": "监管单位"
+      },
+      "data_properties": [
+        {
+          "name": "unit_id",
+          "display_name": "监管单位ID",
+          "type": "string",
+          "comment": "监管单位id",
+          "mapped_field": {
+            "name": "unit_id",
+            "type": "string",
+            "display_name": "监管单位id"
+          },
+          "condition_operations": [
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match"
+          ]
+        },
+        {
+          "name": "unit_name",
+          "display_name": "监管单位名称",
+          "type": "string",
+          "comment": "监管单位名称",
+          "mapped_field": {
+            "name": "unit_name",
+            "type": "string",
+            "display_name": "监管单位名称"
+          },
+          "condition_operations": [
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<="
+          ]
+        }
+      ],
+      "primary_keys": [
+        "unit_id"
+      ],
+      "display_key": "unit_name",
+      "incremental_key": "",
+      "tags": [
+        "监管单位",
+        "监管部门"
+      ],
+      "comment": "监管单位",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-supervision_unit-d5es2u151opae7o9aaq0",
+        "index_available": true,
+        "doc_count": 28,
+        "storage_size": 12417,
+        "update_time": 1767752068769
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678432521,
+      "module_type": "object_type"
+    },
+    {
+      "id": "symptom",
+      "name": "症状",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008404773460635650",
+        "name": "症状"
+      },
+      "data_properties": [
+        {
+          "name": "symptom_id",
+          "display_name": "症状ID",
+          "type": "string",
+          "comment": "症状id",
+          "mapped_field": {
+            "name": "symptom_id",
+            "type": "string",
+            "display_name": "症状id"
+          },
+          "condition_operations": [
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range",
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like"
+          ]
+        },
+        {
+          "name": "symptom_name",
+          "display_name": "症状名",
+          "type": "string",
+          "comment": "症状名",
+          "mapped_field": {
+            "name": "symptom_name",
+            "type": "string",
+            "display_name": "症状名"
+          },
+          "condition_operations": [
+            "regex",
+            "not_in",
+            "<",
+            "<=",
+            "not_like",
+            "match",
+            ">",
+            ">=",
+            "range",
+            "like",
+            "multi_match",
+            "!=",
+            "in",
+            "==",
+            "out_range"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "symptom_id"
+      ],
+      "display_key": "symptom_name",
+      "incremental_key": "",
+      "tags": [
+        "症状",
+        "表现"
+      ],
+      "comment": "症状",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#08979C",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "adp-kn_ot_index-kn_medical-main-symptom-d5es2u151opae7o9aaqg",
+        "index_available": true,
+        "doc_count": 5301,
+        "storage_size": 208,
+        "update_time": 1767752060298
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675800916,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678409504,
+      "module_type": "object_type"
+    },
+    {
+      "id": "testkn",
+      "name": "test",
+      "data_source": {
+        "type": "data_view",
+        "id": "1986010696531939330",
+        "name": "企业基础信息表"
+      },
+      "data_properties": [
+        {
+          "name": "establish_time",
+          "display_name": "成立时间",
+          "type": "date",
+          "comment": "成立时间",
+          "mapped_field": {
+            "name": "establish_time",
+            "type": "date",
+            "display_name": "成立时间"
+          }
+        },
+        {
+          "name": "id",
+          "display_name": "企业ID",
+          "type": "integer",
+          "comment": "企业ID",
+          "mapped_field": {
+            "name": "id",
+            "type": "integer",
+            "display_name": "企业ID"
+          }
+        },
+        {
+          "name": "industry",
+          "display_name": "所属产业如人工智能生物医药",
+          "type": "string",
+          "comment": "所属产业（如：人工智能、生物医药）",
+          "mapped_field": {
+            "name": "industry",
+            "type": "string",
+            "display_name": "所属产业如人工智能生物医药"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "legal_representative",
+          "display_name": "法定代表人",
+          "type": "string",
+          "comment": "法定代表人",
+          "mapped_field": {
+            "name": "legal_representative",
+            "type": "string",
+            "display_name": "法定代表人"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "name",
+          "display_name": "企业名称",
+          "type": "string",
+          "comment": "企业名称",
+          "mapped_field": {
+            "name": "name",
+            "type": "string",
+            "display_name": "企业名称"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "overview",
+          "display_name": "企业概况",
+          "type": "text",
+          "comment": "企业概况",
+          "mapped_field": {
+            "name": "overview",
+            "type": "text",
+            "display_name": "企业概况"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "product_main",
+          "display_name": "主营产品",
+          "type": "string",
+          "comment": "主营产品",
+          "mapped_field": {
+            "name": "product_main",
+            "type": "string",
+            "display_name": "主营产品"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "region",
+          "display_name": "所在区域如广东省深圳市",
+          "type": "string",
+          "comment": "所在区域（如：广东省深圳市）",
+          "mapped_field": {
+            "name": "region",
+            "type": "string",
+            "display_name": "所在区域如广东省深圳市"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        },
+        {
+          "name": "scale",
+          "display_name": "企业规模小型中型大型",
+          "type": "string",
+          "comment": "企业规模（小型/中型/大型）",
+          "mapped_field": {
+            "name": "scale",
+            "type": "string",
+            "display_name": "企业规模小型中型大型"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "display_key": "name",
+      "incremental_key": "",
+      "tags": [],
+      "comment": "",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "",
+        "index_available": false,
+        "doc_count": 0,
+        "storage_size": 0,
+        "update_time": 1768472127659
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1768472127659,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1768472127659,
+      "module_type": "object_type"
+    },
+    {
+      "id": "tttt",
+      "name": "tt",
+      "data_source": {
+        "type": "data_view",
+        "id": "2008857114701852674",
+        "name": "需求计划清单"
+      },
+      "data_properties": [
+        {
+          "name": "actual-sales",
+          "display_name": "actual-sales",
+          "type": "float",
+          "comment": "",
+          "mapped_field": {
+            "name": "actual-sales",
+            "type": "float",
+            "display_name": "actual-sales"
+          }
+        },
+        {
+          "name": "confirmed_order",
+          "display_name": "confirmed_order",
+          "type": "integer",
+          "comment": "",
+          "mapped_field": {
+            "name": "confirmed_order",
+            "type": "integer",
+            "display_name": "confirmed_order"
+          }
+        },
+        {
+          "name": "consensus_demand",
+          "display_name": "consensus_demand",
+          "type": "integer",
+          "comment": "",
+          "mapped_field": {
+            "name": "consensus_demand",
+            "type": "integer",
+            "display_name": "consensus_demand"
+          }
+        },
+        {
+          "name": "id",
+          "display_name": "id",
+          "type": "integer",
+          "comment": "",
+          "mapped_field": {
+            "name": "id",
+            "type": "integer",
+            "display_name": "id"
+          }
+        },
+        {
+          "name": "month",
+          "display_name": "month",
+          "type": "date",
+          "comment": "",
+          "mapped_field": {
+            "name": "month",
+            "type": "date",
+            "display_name": "month"
+          }
+        },
+        {
+          "name": "product_code",
+          "display_name": "product_code",
+          "type": "string",
+          "comment": "",
+          "mapped_field": {
+            "name": "product_code",
+            "type": "string",
+            "display_name": "product_code"
+          },
+          "condition_operations": [
+            "==",
+            "!=",
+            "like",
+            "not_like",
+            "in",
+            "not_in",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "range",
+            "out_range"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "display_key": "consensus_demand",
+      "incremental_key": "",
+      "tags": [],
+      "comment": "",
+      "icon": "icon-dip-suanziguanli",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "status": {
+        "incremental_key": "",
+        "incremental_value": "",
+        "index": "",
+        "index_available": false,
+        "doc_count": 0,
+        "storage_size": 0,
+        "update_time": 1768472315060
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1768472315060,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1768472315060,
+      "module_type": "object_type"
+    }
+  ],
+  "relation_types": [
+    {
+      "id": "belongs_to",
+      "name": "药品分类",
+      "source_object_type_id": "drug_product",
+      "target_object_type_id": "drug_product_class",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773464829953",
+          "name": "药物产品与药物分类关系表"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug_product_id",
+              "display_name": "药物产品id"
+            },
+            "target_property": {
+              "name": "drug_product_id",
+              "display_name": "药物产品id"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "分类",
+              "display_name": "药物分类名"
+            },
+            "target_property": {
+              "name": "drug_class",
+              "display_name": "药品分类名称"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678595770,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "checks",
+      "name": "检查项",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "checklist",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "name": "疾病检查项目关系表",
+          "type": "data_view",
+          "id": "2008404773116702721"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "display_name": "疾病名称",
+              "name": "disease_name"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "checklist",
+              "display_name": "检查项"
+            },
+            "target_property": {
+              "name": "check_item",
+              "display_name": "检查项名称"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678781127,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "comly_with",
+      "name": "执行标准",
+      "source_object_type_id": "drug_product",
+      "target_object_type_id": "executive_standard",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773104119809",
+          "name": "疾病症状关系表"
+        },
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "name": "drug_product_id",
+              "display_name": "疾病名称"
+            },
+            "source_property": {
+              "name": "drug_product_id",
+              "display_name": "药物产品id"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "executive_standard_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "display_name": "执行标准名称",
+              "name": "executive_standard_name"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678813361,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "cures",
+      "name": "可用药物",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "drugs",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773129285634",
+          "name": "疾病可用药物关系表"
+        },
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "source_property": {
+              "display_name": "疾病名称",
+              "name": "disease_name"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug",
+              "display_name": "药物名称"
+            },
+            "target_property": {
+              "name": "drug_name",
+              "display_name": "药物名"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678975007,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "department_2_facility",
+      "name": "配置设备",
+      "source_object_type_id": "department",
+      "target_object_type_id": "facility",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773078953985",
+          "name": "科室拥有的器材"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "display_name": "科室名",
+              "name": "department_name"
+            },
+            "target_property": {
+              "name": "department",
+              "display_name": "科室名"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "display_name": "器材名",
+              "name": "facility"
+            },
+            "target_property": {
+              "display_name": "设备名称",
+              "name": "facility_name"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678992317,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "designated_to",
+      "name": "分诊科室",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "department",
+      "type": "data_view",
+      "mapping_rules": {
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "department",
+              "display_name": "诊室名称"
+            },
+            "target_property": {
+              "name": "department_name",
+              "display_name": "科室名"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773410304001",
+          "name": "疾病对应分诊科室_F1cEo8"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767679012116,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "has_alias",
+      "name": "别名",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "alias",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "alias_name",
+              "display_name": "疾病别名"
+            },
+            "target_property": {
+              "name": "disease_alias_name",
+              "display_name": "疾病别名"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "name": "疾病别名关系表",
+          "type": "data_view",
+          "id": "2008404773389332482"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767679031297,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "has_complication",
+      "name": "并发症",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "disease",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "原发疾病名称"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "source_property": {
+              "display_name": "并发症名称",
+              "name": "disease_name"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "name": "疾病并发症关系表_Q4zko2",
+          "type": "data_view",
+          "id": "2008404773418692609"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767679050150,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "has_symptom",
+      "name": "疾病症状",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "symptom",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "target_property": {
+              "name": "symptom_name",
+              "display_name": "症状名"
+            },
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773422886913",
+          "name": "疾病症状关系表"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767762480950,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "is_a_drug",
+      "name": "可用药品",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "drug_product",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "id": "2008404773129285634",
+          "name": "疾病可用药物关系表",
+          "type": "data_view"
+        },
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "source_property": {
+              "display_name": "疾病名称",
+              "name": "disease_name"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug",
+              "display_name": "药物名称"
+            },
+            "target_property": {
+              "name": "drug_name",
+              "display_name": "药品名"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767679123841,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "is_a_facility",
+      "name": "所属科室",
+      "source_object_type_id": "department",
+      "target_object_type_id": "department",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773099925505",
+          "name": "科室归属关系"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "department_name",
+              "display_name": "科室名"
+            },
+            "target_property": {
+              "name": "department_name",
+              "display_name": "科室子类"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "department_class",
+              "display_name": "科室父类"
+            },
+            "target_property": {
+              "name": "department_name",
+              "display_name": "科室名"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767679066679,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "is_a_level",
+      "name": "包含",
+      "source_object_type_id": "drug_class",
+      "target_object_type_id": "drug_class",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug_class_name",
+              "display_name": "药物类型名"
+            },
+            "target_property": {
+              "name": "classlevel1",
+              "display_name": "药物用途分类的子类，子类归属于父类"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "classlevel2",
+              "display_name": "药物用途分类的父类"
+            },
+            "target_property": {
+              "display_name": "药物类型名",
+              "name": "drug_class_name"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773414498306",
+          "name": "药物用途分类关系表_cyUZSw"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678954603,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "is_a_level3",
+      "name": "用途分类",
+      "source_object_type_id": "drugs",
+      "target_object_type_id": "drug_class",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug_name",
+              "display_name": "药物名"
+            },
+            "target_property": {
+              "display_name": "药物用途分类的子类子类归属于父类",
+              "name": "classlevel1"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "classlevel2",
+              "display_name": "药物用途分类的父类"
+            },
+            "target_property": {
+              "name": "drug_class_name",
+              "display_name": "药物类型名"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773414498306",
+          "name": "药物用途分类关系表"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678737545,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "is_form",
+      "name": "药品剂型",
+      "source_object_type_id": "drug_product",
+      "target_object_type_id": "drug_product_type",
+      "type": "data_view",
+      "mapping_rules": {
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "display_name": "药物分类名",
+              "name": "分类"
+            },
+            "target_property": {
+              "name": "dosage_form_name",
+              "display_name": "剂型名称"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773464829953",
+          "name": "药物产品与药物分类关系表_GukRmm"
+        },
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "display_name": "药物产品id",
+              "name": "drug_product_id"
+            },
+            "source_property": {
+              "display_name": "药物产品id",
+              "name": "drug_product_id"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678716767,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "produces",
+      "name": "生产药品",
+      "source_object_type_id": "procompany",
+      "target_object_type_id": "drug_product",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773460635651",
+          "name": "药物生厂商关系表"
+        },
+        "source_mapping_rules": [
+          {
+            "target_property": {
+              "name": "company_name",
+              "display_name": "公司名称"
+            },
+            "source_property": {
+              "name": "company_name",
+              "display_name": "药企名称"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug_id",
+              "display_name": "药物产品id"
+            },
+            "target_property": {
+              "name": "drug_product_id",
+              "display_name": "药物产品id"
+            }
+          }
+        ]
+      },
+      "tags": [
+        "制造",
+        "生产"
+      ],
+      "comment": "该关系类，主要描述（药物生产厂商，生产，药品）的关系",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678693042,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "shown_on",
+      "name": "体征",
+      "source_object_type_id": "disease",
+      "target_object_type_id": "bodypart",
+      "type": "data_view",
+      "mapping_rules": {
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            },
+            "target_property": {
+              "name": "disease_name",
+              "display_name": "疾病名称"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "target_property": {
+              "name": "bodypart_name",
+              "display_name": "身体部位名"
+            },
+            "source_property": {
+              "name": "bodypart",
+              "display_name": "身体部位名称"
+            }
+          }
+        ],
+        "backing_data_source": {
+          "id": "2008404773120897025",
+          "name": "疾病与身体部位关系表_2hiG0B",
+          "type": "data_view"
+        }
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678617215,
+      "module_type": "relation_type"
+    },
+    {
+      "id": "supervises",
+      "name": "监管单位",
+      "source_object_type_id": "drug_product",
+      "target_object_type_id": "supervision_unit",
+      "type": "data_view",
+      "mapping_rules": {
+        "backing_data_source": {
+          "type": "data_view",
+          "id": "2008404773439664129",
+          "name": "药物产品_VtrRxX"
+        },
+        "source_mapping_rules": [
+          {
+            "source_property": {
+              "name": "drug_name",
+              "display_name": "药品名"
+            },
+            "target_property": {
+              "name": "drug_name",
+              "display_name": "药品名"
+            }
+          }
+        ],
+        "target_mapping_rules": [
+          {
+            "source_property": {
+              "name": "药品批准文号",
+              "display_name": "国家药品监督管理局药品编码或相关标识"
+            },
+            "target_property": {
+              "name": "unit_name",
+              "display_name": "监管单位名称"
+            }
+          }
+        ]
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "source_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "target_object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675801772,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767678933938,
+      "module_type": "relation_type"
+    }
+  ],
+  "action_types": [
+    {
+      "id": "d59ljbmbco5i640uvsr0",
+      "name": "给患者开处方",
+      "action_type": "add",
+      "object_type_id": "disease",
+      "object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "affect": null,
+      "action_source": {
+        "type": "tool",
+        "box_id": "939bb1db-9239-43f5-8100-ba03eed683db",
+        "tool_id": "5e6d3171-f380-4ca5-9d25-3881b54dbbce"
+      },
+      "parameters": [
+        {
+          "name": "api_key",
+          "type": "string",
+          "source": "Header",
+          "operation": "",
+          "value_from": "const",
+          "value": "114124"
+        },
+        {
+          "name": "query",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        }
+      ],
+      "schedule": {
+        "type": "",
+        "expression": ""
+      },
+      "tags": [],
+      "comment": "给患者开处方",
+      "icon": "",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675802446,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1767675802446,
+      "module_type": "action_type"
+    },
+    {
+      "id": "generate_treatment_plan",
+      "name": "生成治疗方案",
+      "action_type": "add",
+      "object_type_id": "disease",
+      "object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "affect": null,
+      "action_source": {
+        "type": "tool",
+        "box_id": "2b708e36-2c0d-4549-a8fa-89aec134d4f7",
+        "tool_id": "4f81dce7-5e4c-43c7-ad04-0bcd2a9a37d0"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "type": "string",
+          "source": "Header",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "bgdata",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "hddata",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "hzdata",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "jhdata",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "lxrdata",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "valuescore",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        }
+      ],
+      "schedule": {
+        "type": "",
+        "expression": ""
+      },
+      "tags": [],
+      "comment": "基于疾病ID或疾病名称，生成个性化的治疗方案。\n支持通过疾病ID或疾病名称查询，如果提供患者信息（年龄、性别、既往病史等），可以生成更个性化的治疗方案。",
+      "icon": "",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1767675802446,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1768471333528,
+      "module_type": "action_type"
+    },
+    {
+      "id": "kn-en",
+      "name": "kn-en",
+      "action_type": "add",
+      "object_type_id": "tttt",
+      "object_type": {
+        "id": "",
+        "name": "",
+        "branch": "",
+        "icon": "",
+        "color": ""
+      },
+      "affect": null,
+      "action_source": {
+        "type": "tool",
+        "box_id": "eb13c974-cc15-4ff7-a9d3-95a677fe8bf7",
+        "tool_id": "09daf508-c552-4fa2-a2b7-34c8d0207494"
+      },
+      "parameters": [
+        {
+          "name": "stream",
+          "type": "boolean",
+          "source": "Query",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "source": "Query",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.background",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.dimension_num_limit",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.force_limit",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.only_essential_dim",
+          "type": "boolean",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.retry_times",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.return_data_limit",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.return_record_limit",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.rewrite_query",
+          "type": "boolean",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.session_id",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.session_type",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "config.view_num_limit",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.account_type",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.base_url",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.kg",
+          "type": "array",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.kn",
+          "type": "array",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.recall_mode",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.search_scope",
+          "type": "array",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.token",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.user_id",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "data_source.view_list",
+          "type": "array",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "infos.extra_info",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "infos.knowledge_enhanced_information",
+          "type": "object",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "inner_llm",
+          "type": "object",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "input",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "llm.max_tokens",
+          "type": "integer",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "llm.model_name",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "llm.openai_api_base",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "llm.openai_api_key",
+          "type": "string",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "llm.temperature",
+          "type": "number",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "source": "Body",
+          "operation": "",
+          "value_from": "input",
+          "value": null
+        }
+      ],
+      "schedule": {
+        "type": "",
+        "expression": ""
+      },
+      "tags": [],
+      "comment": "",
+      "icon": "",
+      "color": "#0e5fc5",
+      "detail": "",
+      "kn_id": "kn_medical",
+      "branch": "main",
+      "creator": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "create_time": 1768472151231,
+      "updater": {
+        "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+        "type": "user",
+        "name": "system_user"
+      },
+      "update_time": 1768472355745,
+      "module_type": "action_type"
+    }
+  ],
+  "creator": {
+    "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+    "type": "user",
+    "name": "system_user"
+  },
+  "create_time": 1767675800907,
+  "updater": {
+    "id": "0ae82800-6f60-11f0-b0dc-36fa540cff80",
+    "type": "user",
+    "name": "system_user"
+  },
+  "update_time": 1767675800907,
+  "module_type": "knowledge_network",
+  "operations": [
+    "create",
+    "modify",
+    "authorize",
+    "task_manage",
+    "import",
+    "view_detail",
+    "delete",
+    "data_query",
+    "export"
+  ]
+}
