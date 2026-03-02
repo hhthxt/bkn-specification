@@ -9,7 +9,7 @@ Official SDKs for parsing, validating, and transforming [BKN (Business Knowledge
 | Language | Status | Path |
 |----------|--------|------|
 | **Python** | Available | [sdk/python/](python/) |
-| **Golang** | Planned | [sdk/golang/](golang/) |
+| **Golang** | Available | [sdk/golang/](golang/) |
 
 ## Python SDK Usage
 
@@ -39,4 +39,9 @@ See [python/README.md](python/README.md) for detailed usage and API.
 
 ## Golang SDK
 
-Coming soon. See [golang/README.md](golang/README.md).
+```bash
+cd sdk/golang
+go test ./bkn/... -v
+```
+
+See [golang/README.md](golang/README.md) for usage and API.

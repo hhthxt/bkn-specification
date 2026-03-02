@@ -37,18 +37,33 @@
 
 ### 2.2 risk_scenario（风险场景）
 
-- **主键**：`scenario_id`
-- **主要属性**：`name`、`category`、`primary_object`、`description`
-- **语义**：描述「在什么情况下」需要做风险判断（例如：某系统、某时段、某环境）。评估时通过 **context** 中的 `scenario_id` 与场景对应。
+- **主键**：`scenario_id`（VARCHAR, not_null, regex:`^[a-z0-9_\-]+$`）
+- **属性**：
+
+| Property | Type | Constraint | 说明 |
+|----------|------|------------|------|
+| scenario_id | VARCHAR | not_null; regex | 场景唯一标识（主键） |
+| name | VARCHAR | not_null | 场景名称（Display Key） |
+| category | VARCHAR | in(availability,integrity,security,performance,dependency,operator) | 场景分类 |
+| primary_object | VARCHAR | not_null | 主要影响对象 |
+| description | TEXT | | 场景说明 |
+| activation_rule | TEXT | | 场景生效条件（如时间窗口规则） |
+
+- **语义**：描述「在什么情况下」需要做风险判断（例如：某系统、某时段、某环境）。评估时通过 **context** 中的 `scenario_id` 与场景对应。`activation_rule` 存放场景的生效条件（如 `day in [28,29,30] with hour>=23 on 28th; day 31 with hour<4`），替代独立的 `scenario_activation.json`。
 
 ### 2.3 risk_rule（风险规则）
 
-- **主键**：`rule_id`
-- **核心属性**：
-  - `scenario_id`：适用场景；
-  - `action_id`：涉及的 Action ID；
-  - `allowed`：该场景下该 action 是否允许（true=allow，false=not_allow）。
-- **可选**：`reason` 等说明。
+- **主键**：`rule_id`（VARCHAR, not_null, regex:`^[a-z0-9_\-]+$`，格式为 `{scenario_id}_{action_id}`）
+- **属性**：
+
+| Property | Type | Constraint | 说明 |
+|----------|------|------------|------|
+| rule_id | VARCHAR | not_null; regex | 规则唯一标识（主键） |
+| scenario_id | VARCHAR | not_null; regex | 适用场景 ID |
+| action_id | VARCHAR | not_null; regex | 涉及的 Action ID |
+| allowed | bool | not_null | 该场景下该 action 是否允许 |
+| reason | TEXT | | 原因说明 |
+
 - **语义**：一条规则即「在 scenario_id 下，对 action_id 的允许结果为 allowed」。评估时用规则实例列表（risk_rules）匹配当前 context 与待执行 action，得到 allow/not_allow。
 
 ### 2.4 Relation: rule_under_scenario
@@ -110,23 +125,161 @@ flowchart LR
 
 ---
 
-## 4. SDK 用法简述
+## 4. 具体示例
+
+以下示例均基于本目录中的实际数据（`data/risk_scenario.bknd`、`data/risk_rule.bknd`、`actions.bkn`）。
+
+### 4.1 示例一：月末封网 — 绝对阻断（not_allow）
+
+**场景**：2026-02-28 23:00，运维 AI 尝试重启 ERP 系统。
+
+| 要素 | 值 |
+|------|-----|
+| scenario_id | `sec_t_01` |
+| 场景名称 | SEC-T-01: 月末财务绝对封网 |
+| activation_rule | `day in [28,29,30] with hour>=23 on 28th; day 31 with hour<4` |
+| action_id | `restart_erp` |
+| 对应规则 | `sec_t_01_restart_erp`（allowed=**false**） |
+| **评估结果** | **not_allow** |
 
 ```python
 from bkn.loader import load_network
 from bkn.risk import evaluate_risk
 
 network = load_network("examples/risk/index.bkn")
-context = {"scenario_id": "prod_db"}
 
-# 无规则时默认 allow
-evaluate_risk(network, "restore_from_backup", context)  # -> "allow"
-
-# 传入规则实例后按规则判定
 risk_rules = [
-    {"scenario_id": "prod_db", "action_id": "restore_from_backup", "allowed": False},
+    {
+        "rule_id": "sec_t_01_restart_erp",
+        "scenario_id": "sec_t_01",
+        "action_id": "restart_erp",
+        "allowed": False,
+        "reason": "SEC-T-01: 月末财务绝对封网; control_action=absolute_block",
+    },
 ]
-evaluate_risk(network, "restore_from_backup", context, risk_rules=risk_rules)  # -> "not_allow"
+
+result = evaluate_risk(
+    network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules
+)
+assert result == "not_allow"
+```
+
+> 同一场景下 `restart_pod` 和 `ddl_alter` 也会被阻断（均有 allowed=false 的规则）。
+
+### 4.2 示例二：雪崩防波及 — 允许但需限流（allow）
+
+**场景**：AI 试图一次性重启超过 20% 的 K8s 节点。
+
+| 要素 | 值 |
+|------|-----|
+| scenario_id | `sec_c_02` |
+| 场景名称 | SEC-C-02: 雪崩防波及驱逐限制 |
+| action_id | `batch_restart_nodes` |
+| 对应规则 | `sec_c_02_batch_restart_nodes`（allowed=**true**） |
+| **评估结果** | **allow**（执行侧需按 reason 中的 `control_action=throttle` 限流） |
+
+```python
+risk_rules = [
+    {
+        "rule_id": "sec_c_02_batch_restart_nodes",
+        "scenario_id": "sec_c_02",
+        "action_id": "batch_restart_nodes",
+        "allowed": True,
+        "reason": "SEC-C-02: 雪崩防波及; control_action=throttle; auth_level=HotL",
+    },
+]
+
+result = evaluate_risk(
+    network, "batch_restart_nodes", {"scenario_id": "sec_c_02"}, risk_rules=risk_rules
+)
+assert result == "allow"
+```
+
+> `evaluate_risk` 返回 allow，但 reason 中携带 `control_action=throttle`，执行侧可据此做限流处理。
+
+### 4.3 示例三：跨网段红线 — 强拦截（not_allow）
+
+**场景**：AI 尝试开通办公网 → 生产网的防火墙白名单。
+
+| 要素 | 值 |
+|------|-----|
+| scenario_id | `sec_n_01` |
+| 场景名称 | SEC-N-01: 跨网段网络隔离红线 |
+| action_id | `open_firewall_rule` |
+| 对应规则 | `sec_n_01_open_firewall_rule`（allowed=**false**） |
+| **评估结果** | **not_allow** |
+
+```python
+risk_rules = [
+    {
+        "rule_id": "sec_n_01_open_firewall_rule",
+        "scenario_id": "sec_n_01",
+        "action_id": "open_firewall_rule",
+        "allowed": False,
+        "reason": "SEC-N-01: 跨网段网络隔离红线; control_action=direct_reject",
+    },
+]
+
+result = evaluate_risk(
+    network, "open_firewall_rule", {"scenario_id": "sec_n_01"}, risk_rules=risk_rules
+)
+assert result == "not_allow"
+```
+
+### 4.4 示例四：无规则匹配 — 默认放行（allow）
+
+**场景**：规则列表中没有当前 scenario + action 的条目。
+
+```python
+risk_rules = [
+    {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False},
+]
+
+# action_id 为 deploy_firmware，但规则中只有 sec_t_01 + restart_erp，不匹配
+result = evaluate_risk(
+    network, "deploy_firmware", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules
+)
+assert result == "allow"
+
+# 不传入任何规则时，也默认 allow
+result = evaluate_risk(network, "restart_erp", {"scenario_id": "sec_t_01"})
+assert result == "allow"
+```
+
+> 默认策略：无匹配规则 → allow。只有存在 `allowed=False` 的匹配规则才会返回 not_allow。
+
+### 4.5 示例五：批量加载规则实例
+
+实际使用中，规则通常从 `data/security_contract_rules.json` 或图库 API 批量加载，而非手动构造：
+
+```python
+import json
+from pathlib import Path
+
+rules_path = Path("examples/risk/data/security_contract_rules.json")
+raw_rules = json.loads(rules_path.read_text())
+
+risk_rules = [
+    {
+        "scenario_id": r["scenario_id"],
+        "action_id": r["action_id"],
+        "allowed": r["allowed"],
+        "reason": r.get("reason", ""),
+    }
+    for r in raw_rules
+]
+
+# 在 sec_p_01（Root/Admin 提权阻断）场景下尝试授予超级权限
+result = evaluate_risk(
+    network, "grant_root_admin", {"scenario_id": "sec_p_01"}, risk_rules=risk_rules
+)
+assert result == "not_allow"
+
+# 在 sec_d_03（核心商业机密防外泄）场景下查询敏感数据 — allowed=true，可执行但需脱敏
+result = evaluate_risk(
+    network, "query_sensitive_data", {"scenario_id": "sec_d_03"}, risk_rules=risk_rules
+)
+assert result == "allow"
 ```
 
 ---

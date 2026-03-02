@@ -9,7 +9,7 @@
 | 语言 | 状态 | 路径 |
 |------|------|------|
 | **Python** | 可用 | [sdk/python/](python/) |
-| **Golang** | 规划中 | [sdk/golang/](golang/) |
+| **Golang** | 可用 | [sdk/golang/](golang/) |
 
 ## Python SDK 用法
 
@@ -39,4 +39,9 @@ transformer.to_files(network, "output/")  # 或写入文件
 
 ## Golang SDK
 
-规划中，见 [golang/README.md](golang/README.md)。
+```bash
+cd sdk/golang
+go test ./bkn/... -v
+```
+
+详见 [golang/README.md](golang/README.md)。

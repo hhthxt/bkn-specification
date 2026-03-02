@@ -1,5 +1,7 @@
 # Risk Design (Tag-Based)
 
+**English**: [README.en.md](README.en.md)
+
 本示例展示基于 **tag** 的风险相关定义与 Action 的 **动态 risk 属性**（allow / not_allow）。
 
 ## 设计要点
@@ -55,12 +57,15 @@ from bkn.loader import load_network
 from bkn.risk import evaluate_risk
 
 network = load_network("examples/risk/index.bkn")
-result = evaluate_risk(network, action_id="restore_from_backup", context={"scenario_id": "prod_db"})
-# result == "allow" or "not_allow"
+
+# 无规则时默认 allow
+result = evaluate_risk(network, action_id="restart_erp", context={"scenario_id": "sec_t_01"})
+# result == "allow"
 
 # 传入规则实例（如从 security_contract_rules.json 加载）得到门控结果
-# risk_rules = [{"scenario_id": "sec_t_01", "action_id": "restart_pod", "allowed": False}, ...]
-# evaluate_risk(network, "restart_pod", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules)  # -> "not_allow"
+risk_rules = [{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False}]
+evaluate_risk(network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules)
+# -> "not_allow"
 ```
 
 风险类的设计与交互逻辑见 [risk.md](risk.md)。
