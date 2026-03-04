@@ -45,7 +45,7 @@ export default function Home() {
     const jsonData = {
       id: network.id,
       name: network.name,
-      entities: network.entities,
+      objects: network.objects,
       relations: network.relations,
       actions: network.actions,
     };

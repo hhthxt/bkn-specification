@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import type {
   BKNFile,
   BKNNetwork,
-  Entity,
+  BknObject,
   Relation,
   Action,
   DataProperty,
@@ -52,51 +52,48 @@ export function parseBKNFile(content: string, path: string): BKNFile {
 }
 
 /**
- * Parse all Entities from a network-type BKN file
+ * Parse all Objects from a network-type BKN file
  */
-function parseAllEntities(file: BKNFile): Entity[] {
-  const entities: Entity[] = [];
+function parseAllObjects(file: BKNFile): BknObject[] {
+  const objects: BknObject[] = [];
   
-  // Find all Entity sections: ## Entity: {id}
-  // Match from "## Entity: {id}" to next "##" or end of file
-  const entityPattern = /##\s+Entity:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Entity|Relation|Action|#\s+[^#])|$)/g;
+  // Find all Object sections: ## Object: {id}
+  const objectPattern = /##\s+Object:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Object|Relation|Action|#\s+[^#])|$)/g;
   let match;
   
-  while ((match = entityPattern.exec(file.content)) !== null) {
-    const entityId = match[1];
-    const entityContent = match[2].trim();
+  while ((match = objectPattern.exec(file.content)) !== null) {
+    const objectId = match[1];
+    const objectContent = match[2].trim();
     
-    // Create a temporary file-like object for this entity section
-    const entityFile: BKNFile = {
+    const objectFile: BKNFile = {
       ...file,
-      content: entityContent,
+      content: objectContent,
       frontmatter: {
         ...file.frontmatter,
-        id: entityId,
-        type: 'entity',
+        id: objectId,
+        type: 'object',
       },
     };
     
-    const entity = parseEntityFromContent(entityFile, entityId);
-    if (entity) {
-      entities.push(entity);
+    const obj = parseObjectFromContent(objectFile, objectId);
+    if (obj) {
+      objects.push(obj);
     }
   }
   
-  return entities;
+  return objects;
 }
 
 /**
- * Parse Entity from content (internal helper)
+ * Parse Object from content (internal helper)
  */
-function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null {
-  // Extract name from content: **Name** - description
+function parseObjectFromContent(file: BKNFile, objectId: string): BknObject | null {
   const nameMatch = file.content.match(/\*\*([^*]+)\*\*\s*-\s*([^\n]+)/);
-  const entityName = nameMatch ? nameMatch[1].trim() : entityId;
+  const objectName = nameMatch ? nameMatch[1].trim() : objectId;
 
-  const entity: Entity = {
-    id: entityId,
-    name: entityName,
+  const obj: BknObject = {
+    id: objectId,
+    name: objectName,
     filePath: file.path,
     network: file.frontmatter.network,
     namespace: file.frontmatter.namespace,
@@ -104,10 +101,9 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
     tags: file.frontmatter.tags,
   };
 
-  // Parse description (first paragraph after title)
   const descMatch = file.content.match(/\*\*[^*]+\*\*\s*-\s*([^\n]+)/);
   if (descMatch) {
-    entity.description = descMatch[1].trim();
+    obj.description = descMatch[1].trim();
   }
 
   // Parse data source table (## or ### section level)
@@ -115,7 +111,7 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
   if (dataSourceMatch) {
     const table = parseTable(dataSourceMatch[1]);
     if (table.length > 0 && (table[0]['Type'] || table[0]['类型'])) {
-      entity.dataSource = {
+      obj.dataSource = {
         type: table[0]['Type'] || table[0]['类型'] || '',
         id: table[0]['ID'] || table[0]['id'] || '',
         name: table[0]['Name'] || table[0]['名称'] || table[0]['name'],
@@ -126,12 +122,12 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
   // Parse primary key and display key from quote block (both English and Chinese)
   const quoteMatch = file.content.match(/>\s*\*\*(?:Primary Key|主键)\*\*:\s*`([^`]+)`\s*\|\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
   if (quoteMatch) {
-    entity.primaryKey = quoteMatch[1];
-    entity.displayKey = quoteMatch[2];
+    obj.primaryKey = quoteMatch[1];
+    obj.displayKey = quoteMatch[2];
   } else {
     const altMatch = file.content.match(/>\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
     if (altMatch) {
-      entity.displayKey = altMatch[1];
+      obj.displayKey = altMatch[1];
     }
   }
 
@@ -139,7 +135,7 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
   const dataPropsMatch = file.content.match(/#{2,3}\s+(?:Data Properties|数据属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (dataPropsMatch) {
     const table = parseTable(dataPropsMatch[1]);
-    entity.dataProperties = table.map((row) => ({
+    obj.dataProperties = table.map((row) => ({
       name: row['Property'] || row['属性名'] || row['property_name'] || '',
       displayName: row['Display Name'] || row['显示名'] || row['display_name'],
       type: row['Type'] || row['类型'] || row['type'],
@@ -153,7 +149,7 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
   const propsMatch = file.content.match(/#{2,3}\s+(?:Property Override|属性覆盖)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|\n####\s|$)/);
   if (propsMatch) {
     const table = parseTable(propsMatch[1]);
-    entity.properties = table.map((row) => ({
+    obj.properties = table.map((row) => ({
       name: row['Property'] || row['属性名'] || row['property_name'] || '',
       displayName: row['Display Name'] || row['显示名'] || row['display_name'],
       type: row['Type'] || row['类型'] || row['type'],
@@ -217,33 +213,33 @@ function parseEntityFromContent(file: BKNFile, entityId: string): Entity | null 
     }
 
     if (logicProps.length > 0) {
-      entity.logicProperties = logicProps;
+      obj.logicProperties = logicProps;
     }
   }
 
-  return entity;
+  return obj;
 }
 
 /**
- * Parse Entity from BKN file (single entity file format)
+ * Parse Object from BKN file (single object file format)
  */
-function parseEntity(file: BKNFile): Entity | null {
-  if (file.frontmatter.type !== 'entity' && file.frontmatter.type !== 'network' && file.frontmatter.type !== 'fragment') {
+function parseObject(file: BKNFile): BknObject | null {
+  if (file.frontmatter.type !== 'object' && file.frontmatter.type !== 'network' && file.frontmatter.type !== 'fragment') {
     return null;
   }
 
-  const entityId = file.frontmatter.id;
-  if (!entityId) {
-    // Try to extract from content: ## Entity: {id}
-    const match = file.content.match(/^##\s+Entity:\s+(\w+)/m);
+  const objectId = file.frontmatter.id;
+  if (!objectId) {
+    // Try to extract from content: ## Object: {id}
+    const match = file.content.match(/^##\s+Object:\s+(\w+)/m);
     if (!match) return null;
-    return parseEntityFromContent(file, match[1]);
+    return parseObjectFromContent(file, match[1]);
   }
 
-  // For single entity files, parse directly from frontmatter + content
-  const entity: Entity = {
-    id: entityId,
-    name: file.frontmatter.name || entityId,
+  // For single object files, parse directly from frontmatter + content
+  const obj: BknObject = {
+    id: objectId,
+    name: file.frontmatter.name || objectId,
     filePath: file.path,
     network: file.frontmatter.network,
     namespace: file.frontmatter.namespace,
@@ -257,7 +253,7 @@ function parseEntity(file: BKNFile): Entity | null {
   if (dataSourceMatch) {
     const table = parseTable(dataSourceMatch[1]);
     if (table.length > 0 && (table[0]['Type'] || table[0]['类型'])) {
-      entity.dataSource = {
+      obj.dataSource = {
         type: table[0]['Type'] || table[0]['类型'] || '',
         id: table[0]['ID'] || table[0]['id'] || '',
         name: table[0]['Name'] || table[0]['名称'] || table[0]['name'],
@@ -268,15 +264,15 @@ function parseEntity(file: BKNFile): Entity | null {
   // Parse primary key and display key from quote block (both English and Chinese)
   const quoteMatch = file.content.match(/>\s*\*\*(?:Primary Key|主键)\*\*:\s*`([^`]+)`\s*\|\s*\*\*(?:Display Key|显示属性)\*\*:\s*`([^`]+)`/);
   if (quoteMatch) {
-    entity.primaryKey = quoteMatch[1];
-    entity.displayKey = quoteMatch[2];
+    obj.primaryKey = quoteMatch[1];
+    obj.displayKey = quoteMatch[2];
   }
 
   // Parse data properties table (## or ### in single-file)
   const dataPropsMatch = file.content.match(/#{2,3}\s+(?:Data Properties|数据属性)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (dataPropsMatch) {
     const table = parseTable(dataPropsMatch[1]);
-    entity.dataProperties = table.map((row) => ({
+    obj.dataProperties = table.map((row) => ({
       name: row['Property'] || row['属性名'] || row['property_name'] || '',
       displayName: row['Display Name'] || row['显示名'] || row['display_name'],
       type: row['Type'] || row['类型'] || row['type'],
@@ -290,7 +286,7 @@ function parseEntity(file: BKNFile): Entity | null {
   const propsMatch = file.content.match(/#{2,3}\s+(?:Property Override|属性覆盖)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (propsMatch) {
     const table = parseTable(propsMatch[1]);
-    entity.properties = table.map((row) => ({
+    obj.properties = table.map((row) => ({
       name: row['Property'] || row['属性名'] || row['property_name'] || '',
       displayName: row['Display Name'] || row['显示名'] || row['display_name'],
       type: row['Type'] || row['类型'] || row['type'],
@@ -343,10 +339,10 @@ function parseEntity(file: BKNFile): Entity | null {
       logicProps.push(prop);
     }
 
-    if (logicProps.length > 0) entity.logicProperties = logicProps;
+    if (logicProps.length > 0) obj.logicProperties = logicProps;
   }
 
-  return entity;
+  return obj;
 }
 
 /**
@@ -356,14 +352,13 @@ function parseAllRelations(file: BKNFile): Relation[] {
   const relations: Relation[] = [];
   
   // Find all Relation sections: ## Relation: {id}
-  const relationPattern = /##\s+Relation:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Entity|Relation|Action|#\s+[^#])|$)/g;
+  const relationPattern = /##\s+Relation:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Object|Relation|Action|#\s+[^#])|$)/g;
   let match;
   
   while ((match = relationPattern.exec(file.content)) !== null) {
     const relationId = match[1];
     const relationContent = match[2].trim();
     
-    // Create a temporary file-like object for this relation section
     const relationFile: BKNFile = {
       ...file,
       content: relationContent,
@@ -387,7 +382,6 @@ function parseAllRelations(file: BKNFile): Relation[] {
  * Parse Relation from content (internal helper)
  */
 function parseRelationFromContent(file: BKNFile, relationId: string): Relation | null {
-  // Extract name from content: **Name** - description
   const nameMatch = file.content.match(/\*\*([^*]+)\*\*\s*-\s*([^\n]+)/);
   const relationName = nameMatch ? nameMatch[1].trim() : relationId;
 
@@ -403,7 +397,6 @@ function parseRelationFromContent(file: BKNFile, relationId: string): Relation |
     type: 'direct',
   };
 
-  // Parse description
   const descMatch = file.content.match(/\*\*[^*]+\*\*\s*-\s*([^\n]+)/);
   if (descMatch) {
     relation.description = descMatch[1].trim();
@@ -498,7 +491,6 @@ function parseRelation(file: BKNFile): Relation | null {
   if (mappingMatch) {
     const table = parseTable(mappingMatch[1]);
     relation.mappingRules = table.map((row) => {
-      // Handle various header formats
       const sourceKey = Object.keys(row).find(k => k.includes('起点'));
       const targetKey = Object.keys(row).find(k => k.includes('终点'));
       return {
@@ -518,14 +510,13 @@ function parseAllActions(file: BKNFile): Action[] {
   const actions: Action[] = [];
   
   // Find all Action sections: ## Action: {id}
-  const actionPattern = /##\s+Action:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Entity|Relation|Action|#\s+[^#])|$)/g;
+  const actionPattern = /##\s+Action:\s+(\w+)([\s\S]*?)(?=\n##\s+(?:Object|Relation|Action|#\s+[^#])|$)/g;
   let match;
   
   while ((match = actionPattern.exec(file.content)) !== null) {
     const actionId = match[1];
     const actionContent = match[2].trim();
     
-    // Create a temporary file-like object for this action section
     const actionFile: BKNFile = {
       ...file,
       content: actionContent,
@@ -549,7 +540,6 @@ function parseAllActions(file: BKNFile): Action[] {
  * Parse Action from content (internal helper)
  */
 function parseActionFromContent(file: BKNFile, actionId: string): Action | null {
-  // Extract name from content: **Name** - description
   const nameMatch = file.content.match(/\*\*([^*]+)\*\*\s*-\s*([^\n]+)/);
   const actionName = nameMatch ? nameMatch[1].trim() : actionId;
 
@@ -560,25 +550,24 @@ function parseActionFromContent(file: BKNFile, actionId: string): Action | null 
     network: file.frontmatter.network,
     namespace: file.frontmatter.namespace,
     owner: file.frontmatter.owner,
-    entityId: '',
+    objectId: '',
     actionType: file.frontmatter.action_type || 'modify',
     enabled: file.frontmatter.enabled,
     risk_level: file.frontmatter.risk_level,
     requires_approval: file.frontmatter.requires_approval,
   };
 
-  // Parse description
   const descMatch = file.content.match(/\*\*[^*]+\*\*\s*-\s*([^\n]+)/);
   if (descMatch) {
     action.description = descMatch[1].trim();
   }
 
-  // Parse binding entity table (Bound Entity/Action Type or 绑定实体/行动类型)
-  const bindingMatch = file.content.match(/\|\s*(?:Bound Entity|绑定实体)\s*\|\s*(?:Action Type|行动类型)\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
+  // Parse binding object table (Bound Object/Action Type or 绑定对象/行动类型)
+  const bindingMatch = file.content.match(/\|\s*(?:Bound Object|绑定对象)\s*\|\s*(?:Action Type|行动类型)\s*\|[\s\S]*?(?=\n###|\n##|\n\n|$)/);
   if (bindingMatch) {
     const table = parseTable(bindingMatch[0]);
     if (table.length > 0) {
-      action.entityId = table[0]['Bound Entity'] || table[0]['绑定实体'] || table[0]['entity_id'] || '';
+      action.objectId = table[0]['Bound Object'] || table[0]['绑定对象'] || table[0]['object_id'] || '';
       action.actionType = (table[0]['Action Type'] || table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
     }
   }
@@ -592,7 +581,6 @@ function parseActionFromContent(file: BKNFile, actionId: string): Action | null 
         action.condition = cond.condition as Condition;
       }
     } catch (e) {
-      // Fallback: parse from markdown
       const condText = conditionMatch[1];
       const fieldMatch = condText.match(/field:\s*(.+)/);
       const opMatch = condText.match(/operation:\s*(.+)/);
@@ -664,7 +652,7 @@ function parseActionFromContent(file: BKNFile, actionId: string): Action | null 
     }));
   }
 
-  return action.entityId ? action : null;
+  return action.objectId ? action : null;
 }
 
 /**
@@ -690,7 +678,7 @@ function parseAction(file: BKNFile): Action | null {
     network: file.frontmatter.network,
     namespace: file.frontmatter.namespace,
     owner: file.frontmatter.owner,
-    entityId: '',
+    objectId: '',
     actionType: file.frontmatter.action_type || 'modify',
     enabled: file.frontmatter.enabled,
     risk_level: file.frontmatter.risk_level,
@@ -698,12 +686,12 @@ function parseAction(file: BKNFile): Action | null {
     description: file.frontmatter.description,
   };
 
-  // Parse binding entity table (## or ### section level)
-  const bindingMatch = file.content.match(/#{2,3}\s+(?:Bound Entity|绑定实体)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
+  // Parse binding object table (## or ### section level)
+  const bindingMatch = file.content.match(/#{2,3}\s+(?:Bound Object|绑定对象)\s*\n+([\s\S]*?)(?=\n#{2,3}\s|$)/);
   if (bindingMatch) {
     const table = parseTable(bindingMatch[1]);
     if (table.length > 0) {
-      action.entityId = table[0]['Bound Entity'] || table[0]['绑定实体'] || table[0]['entity_id'] || '';
+      action.objectId = table[0]['Bound Object'] || table[0]['绑定对象'] || table[0]['object_id'] || '';
       action.actionType = (table[0]['Action Type'] || table[0]['行动类型'] || table[0]['action_type'] || action.actionType) as 'add' | 'modify' | 'delete';
     }
   }
@@ -788,7 +776,7 @@ function parseAction(file: BKNFile): Action | null {
     }));
   }
 
-  return action.entityId ? action : null;
+  return action.objectId ? action : null;
 }
 
 /**
@@ -860,7 +848,7 @@ export function parseBKNNetwork(files: BKNFile[]): BKNNetwork {
   const network: BKNNetwork = {
     id: '',
     name: '',
-    entities: [],
+    objects: [],
     relations: [],
     actions: [],
     files: [],
@@ -878,25 +866,23 @@ export function parseBKNNetwork(files: BKNFile[]): BKNNetwork {
     network.files.push(file);
     const fileType = file.frontmatter.type;
 
-    // For network-type or fragment-type files, parse all entities, relations, and actions
+    // For network-type or fragment-type files, parse all objects, relations, and actions
     if (fileType === 'network' || fileType === 'fragment') {
-      const entities = parseAllEntities(file);
+      const objects = parseAllObjects(file);
       const relations = parseAllRelations(file);
       const actions = parseAllActions(file);
-      network.entities.push(...entities);
+      network.objects.push(...objects);
       network.relations.push(...relations);
       network.actions.push(...actions);
     } else {
       // For single-type files, parse one of each type
-      // Parse entities
-      if (fileType === 'entity') {
-        const entity = parseEntity(file);
-        if (entity) {
-          network.entities.push(entity);
+      if (fileType === 'object') {
+        const obj = parseObject(file);
+        if (obj) {
+          network.objects.push(obj);
         }
       }
 
-      // Parse relations
       if (fileType === 'relation') {
         const relation = parseRelation(file);
         if (relation) {
@@ -904,7 +890,6 @@ export function parseBKNNetwork(files: BKNFile[]): BKNNetwork {
         }
       }
 
-      // Parse actions
       if (fileType === 'action') {
         const action = parseAction(file);
         if (action) {

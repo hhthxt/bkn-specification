@@ -173,7 +173,7 @@ export function FileTree({ onFileSelect }: FileTreeProps) {
       
       // Create empty BKN file with basic structure
       const content = `---
-type: entity
+type: object
 id: ${name.replace('.bkn', '')}
 name: ${name.replace('.bkn', '')}
 ---
@@ -182,7 +182,7 @@ name: ${name.replace('.bkn', '')}
 
 描述...
 
-## Entity: ${name.replace('.bkn', '')}
+## Object: ${name.replace('.bkn', '')}
 
 **${name.replace('.bkn', '')}** - 描述
 
@@ -210,7 +210,7 @@ name: ${name.replace('.bkn', '')}
     switch (fileType) {
       case 'network':
         return <Network className="h-4 w-4 text-blue-500" />;
-      case 'entity':
+      case 'object':
         return <FileText className="h-4 w-4 text-green-500" />;
       case 'relation':
         return <GitBranch className="h-4 w-4 text-purple-500" />;

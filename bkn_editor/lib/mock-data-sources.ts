@@ -194,6 +194,6 @@ export function getMockDataSource(dataSourceId: string): MockDataSource | undefi
 }
 
 // Helper function to get mock logic property data
-export function getMockLogicPropertyData(entityId: string, propertyName: string): any | undefined {
-  return mockLogicPropertyData[entityId]?.[propertyName]?.sampleValue;
+export function getMockLogicPropertyData(objectId: string, propertyName: string): any | undefined {
+  return mockLogicPropertyData[objectId]?.[propertyName]?.sampleValue;
 }

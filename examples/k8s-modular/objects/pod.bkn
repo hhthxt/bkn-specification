@@ -1,5 +1,5 @@
 ---
-type: entity
+type: object
 id: pod
 name: Pod实例
 version: 1.0.0
@@ -7,7 +7,7 @@ network: k8s-modular
 tags: [拓扑架构, 容器, Kubernetes]
 ---
 
-## Entity: pod
+## Object: pod
 
 Kubernetes 中的最小部署单元，一个或多个容器的集合。
 

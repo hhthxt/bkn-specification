@@ -7,9 +7,9 @@ Go SDK for parsing, validating, and transforming BKN files. Provides feature par
 Implemented. The Go SDK supports:
 
 - Parse `.bkn` and `.bknd` files (YAML frontmatter + Markdown body)
-- Structured models for Entity, Relation, Action, DataTable
+- Structured models for BknObject, Relation, Action, DataTable
 - Network loading with `includes` resolution (cycle detection)
-- Data validation against Entity schema (not_null, regex, in, range, type checks, PK uniqueness)
+- Data validation against object schema (not_null, regex, in, range, type checks, PK uniqueness)
 - Serialization to `.bknd` format
 - Risk evaluation (`EvaluateRisk`)
 
@@ -78,8 +78,8 @@ func main() {
         panic(err)
     }
 
-    // Access entities, relations, actions, data tables
-    entities := net.AllEntities()
+    // Access objects, relations, actions, data tables
+    objects := net.AllObjects()
     tables := net.AllDataTables()
 
     // Validate data against schema
@@ -105,11 +105,11 @@ func main() {
 |----------|-------------|
 | `Parse(text, sourcePath)` | Parse .bkn/.bknd content into BknDocument |
 | `ParseFrontmatter(text)` | Parse YAML frontmatter only |
-| `ParseBody(text)` | Parse Markdown body into Entity/Relation/Action lists |
+| `ParseBody(text)` | Parse Markdown body into Object/Relation/Action lists |
 | `ParseDataTables(text, fm, sourcePath)` | Parse .bknd data tables |
 | `Load(path)` | Load single file from disk |
 | `LoadNetwork(rootPath)` | Load network with includes resolution |
-| `ValidateDataTable(table, schema, network)` | Validate DataTable against Entity schema |
+| `ValidateDataTable(table, schema, network)` | Validate DataTable against object schema |
 | `ValidateNetworkData(network)` | Validate all DataTables in network |
 | `ToBknd(opts)` | Serialize rows to .bknd format |
 | `ToBkndFromTable(table, network, source)` | Serialize DataTable to .bknd |

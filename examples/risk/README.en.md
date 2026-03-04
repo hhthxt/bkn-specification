@@ -6,8 +6,8 @@ This example demonstrates **tag-based** risk definitions and the **dynamic risk 
 
 ## Design Highlights
 
-1. **Built-in tag `__risk__`**: `__risk__` is a reserved tag for entities/relations participating in built-in risk assessment; users must not use it. Marked via `- **Tags**: __risk__`; users may define custom risk classes with other tags and their own evaluation functions.
-2. **Action risk attribute**: Actions have a runtime/computed attribute `risk`, with values `allow` | `not_allow` | `unknown`, computed by the **SDK risk module** from the current scenario and risk-tagged entity/relation data; it is not stored in BKN files. Returns `unknown` when no rules are provided or no rule matches, leaving the decision to the caller's business policy.
+1. **Built-in tag `__risk__`**: `__risk__` is a reserved tag for objects/relations participating in built-in risk assessment; users must not use it. Marked via `- **Tags**: __risk__`; users may define custom risk classes with other tags and their own evaluation functions.
+2. **Action risk attribute**: Actions have a runtime/computed attribute `risk`, with values `allow` | `not_allow` | `unknown`, computed by the **SDK risk module** from the current scenario and risk-tagged object/relation data; it is not stored in BKN files. Returns `unknown` when no rules are provided or no rule matches, leaving the decision to the caller's business policy.
 3. **Risk evaluation module**: The SDK provides `bkn.risk.evaluate_risk(network, action_id, context)` to determine whether an action is allowed in a given scenario (context).
 
 ## Directory Structure
@@ -18,7 +18,7 @@ examples/risk/
 ├── README.en.md        # This readme (English)
 ├── risk.md             # Risk design and interaction logic
 ├── index.bkn           # Network entry (aggregates risk-fragment + actions)
-├── risk-fragment.bkn   # Entity examples with Tags: __risk__
+├── risk-fragment.bkn   # Object examples with Tags: __risk__
 ├── actions.bkn         # Action definitions (e.g. restart_erp)
 ├── data/
 │   ├── *.bknd                         # risk_scenario / risk_rule instance data

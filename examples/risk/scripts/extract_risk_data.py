@@ -51,7 +51,7 @@ def _escape_cell(value: str) -> str:
 def _write_bknd(
     out_path: Path,
     network: str,
-    entity_id: str,
+    object_id: str,
     columns: list[str],
     rows: list[dict[str, str]],
     source: str,
@@ -59,12 +59,12 @@ def _write_bknd(
     header = [
         "---",
         "type: data",
-        f"entity: {entity_id}",
+        f"object: {object_id}",
         f"network: {network}",
         f"source: {source}",
         "---",
         "",
-        f"# {entity_id}",
+        f"# {object_id}",
         "",
     ]
     table_header = "| " + " | ".join(columns) + " |"
@@ -181,7 +181,7 @@ def convert(
     _write_bknd(
         out_path=output_dir / "risk_scenario.bknd",
         network=network,
-        entity_id="risk_scenario",
+        object_id="risk_scenario",
         columns=SCENARIO_COLUMNS,
         rows=scenario_rows,
         source=source,
@@ -189,7 +189,7 @@ def convert(
     _write_bknd(
         out_path=output_dir / "risk_rule.bknd",
         network=network,
-        entity_id="risk_rule",
+        object_id="risk_rule",
         columns=RULE_COLUMNS,
         rows=rule_rows,
         source=source,

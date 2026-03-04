@@ -1,4 +1,4 @@
-"""Validate .bknd DataTable rows against Entity/Relation schema definitions.
+"""Validate .bknd DataTable rows against Object/Relation schema definitions.
 
 Checks performed:
   1. Column match   — .bknd columns vs Data Properties names
@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from bkn.models import BknNetwork, DataProperty, DataTable, Entity
+from bkn.models import BknNetwork, BknObject, DataProperty, DataTable
 
 
 @dataclass
@@ -223,29 +223,29 @@ def _check_cell(
 
 def validate_data_table(
     table: DataTable,
-    schema: Entity | None = None,
+    schema: BknObject | None = None,
     network: BknNetwork | None = None,
 ) -> ValidationResult:
-    """Validate a DataTable against its Entity schema.
+    """Validate a DataTable against its Object schema.
 
     Args:
         table: Parsed DataTable from a .bknd file.
-        schema: Entity definition to validate against. If not provided,
-            will be looked up from *network* by table.entity_or_relation.
+        schema: Object definition to validate against. If not provided,
+            will be looked up from *network* by table.object_or_relation.
         network: BknNetwork to look up schema from (used when schema is None).
 
     Returns:
         ValidationResult with any errors found.
     """
     result = ValidationResult()
-    table_name = table.entity_or_relation or table.source_path
+    table_name = table.object_or_relation or table.source_path
 
     if table.is_relation:
         return result
 
     if schema is None and network is not None:
         schema = next(
-            (e for e in network.all_entities if e.id == table.entity_or_relation),
+            (e for e in network.all_objects if e.id == table.object_or_relation),
             None,
         )
 
@@ -253,7 +253,7 @@ def validate_data_table(
         result.errors.append(ValidationError(
             table=table_name, row=None, column="",
             code="no_schema",
-            message=f"no Entity schema found for '{table.entity_or_relation}'",
+            message=f"no Object schema found for '{table.object_or_relation}'",
         ))
         return result
 
@@ -265,7 +265,7 @@ def validate_data_table(
         result.errors.append(ValidationError(
             table=table_name, row=None, column=col,
             code="extra_column",
-            message=f"column '{col}' not defined in Entity schema",
+            message=f"column '{col}' not defined in Object schema",
         ))
 
     missing_cols = [p for p in schema_prop_names if p not in table.columns]
@@ -304,7 +304,7 @@ def validate_data_table(
 
 
 def validate_network_data(network: BknNetwork) -> ValidationResult:
-    """Validate all DataTables in a network against their Entity schemas.
+    """Validate all DataTables in a network against their Object schemas.
 
     Args:
         network: Loaded BknNetwork with schema definitions and data tables.

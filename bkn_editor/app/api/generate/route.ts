@@ -12,7 +12,7 @@ function loadSpecForLLM(): string {
   }
   return `# BKN 规范
 生成符合 BKN 格式的 Markdown。文件结构：YAML Frontmatter + Markdown Body。
-类型：entity / relation / action。ID 小写+下划线，显示名用中文。
+类型：object / relation / action。ID 小写+下划线，显示名用中文。
 输出仅含 BKN 内容，勿用 \`\`\`markdown 包裹。`;
 }
 
@@ -45,7 +45,7 @@ ${dataSourcesSummary || '（无）'}
 ${existingFilesContext || '（无）'}${currentFileContext}
 
 ### 生成要求
-根据用户请求和上述规范生成 BKN 内容。引用实体/关系时使用项目中已有的 ID。`;
+根据用户请求和上述规范生成 BKN 内容。引用对象/关系时使用项目中已有的 ID。`;
 }
 
 type AIProvider = 'openai' | 'anthropic';

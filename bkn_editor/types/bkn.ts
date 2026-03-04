@@ -1,6 +1,6 @@
 // BKN Type Definitions
 
-export type BKNFileType = 'network' | 'entity' | 'relation' | 'action' | 'fragment' | 'delete';
+export type BKNFileType = 'network' | 'object' | 'relation' | 'action' | 'fragment' | 'delete';
 
 export interface BKNFile {
   path: string;
@@ -27,7 +27,7 @@ export interface BKNFrontmatter {
   requires_approval?: boolean;
   // Delete-specific fields
   targets?: Array<{
-    entity?: string;
+    object?: string;
     relation?: string;
     action?: string;
   }>;
@@ -36,13 +36,13 @@ export interface BKNFrontmatter {
 export interface BKNNetwork {
   id: string;
   name: string;
-  entities: Entity[];
+  objects: BknObject[];
   relations: Relation[];
   actions: Action[];
   files: BKNFile[];
 }
 
-export interface Entity {
+export interface BknObject {
   id: string;
   name: string;
   filePath: string;
@@ -106,8 +106,8 @@ export interface Relation {
   namespace?: string;
   owner?: string;
   description?: string;
-  source: string; // entity id
-  target: string; // entity id
+  source: string; // object id
+  target: string; // object id
   type: 'direct' | 'data_view';
   mappingRules?: MappingRule[];
   dataView?: {
@@ -132,7 +132,7 @@ export interface Action {
   namespace?: string;
   owner?: string;
   description?: string;
-  entityId: string; // 绑定的实体
+  objectId: string; // 绑定的对象
   actionType: 'add' | 'modify' | 'delete';
   enabled?: boolean;
   risk_level?: 'low' | 'medium' | 'high';
@@ -203,9 +203,9 @@ export interface LegacyStoredData {
 // Graph visualization types
 export interface GraphNode {
   id: string;
-  type: 'entity' | 'action';
+  type: 'object' | 'action';
   label: string;
-  data: Entity | Action;
+  data: BknObject | Action;
   position?: { x: number; y: number };
 }
 

@@ -8,7 +8,7 @@ import (
 
 // ToBkndOptions holds options for serializing to .bknd format.
 type ToBkndOptions struct {
-	EntityID   string
+	ObjectID   string
 	RelationID string
 	Rows       []map[string]interface{}
 	Network    string
@@ -37,11 +37,11 @@ func rowToStringMap(row map[string]string) map[string]interface{} {
 
 // ToBknd serializes structured data to .bknd Markdown format.
 func ToBknd(opts ToBkndOptions) (string, error) {
-	if opts.EntityID != "" && opts.RelationID != "" {
-		return "", errors.New("specify either entity_id or relation_id, not both")
+	if opts.ObjectID != "" && opts.RelationID != "" {
+		return "", errors.New("specify either object_id or relation_id, not both")
 	}
-	if opts.EntityID == "" && opts.RelationID == "" {
-		return "", errors.New("specify either entity_id or relation_id")
+	if opts.ObjectID == "" && opts.RelationID == "" {
+		return "", errors.New("specify either object_id or relation_id")
 	}
 	if opts.Rows == nil {
 		opts.Rows = []map[string]interface{}{}
@@ -50,7 +50,7 @@ func ToBknd(opts ToBkndOptions) (string, error) {
 	targetID := opts.RelationID
 	isRelation := opts.RelationID != ""
 	if targetID == "" {
-		targetID = opts.EntityID
+		targetID = opts.ObjectID
 	}
 
 	columns := opts.Columns
@@ -70,7 +70,7 @@ func ToBknd(opts ToBkndOptions) (string, error) {
 	if isRelation {
 		fmLines = append(fmLines, "relation: "+opts.RelationID)
 	} else {
-		fmLines = append(fmLines, "entity: "+opts.EntityID)
+		fmLines = append(fmLines, "object: "+opts.ObjectID)
 	}
 	if opts.Source != "" {
 		fmLines = append(fmLines, "source: "+opts.Source)
@@ -121,7 +121,7 @@ func ToBkndFromTable(table *DataTable, network, source string) (string, error) {
 	}
 	if table.IsRelation {
 		return ToBknd(ToBkndOptions{
-			RelationID: table.EntityOrRelation,
+			RelationID: table.ObjectOrRelation,
 			Rows:       rows,
 			Network:    net,
 			Source:     source,
@@ -129,7 +129,7 @@ func ToBkndFromTable(table *DataTable, network, source string) (string, error) {
 		})
 	}
 	return ToBknd(ToBkndOptions{
-		EntityID: table.EntityOrRelation,
+		ObjectID: table.ObjectOrRelation,
 		Rows:     rows,
 		Network:  net,
 		Source:   source,

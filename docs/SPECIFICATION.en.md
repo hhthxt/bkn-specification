@@ -5,7 +5,7 @@ spec_version: 1.0.0
 
 ## Overview
 
-BKN (Business Knowledge Network) is a declarative modeling language based on Markdown for defining entities, relations, and actions in business knowledge networks. BKN describes model structure and semantics only — runtime capabilities such as validation engines, data pipelines, and workflows are provided by platforms that consume BKN models.
+BKN (Business Knowledge Network) is a declarative modeling language based on Markdown for defining objects, relations, and actions in business knowledge networks. BKN describes model structure and semantics only — runtime capabilities such as validation engines, data pipelines, and workflows are provided by platforms that consume BKN models.
 
 This document defines the complete syntax specification for BKN.
 
@@ -17,16 +17,16 @@ This document defines the complete syntax specification for BKN.
 |------|---------|
 | BKN | Business Knowledge Network |
 | knowledge_network | The overall collection of a business knowledge network |
-| entity | Business object type (e.g., Pod/Node/Service) |
-| relation | Relationship type connecting two entities (e.g., belongs_to, routes_to) |
-| action | Operation definition on an entity (can bind to tool or mcp) |
+| object | Business object type (e.g., Pod/Node/Service) |
+| relation | Relationship type connecting two objects (e.g., belongs_to, routes_to) |
+| action | Operation definition on an object (can bind to tool or mcp) |
 
-**Entity Structure**
+**Object Structure**
 
 | Term | Meaning |
 |------|---------|
-| data_view | Data view; the data source an entity or relation maps to |
-| data_properties | Entity property definition table; declares field types, primary key, display key, etc. |
+| data_view | Data view; the data source an object or relation maps to |
+| data_properties | Object property definition table; declares field types, primary key, display key, etc. |
 | property_override | Property override; special configuration for inherited properties (index, constraint) |
 | logic_properties | Logic properties; derived fields from external sources (metric / operator) |
 | primary_key | Primary key field; uniquely identifies an instance (marked YES in Data Properties) |
@@ -52,7 +52,7 @@ This document defines the complete syntax specification for BKN.
 |------|---------|
 | frontmatter | YAML metadata block (wrapped in `---`) at the top of every .bkn file |
 | network | File type `type: network`; top-level container for a complete knowledge network |
-| fragment | File type `type: fragment`; mixed snippet containing multiple entity/relation/action definitions |
+| fragment | File type `type: fragment`; mixed snippet containing multiple object/relation/action definitions |
 | data | File type `type: data`; instance data file (recommended `.bknd` extension) |
 | delete | File type `type: delete`; explicitly declares definitions to be removed |
 | patch | File type `type: patch`; incremental modification to an existing file |
@@ -61,27 +61,27 @@ This document defines the complete syntax specification for BKN.
 
 ### Primitives (Canonical Section and Table Terms)
 
-The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / entity / relation / action / data).
+The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / object / relation / action / data).
 
 | Level | English (canonical) | Definition | Syntax |
 |:-----:|---------------------|------------|--------|
-| `#` | Entities | Section: all entity definitions in this file | `# Entities` |
+| `#` | Objects | Section: all object definitions in this file | `# Objects` |
 | `#` | Relations | Section: all relation definitions | `# Relations` |
 | `#` | Actions | Section: all action definitions | `# Actions` |
-| `##` | Entity | Individual entity definition | `## Entity: {id}` |
+| `##` | Object | Individual object definition | `## Object: {id}` |
 | `##` | Relation | Individual relation definition | `## Relation: {id}` |
 | `##` | Action | Individual action definition | `## Action: {id}` |
-| `###` | Data Source | The data view this entity maps from | `### Data Source` |
+| `###` | Data Source | The data view this object maps from | `### Data Source` |
 | `###` | Data Properties | Explicit list of fields (name, type, PK, index) | `### Data Properties` |
 | `###` | Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
 | `###` | Logic Properties | Derived fields: metric, operator | `### Logic Properties` |
-| `###` | Business Semantics | Human-readable meaning of the entity/relation | `### Business Semantics` |
+| `###` | Business Semantics | Human-readable meaning of the object/relation | `### Business Semantics` |
 | `###` | Endpoints | Relation endpoints: source, target, type | `### Endpoints` |
 | `###` | Mapping Rules | How source/target properties map | `### Mapping Rules` |
 | `###` | Mapping View | For data_view relations: the join view | `### Mapping View` |
-| `###` | Source Mapping | Map source entity props to view | `### Source Mapping` |
-| `###` | Target Mapping | Map view to target entity props | `### Target Mapping` |
-| `###` | Bound Entity | Entity this action operates on | `### Bound Entity` |
+| `###` | Source Mapping | Map source object props to view | `### Source Mapping` |
+| `###` | Target Mapping | Map view to target object props | `### Target Mapping` |
+| `###` | Bound Object | Object this action operates on | `### Bound Object` |
 | `###` | Trigger Condition | When to run (YAML condition) | `### Trigger Condition` |
 | `###` | Pre-conditions | Data conditions required before action execution | `### Pre-conditions` |
 | `###` | Tool Configuration | tool or MCP binding | `### Tool Configuration` |
@@ -93,7 +93,7 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | — | Display Key | Field used for UI label / search display | Data Properties table column |
 | — | Action Type | add \| modify \| delete | table column |
 
-Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Entity, Action Type; Entity, Check, Condition, Message; Object, Impact Description.
+Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Object, Action Type; Object, Check, Condition, Message; Object, Impact Description.
 
 ## File Format
 
@@ -125,9 +125,9 @@ version: 1.0.0
 
 Network description...
 
-## Entity: entity_id
+## Object: object_id
 
-Entity definition...
+Object definition...
 
 ## Relation: relation_id
 
@@ -149,8 +149,8 @@ To support scalable collaboration, approval, and audit, use the following fields
 | Field | Applicable type | Description |
 |-------|-----------------|-------------|
 | `spec_version` | all | Specification version used by this file (inherits document spec_version by default) |
-| `namespace` | entity/relation/action/fragment/delete | Namespace/package name for large-scale organization and conflict avoidance (e.g., `platform.k8s`) |
-| `owner` | entity/relation/action/fragment/delete | Owner/team (for audit and approval routing) |
+| `namespace` | object/relation/action/fragment/delete | Namespace/package name for large-scale organization and conflict avoidance (e.g., `platform.k8s`) |
+| `owner` | object/relation/action/fragment/delete | Owner/team (for audit and approval routing) |
 | `enabled` | action | Whether enabled (default `false` recommended; import does not imply enablement) |
 | `risk_level` | action | Risk level (`low|medium|high` for approval and release strategy) |
 | `requires_approval` | action | Whether approval is required to enable/execute |
@@ -160,11 +160,11 @@ To support scalable collaboration, approval, and audit, use the following fields
 | type | Description | Purpose |
 |------|-------------|---------|
 | `network` | Full knowledge network | Network file containing multiple definitions |
-| `entity` | Single entity definition | Standalone entity file, directly importable |
+| `object` | Single object definition | Standalone object file, directly importable |
 | `relation` | Single relation definition | Standalone relation file, directly importable |
 | `action` | Single action definition | Standalone action file, directly importable |
 | `fragment` | Mixed fragment | Contains multiple types of partial definitions |
-| `data` | Data file | Carries instance rows for entity/relation definitions (recommended `.bknd`) |
+| `data` | Data file | Carries instance rows for object/relation definitions (recommended `.bknd`) |
 | `delete` | Delete marker | Marks definitions to be deleted |
 
 ### Network File (type: network)
@@ -181,13 +181,13 @@ includes: [string]               # Optional, referenced files
 ---
 ```
 
-### Single Entity File (type: entity)
+### Single Object File (type: object)
 
 ```yaml
 ---
-type: entity                     # Single entity definition
-id: string                       # Entity ID, unique identifier
-name: string                     # Entity display name
+type: object                     # Single object definition
+id: string                       # Object ID, unique identifier
+name: string                     # Object display name
 version: string                  # Optional, version
 network: string                  # Network ID (recommended required for import determinism)
 namespace: string                # Optional, namespace/package
@@ -253,7 +253,7 @@ network: string                  # Target network ID (recommended required for i
 namespace: string                # Optional, namespace/package
 owner: string                    # Optional, owner/team
 targets:                         # Definitions to delete
-  - entity: pod
+  - object: pod
   - relation: pod_belongs_node
   - action: restart_pod
 ---
@@ -263,7 +263,7 @@ targets:                         # Definitions to delete
 
 ## Data Files (`.bknd` / `type: data`)
 
-`.bknd` files use the same Markdown syntax as `.bkn`, but the body carries instance rows instead of entity/relation/action definitions.
+`.bknd` files use the same Markdown syntax as `.bkn`, but the body carries instance rows instead of object/relation/action definitions.
 
 ### Frontmatter
 
@@ -271,19 +271,19 @@ targets:                         # Definitions to delete
 ---
 type: data
 network: recoverable-network
-entity: scenario            # mutually exclusive with relation
+object: scenario            # mutually exclusive with relation
 source: PFMEA模板.xlsx      # optional data provenance
 ---
 ```
 
 - `type` must be `data`
-- `entity` or `relation` must be set (mutually exclusive), pointing to an ID defined in `.bkn`
+- `object` or `relation` must be set (mutually exclusive), pointing to an ID defined in `.bkn`
 - `network` is recommended for consistency with schema files
 - `source` is optional provenance metadata
 
 ### Body
 
-Use one heading (`#` or `##`) plus one GFM table. Table headers should align with target entity Data Properties (or relation mapping fields).
+Use one heading (`#` or `##`) plus one GFM table. Table headers should align with target object Data Properties (or relation mapping fields).
 
 ```markdown
 # scenario
@@ -300,12 +300,12 @@ Use one heading (`#` or `##`) plus one GFM table. Table headers should align wit
 
 ---
 
-## Entity Definition Specification
+## Object Definition Specification
 
 ### Syntax
 
 ```markdown
-## Entity: {entity_id}
+## Object: {object_id}
 
 **{Display Name}** - {Brief description}
 
@@ -362,28 +362,28 @@ Example: `keyword(1024) + fulltext(standard) + vector(1951511856216674304)`
 
 | Parameter | Type | Source | Binding | Description |
 |-----------|------|--------|---------|-------------|
-| ... | string | property | {property_name} | Bind from entity property |
+| ... | string | property | {property_name} | Bind from object property |
 | ... | array | input | - | Runtime user input |
 | ... | string | const | {value} | Constant value |
 ```
 
 - `Type`: Parameter data type (e.g. string, number, boolean, array)
-- `Source`: Value source — `property` (entity property) / `input` (user input) / `const` (constant)
+- `Source`: Value source — `property` (object property) / `input` (user input) / `const` (constant)
 - `Binding`: When Source is property, the property name; when const, the constant value; when input, `-`
 
 ### Definition-Level Metadata
 
-In the header of a `## Entity:` or `## Relation:` definition (before `### Data Source` or `### Endpoints`), optional inline metadata lines may be used:
+In the header of a `## Object:` or `## Relation:` definition (before `### Data Source` or `### Endpoints`), optional inline metadata lines may be used:
 
 - **Tags**: Tag list for this definition (comma-separated), for categorization, filtering, and audit
 - **Owner**: Owner or team, for approval routing and audit
 
-In fragment or network files, multiple entities or relations may each have different tags and owner.
+In fragment or network files, multiple objects or relations may each have different tags and owner.
 
 ### Risk-Related Definitions
 
-- **Reserved tag**: **`__risk__`** is a built-in reserved tag used only for entities and relations that participate in the built-in risk assessment. **Users must not use `__risk__` for custom purposes**, to avoid conflicting with built-in behavior.
-- Add `- **Tags**: __risk__` in the definition header of entities and relations that participate in the built-in risk evaluation. AI applications and the built-in evaluator use this tag to identify risk-related definitions.
+- **Reserved tag**: **`__risk__`** is a built-in reserved tag used only for objects and relations that participate in the built-in risk assessment. **Users must not use `__risk__` for custom purposes**, to avoid conflicting with built-in behavior.
+- Add `- **Tags**: __risk__` in the definition header of objects and relations that participate in the built-in risk evaluation. AI applications and the built-in evaluator use this tag to identify risk-related definitions.
 - Actions have a **runtime/computed property** `risk` (see Action definition section), with values `allow` | `not_allow`, computed by the built-in or a user-provided risk evaluation function from the current scenario and data tagged with `__risk__`; it is **not written in BKN files**.
 
 **Openness**: Users may define **their own risk-like classes** (using **non-reserved** tags, e.g. `compliance`, `audit`) and **their own risk evaluation functions**; the built-in `__risk__` and default evaluator are one optional implementation and do not preclude extension or replacement.
@@ -392,7 +392,7 @@ In fragment or network files, multiple entities or relations may each have diffe
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| {entity_id} | YES | Entity unique ID, lowercase letters, digits, underscores |
+| {object_id} | YES | Object unique ID, lowercase letters, digits, underscores |
 | {display_name} | YES | Human-readable name |
 | Data Source | NO | Mapped data view; managed by the platform automatically when omitted |
 | Data Properties | YES | Property definitions; must mark Primary Key and Display Key |
@@ -431,7 +431,7 @@ The `Type` column in Data Properties tables uses the following standard types. T
 Map to view, declare only primary key and display key:
 
 ```markdown
-## Entity: node
+## Object: node
 
 **Node**
 
@@ -454,7 +454,7 @@ Map to view, declare only primary key and display key:
 Map to view, declare keys and configure properties needing special treatment:
 
 ```markdown
-## Entity: pod
+## Object: pod
 
 **Pod Instance**
 
@@ -483,7 +483,7 @@ Map to view, declare keys and configure properties needing special treatment:
 Declare all properties explicitly (with types, constraints, indexes):
 
 ```markdown
-## Entity: service
+## Object: service
 
 **Service**
 
@@ -518,7 +518,7 @@ Declare all properties explicitly (with types, constraints, indexes):
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|
-| {source_entity} | {target_entity} | direct \| data_view | YES \| NO | 0 | - |
+| {source} | {target} | direct \| data_view | YES \| NO | 0 | - |
 
 - `Required`: YES/NO, whether at least one relation must exist (from Source side)
 - `Min`: Minimum relation count, default 0
@@ -541,8 +541,8 @@ Declare all properties explicitly (with types, constraints, indexes):
 | Field | Required | Description |
 |-------|:--------:|-------------|
 | {relation_id} | YES | Relation unique identifier |
-| Source | YES | Source entity ID |
-| Target | YES | Target entity ID |
+| Source | YES | Source object ID |
+| Target | YES | Target object ID |
 | Type | YES | `direct` (direct mapping) or `data_view` (view mapping) |
 | Mapping Rules | YES | Property mapping relationship |
 | Required | NO | Whether at least one relation must exist (from Source side) |
@@ -612,9 +612,9 @@ Associate via intermediate view:
 
 **{Display Name}** - {Brief description}
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|--------------|
-| {entity_id} | add | modify | delete |
+| {object_id} | add | modify | delete |
 
 ### Trigger Condition
 
@@ -628,10 +628,10 @@ value: {value}
 
 (Optional) Data conditions required before execution; if not satisfied, action is blocked
 
-| Entity | Check | Condition | Message |
+| Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
-| {entity_id} | relation:{relation_id} | exist | Violation message |
-| {entity_id} | property:{property_name} | {op} {value} | Violation message |
+| {object_id} | relation:{relation_id} | exist | Violation message |
+| {object_id} | property:{property_name} | {op} {value} | Violation message |
 
 - `Check`: `property:{name}` or `relation:{id}`, specifies what to check
 - `Condition`: Reuses Trigger Condition operator syntax
@@ -687,7 +687,7 @@ Action definitions connect to execution surface (tool/mcp). For stability and se
 | Field | Required | Description |
 |-------|:--------:|-------------|
 | {action_id} | YES | Action unique identifier |
-| Bound Entity | YES | Target entity ID |
+| Bound Object | YES | Target object ID |
 | Action Type | YES | `add` / `modify` / `delete` |
 | Trigger Condition | NO | Conditions for automatic trigger |
 | Pre-conditions | NO | Data conditions required before execution |
@@ -718,7 +718,7 @@ These operators apply to Trigger Condition, Pre-conditions, and the Constraint c
 
 ### Constraint Column Syntax
 
-The `Constraint` column appears in the **Data Properties** and **Property Override** tables within an Entity definition. It declares valid value ranges that instance data must satisfy. The column is optional; an empty cell means no constraint.
+The `Constraint` column appears in the **Data Properties** and **Property Override** tables within an Object definition. It declares valid value ranges that instance data must satisfy. The column is optional; an empty cell means no constraint.
 
 #### Format
 
@@ -768,7 +768,7 @@ Combined constraints use **logical AND** — all constraints must be satisfied s
 
 | Source | Description |
 |--------|-------------|
-| property | From entity property |
+| property | From object property |
 | input | Runtime user input |
 | const | Constant value |
 
@@ -829,15 +829,15 @@ graph LR
 For key information:
 
 ```markdown
-> **Note**: This entity requires an approval workflow
+> **Note**: This object requires an approval workflow
 ```
 
 ### Heading Levels
 
 Heading levels are consistent across all file types:
 
-- `#` - Document/group heading (for example network title, or `# Entities` / `# Relations` / `# Actions`)
-- `##` - Definition heading (`## Entity:` / `## Relation:` / `## Action:`)
+- `#` - Document/group heading (for example network title, or `# Objects` / `# Relations` / `# Actions`)
+- `##` - Definition heading (`## Object:` / `## Relation:` / `## Action:`)
 - `###` - In-definition sections (Data Source, Data Properties, Mapping Rules, Trigger Condition, etc.)
 - `####` - Sub-items (for example logic property names)
 
@@ -858,10 +858,10 @@ id: my-network
 
 # My Network
 
-## Entity: entity1
+## Object: object1
 ...
 
-## Entity: entity2
+## Object: object2
 ...
 
 ## Relation: rel1
@@ -880,7 +880,7 @@ Use `index.bkn` to reference other files:
 type: network
 id: my-network
 includes:
-  - entities.bkn
+  - objects.bkn
   - relations.bkn
   - actions.bkn
 ---
@@ -892,15 +892,15 @@ Network description...
 
 ### Pattern 3: One Definition per File (Large Networks, Recommended)
 
-Each entity, relation, and action in its own file:
+Each object, relation, and action in its own file:
 
 ```
 k8s-network/
 ├── index.bkn                    # type: network
-├── entities/
-│   ├── pod.bkn                  # type: entity
-│   ├── node.bkn                 # type: entity
-│   └── service.bkn              # type: entity
+├── objects/
+│   ├── pod.bkn                  # type: object
+│   ├── node.bkn                 # type: object
+│   └── service.bkn              # type: object
 ├── relations/
 │   ├── pod_belongs_node.bkn     # type: relation
 │   └── service_routes_pod.bkn   # type: relation
@@ -909,17 +909,17 @@ k8s-network/
     └── cordon_node.bkn          # type: action
 ```
 
-**Single entity file example** (`pod.bkn`):
+**Single object file example** (`pod.bkn`):
 
 ```markdown
 ---
-type: entity
+type: object
 id: pod
 name: Pod Instance
 network: k8s-network
 ---
 
-## Entity: pod
+## Object: pod
 
 **Pod Instance**
 
@@ -1008,19 +1008,19 @@ When the same `key` is declared by multiple files in one import batch:
 
 ### Import Examples
 
-**Scenario: Add new entity to existing network**
+**Scenario: Add new object to existing network**
 
 Create `deployment.bkn`:
 
 ```markdown
 ---
-type: entity
+type: object
 id: deployment
 name: Deployment
 network: k8s-network
 ---
 
-## Entity: deployment
+## Object: deployment
 
 **Deployment**
 
@@ -1040,21 +1040,21 @@ Kubernetes deployment controller.
 | deployment_name | | YES |
 ```
 
-After import, `k8s-network` will include the new `deployment` entity.
+After import, `k8s-network` will include the new `deployment` object.
 
-**Scenario: Update existing entity**
+**Scenario: Update existing object**
 
 Create a file with the same ID; import will overwrite:
 
 ```markdown
 ---
-type: entity
+type: object
 id: pod
 name: Pod Instance (Updated)
 network: k8s-network
 ---
 
-## Entity: pod
+## Object: pod
 
 **Pod Instance (Updated)**
 
@@ -1068,7 +1068,7 @@ Updated definition...
 type: delete
 network: k8s-network
 targets:
-  - entity: deprecated_entity
+  - object: deprecated_object
   - relation: old_relation
 ---
 
@@ -1089,9 +1089,9 @@ network: k8s-network
 
 # Monitoring Extension
 
-Add monitoring-related entities and actions.
+Add monitoring-related objects and actions.
 
-## Entity: alert
+## Object: alert
 
 **Alert**
 
@@ -1114,7 +1114,7 @@ Add monitoring-related entities and actions.
 
 **Send Alert**
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | alert | add |
 
@@ -1141,7 +1141,7 @@ operation: add
 
 # Add CPU Metric
 
-Add after `### Logic Properties` in `## Entity: pod`:
+Add after `### Logic Properties` in `## Object: pod`:
 
 #### cpu_usage
 
@@ -1199,7 +1199,7 @@ Delete `## Action: deprecated_action`
 
 1. Put network description at the beginning
 2. Use mermaid diagrams for overall topology
-3. Entity definitions first, then relations and actions
+3. Object definitions first, then relations and actions
 4. Group related definitions together
 
 ### Simplicity
@@ -1221,5 +1221,5 @@ Delete `## Action: deprecated_action`
 - [Architecture Design](./ARCHITECTURE.md)
 - Examples:
   - [Single-file mode](./examples/k8s-topology.bkn) — All definitions in one file
-  - [Split by type](./examples/k8s-network/) — Entities, relations, actions in separate files
+  - [Split by type](./examples/k8s-network/) — Objects, relations, actions in separate files
   - [One definition per file](./examples/k8s-modular/) — Each definition in its own file (recommended for large-scale use)

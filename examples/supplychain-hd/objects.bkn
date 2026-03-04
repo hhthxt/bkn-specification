@@ -1,13 +1,13 @@
 ---
 type: fragment
-id: supplychain-hd-entities
-name: HD供应链实体定义
+id: supplychain-hd-objects
+name: HD供应链对象定义
 network: supplychain_hd0202
 ---
 
-# Entities
+# Objects
 
-## Entity: po
+## Object: po
 
 **采购订单** - 发给供应商的正式采购订单。
 
@@ -55,7 +55,7 @@ network: supplychain_hd0202
 
 ---
 
-## Entity: salesorder
+## Object: salesorder
 
 **销售订单** - 
 
@@ -89,7 +89,7 @@ network: supplychain_hd0202
 
 ---
 
-## Entity: inventory
+## Object: inventory
 
 **库存** - 实时记录物料在各仓库及仓位的现有库存量、库存状态及批次信息。
 
@@ -138,7 +138,7 @@ network: supplychain_hd0202
 
 ---
 
-## Entity: forecast
+## Object: forecast
 
 **需求预测** - 记录销售侧的月度需求预测数据，作为供应链计划（MRP）的输入源头。
 
@@ -162,7 +162,7 @@ network: supplychain_hd0202
 
 ---
 
-## Entity: bom
+## Object: bom
 
 **产品BOM** - 定义产品的物料清单结构，BOM结构：4层(成品→半成品→PCBA→元器件)；含自制、委外、外购。 替代识别规则：1. 分组判断：alt_group_no 有值则属于替代组，为空则无替代。 2. 主替区分：在同一组内，alt_part 为空则为主料；若内容含“替代”则为替代料。
 
@@ -203,7 +203,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: mps
+## Object: mps
 
 **工厂生产计划** - 产品需求计划最终通过工厂生产计划进行执行，比如某产品A 2月需要1000台，根据物料和产能情况，生产计划经理排2个生产计划，2月15日完成800台，2月28日完成200台。
 
@@ -237,7 +237,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: mrp
+## Object: mrp
 
 **物料需求计划** - MRP运算产生的物料净需求建议。
 
@@ -269,7 +269,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: product
+## Object: product
 
 **产品** - 存储企业生产的成品基本信息，包括产品编码、名称。
 
@@ -330,7 +330,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: material
+## Object: material
 
 **物料** - 记录物料的基础信息，包括编码、名称、规格型号、属性（自制/外购）及单位等及相关参数。
 
@@ -372,7 +372,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: supplier
+## Object: supplier
 
 **供应商** - 记录供应商的基础信息，包括编码、名称、信用代码、付款条件及对应采购员。
 
@@ -405,7 +405,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: pr
+## Object: pr
 
 **采购申请单** - 根据MRP生成的内部采购申请PR。
 
@@ -446,7 +446,7 @@ A产品的BOM中都有一个序号。 |  |  |  |
 
 ---
 
-## Entity: pp
+## Object: pp
 
 **产品需求计划** - 产品需求计划是指产品在特定时间需要交付的数量计划，比如2026年3月要交付1000台A产品。
 

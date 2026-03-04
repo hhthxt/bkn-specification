@@ -179,11 +179,11 @@ func checkCell(value string, prop DataProperty, tableName string, rowIdx int, er
 	}
 }
 
-// ValidateDataTable validates a DataTable against its Entity schema.
-// If schema is nil and network is provided, schema is looked up by table.EntityOrRelation.
-func ValidateDataTable(table *DataTable, schema *Entity, network *BknNetwork) *ValidationResult {
+// ValidateDataTable validates a DataTable against its Object schema.
+// If schema is nil and network is provided, schema is looked up by table.ObjectOrRelation.
+func ValidateDataTable(table *DataTable, schema *BknObject, network *BknNetwork) *ValidationResult {
 	result := &ValidationResult{}
-	tableName := table.EntityOrRelation
+	tableName := table.ObjectOrRelation
 	if tableName == "" {
 		tableName = table.SourcePath
 	}
@@ -191,8 +191,8 @@ func ValidateDataTable(table *DataTable, schema *Entity, network *BknNetwork) *V
 		return result
 	}
 	if schema == nil && network != nil {
-		for _, e := range network.AllEntities() {
-			if e.ID == table.EntityOrRelation {
+		for _, e := range network.AllObjects() {
+			if e.ID == table.ObjectOrRelation {
 				schema = &e
 				break
 			}
@@ -201,7 +201,7 @@ func ValidateDataTable(table *DataTable, schema *Entity, network *BknNetwork) *V
 	if schema == nil {
 		result.Errors = append(result.Errors, ValidationError{
 			Table: tableName, Column: "", Code: "no_schema",
-			Message: "no Entity schema found for '" + table.EntityOrRelation + "'",
+			Message: "no Object schema found for '" + table.ObjectOrRelation + "'",
 		})
 		return result
 	}
@@ -219,7 +219,7 @@ func ValidateDataTable(table *DataTable, schema *Entity, network *BknNetwork) *V
 		if !schemaPropNames[c] {
 			result.Errors = append(result.Errors, ValidationError{
 				Table: tableName, Column: c, Code: "extra_column",
-				Message: "column '" + c + "' not defined in Entity schema",
+				Message: "column '" + c + "' not defined in Object schema",
 			})
 		}
 	}
@@ -281,7 +281,7 @@ func ValidateDataTable(table *DataTable, schema *Entity, network *BknNetwork) *V
 	return result
 }
 
-// ValidateNetworkData validates all DataTables in a network against their Entity schemas.
+// ValidateNetworkData validates all DataTables in a network against their Object schemas.
 func ValidateNetworkData(network *BknNetwork) *ValidationResult {
 	result := &ValidationResult{}
 	for _, table := range network.AllDataTables() {

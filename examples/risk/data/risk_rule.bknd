@@ -1,6 +1,6 @@
 ---
 type: data
-entity: risk_rule
+object: risk_rule
 network: recoverable-network
 source: security_contract_rules.json
 ---

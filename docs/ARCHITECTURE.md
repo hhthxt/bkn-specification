@@ -1,13 +1,13 @@
 # BKN 架构设计
 
-BKN (Business Knowledge Network) 是一种 Markdown-based 的业务知识网络建模语言，用于描述业务知识网络中的实体、关系和行动。
+BKN (Business Knowledge Network) 是一种 Markdown-based 的业务知识网络建模语言，用于描述业务知识网络中的对象、关系和行动。
 
 ## 设计理念
 
 - **人类可读**: 使用 Markdown 语法，业务人员也能理解和编辑
 - **Agent 友好**: 结构化的 YAML frontmatter + 语义化的 section，便于 LLM 解析和生成
 - **增量导入**: 任何 `.bkn` 文件可直接导入到已有的知识网络，支持动态更新
-- **大规模友好**: 每个定义可以是独立文件，100 个实体 = 100 个小文件
+- **大规模友好**: 每个定义可以是独立文件，100 个对象 = 100 个小文件
 - **灵活组织**: 支持单文件、按类型拆分、每定义一文件等多种模式
 
 ## 架构概览
@@ -18,7 +18,7 @@ flowchart TB
         direction TB
         
         subgraph Types["三种类型"]
-            Entity["Entity Type<br/>实体类"]
+            Object["Object Type<br/>对象类"]
             Relation["Relation Type<br/>关系类"]
             Action["Action Type<br/>行动类"]
         end
@@ -28,7 +28,7 @@ flowchart TB
             Body["Markdown Body<br/>描述 + 定义"]
         end
         
-        Entity --> Frontmatter
+        Object --> Frontmatter
         Relation --> Frontmatter
         Action --> Frontmatter
         Frontmatter --> Body
@@ -45,11 +45,11 @@ flowchart TB
         MCP["MCP<br/>模型上下文协议"]
     end
     
-    Entity -.->|数据来源| DataView
-    Entity -.->|逻辑属性| MetricModel
-    Entity -.->|逻辑属性| Operator
-    Relation -.->|映射| Entity
-    Action -.->|绑定| Entity
+    Object -.->|数据来源| DataView
+    Object -.->|逻辑属性| MetricModel
+    Object -.->|逻辑属性| Operator
+    Relation -.->|映射| Object
+    Action -.->|绑定| Object
     Action -.->|执行| Tool
     Action -.->|执行| MCP
 ```
@@ -84,7 +84,7 @@ flowchart LR
 
 ## 三种类型
 
-### 实体类 (Entity Type)
+### 对象类 (Object Type)
 
 描述业务对象，如 Pod、Node、Service 等。
 
@@ -95,7 +95,7 @@ flowchart LR
 
 ```mermaid
 classDiagram
-    class Entity {
+    class BknObject {
         +String id
         +String name
         +List~String~ tags
@@ -119,16 +119,16 @@ classDiagram
         +List~Parameter~ parameters
     }
     
-    Entity --> DataSource
-    Entity --> LogicProperty
+    BknObject --> DataSource
+    BknObject --> LogicProperty
 ```
 
 ### 关系类 (Relation Type)
 
-描述两个实体之间的关联关系。
+描述两个对象之间的关联关系。
 
 **核心特性**:
-- 定义起点和终点实体
+- 定义起点和终点对象
 - 支持直接映射和视图映射
 - 声明属性映射规则
 
@@ -137,8 +137,8 @@ classDiagram
     class Relation {
         +String id
         +String name
-        +EntityRef source
-        +EntityRef target
+        +ObjectRef source
+        +ObjectRef target
         +String type
         +List~MappingRule~ mapping_rules
     }
@@ -156,7 +156,7 @@ classDiagram
 描述可执行的操作，绑定工具或 MCP。
 
 **核心特性**:
-- 绑定目标实体
+- 绑定目标对象
 - 定义触发条件
 - 配置执行工具和参数
 - 支持调度配置
@@ -212,27 +212,27 @@ k8s-topology.bkn          # type: network
 
 ### 模式二：按类型拆分（中型网络）
 
-按实体/关系/行动分文件，适合 20-100 个定义：
+按对象/关系/行动分文件，适合 20-100 个定义：
 
 ```
 k8s-network/
 ├── index.bkn             # type: network
-├── entities.bkn          # type: entities
+├── objects.bkn          # type: objects
 ├── relations.bkn         # type: relations
 └── actions.bkn           # type: actions
 ```
 
 ### 模式三：每定义一文件（大型网络，推荐）
 
-每个实体/关系/行动单独一个文件，适合 100+ 个定义：
+每个对象/关系/行动单独一个文件，适合 100+ 个定义：
 
 ```
 k8s-network/
 ├── index.bkn                    # type: network (可选索引)
-├── entities/
-│   ├── pod.bkn                  # type: entity
-│   ├── node.bkn                 # type: entity
-│   └── service.bkn              # type: entity
+├── objects/
+│   ├── pod.bkn                  # type: object
+│   ├── node.bkn                 # type: object
+│   └── service.bkn              # type: object
 ├── relations/
 │   ├── pod_belongs_node.bkn     # type: relation
 │   └── service_routes_pod.bkn   # type: relation
@@ -258,12 +258,12 @@ flowchart LR
     end
     
     subgraph NewFiles["新增 BKN 文件"]
-        NewEntity["deployment.bkn<br/>type: entity"]
+        NewObject["deployment.bkn<br/>type: object"]
         NewRelation["pod_in_deployment.bkn<br/>type: relation"]
         Fragment["monitoring.bkn<br/>type: fragment"]
     end
     
-    NewEntity -->|导入| KN
+    NewObject -->|导入| KN
     NewRelation -->|导入| KN
     Fragment -->|导入| KN
     
@@ -287,7 +287,7 @@ flowchart LR
 | type | 说明 | 用途 |
 |------|------|------|
 | `network` | 完整知识网络 | 初始化或全量导入 |
-| `entity` | 单个实体定义 | 增量添加/更新实体 |
+| `object` | 单个对象定义 | 增量添加/更新对象 |
 | `relation` | 单个关系定义 | 增量添加/更新关系 |
 | `action` | 单个行动定义 | 增量添加/更新行动 |
 | `fragment` | 混合片段 | 包含多个类型的部分定义 |
@@ -296,7 +296,7 @@ flowchart LR
 ### 典型工作流
 
 1. **初始化**: 导入 `network` 类型的完整定义
-2. **扩展**: 导入单个 `entity`/`relation`/`action` 文件
+2. **扩展**: 导入单个 `object`/`relation`/`action` 文件
 3. **批量扩展**: 导入 `fragment` 类型的混合片段
 4. **修改**: 导入同 ID 的文件，自动覆盖
 5. **删除**: 导入 `type: delete` 标记的文件
@@ -307,7 +307,7 @@ flowchart LR
 
 | BKN 概念 | API 端点 |
 |----------|----------|
-| Entity | `/api/knowledge-networks/{kn_id}/object-types` |
+| Object | `/api/knowledge-networks/{kn_id}/object-types` |
 | Relation | `/api/knowledge-networks/{kn_id}/relation-types` |
 | Action | `/api/knowledge-networks/{kn_id}/action-types` |
 
@@ -317,5 +317,5 @@ flowchart LR
 - [BKN vs RESTful API 对比](./BKN_vs_REST_API.md)
 - 样例：
   - [单文件模式](./examples/k8s-topology.bkn) - 所有定义在一个文件
-  - [按类型拆分](./examples/k8s-network/) - 实体/关系/行动分文件
+  - [按类型拆分](./examples/k8s-network/) - 对象/关系/行动分文件
   - [每定义一文件](./examples/k8s-modular/) - 每个定义独立文件（推荐大规模场景）

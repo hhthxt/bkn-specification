@@ -18,7 +18,7 @@ tags: [{标签1}, {标签2}]
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|
-| {source_entity} | {target_entity} | direct | YES | 1 | 1 |
+| {source} | {target} | direct | YES | 1 | 1 |
 
 ### Mapping Rules
 
@@ -32,7 +32,7 @@ tags: [{标签1}, {标签2}]
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|
-| {source_entity} | {target_entity} | data_view | NO | 0 | - |
+| {source} | {target} | data_view | NO | 0 | - |
 
 ### Mapping View
 

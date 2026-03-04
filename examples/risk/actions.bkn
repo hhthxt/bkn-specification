@@ -18,7 +18,7 @@ owner: sre-team
 
 **重启ERP** - 重启 ERP 系统或 ERP 核心服务
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | erp_system | modify |
 
@@ -33,7 +33,7 @@ owner: sre-team
 
 **重启 Pod** - 重启 K8s Pod 或容器
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | k8s_pod | modify |
 
@@ -47,7 +47,7 @@ owner: sre-team
 
 **DDL 变更** - 执行数据库 DDL（ALTER、DROP、TRUNCATE 等）
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | database | modify |
 
@@ -61,7 +61,7 @@ owner: sre-team
 
 **执行 SQL** - 执行数据库 SQL 语句（含高危写操作）
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | database | modify |
 
@@ -75,7 +75,7 @@ owner: sre-team
 
 **批量重启节点** - 一次性重启或驱逐大量计算节点
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | k8s_cluster | modify |
 
@@ -89,7 +89,7 @@ owner: sre-team
 
 **申请大规格算力** - 申请算力规格>16C64G 或预估月度成本>5000元
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | cloud_platform | modify |
 
@@ -103,7 +103,7 @@ owner: sre-team
 
 **查询敏感数据** - 查询 BOM 配方、核心工艺参数或员工隐私
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | database | modify |
 
@@ -117,7 +117,7 @@ owner: sre-team
 
 **开通防火墙规则** - 开通跨网段白名单（如办公网→生产网）
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | firewall_rule | modify |
 
@@ -131,7 +131,7 @@ owner: sre-team
 
 **更新或删除** - 执行 UPDATE/DELETE 或覆盖配置
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | database | modify |
 
@@ -145,7 +145,7 @@ owner: sre-team
 
 **授予 Root/Admin 权限** - 赋予 root 或 Domain Admin 等超级权限
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | iam_account | modify |
 
@@ -159,7 +159,7 @@ owner: sre-team
 
 **开通 VPN 通道** - 外部供应商申请生产环境远程排障通道
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | vpn_gateway | modify |
 
@@ -173,7 +173,7 @@ owner: sre-team
 
 **部署固件** - 下发边缘设备固件升级或修改核心设备运转参数
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | edge_device | modify |
 
@@ -187,7 +187,7 @@ owner: sre-team
 
 **高频 API 调用** - API 调用并发频率超过 100次/秒
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | api_endpoint | modify |
 

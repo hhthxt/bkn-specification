@@ -15,10 +15,10 @@
 
 | 概念 | 说明 |
 |------|------|
-| Entity（实体） | 业务对象类型（如 Pod、Node、Service） |
-| Relation（关系） | 实体之间的连接 |
-| Action（行动） | 对实体的操作定义（可绑定 tool/MCP） |
-| data_view | 实体/关系映射的数据来源 |
+| Object（对象） | 业务对象类型（如 Pod、Node、Service） |
+| Relation（关系） | 对象之间的连接 |
+| Action（行动） | 对对象的操作定义（可绑定 tool/MCP） |
+| data_view | 对象/关系映射的数据来源 |
 
 ### 文件结构
 
@@ -30,7 +30,7 @@
 │   └── templates/            # BKN 文件模板
 └── examples/                 # 示例网络（Kubernetes 拓扑）
     ├── k8s-topology.bkn      # 单文件示例
-    ├── k8s-network/          # 按类型拆分（entities/relations/actions）
+    ├── k8s-network/          # 按类型拆分（objects/relations/actions）
     └── k8s-modular/          # 每定义一文件
 ```
 
@@ -39,8 +39,8 @@
 本仓库内含 **BKN Editor**，用于编辑和可视化 BKN 文件的演示 Web 应用：
 
 - 文件树与 Monaco 编辑器
-- 实体-关系网络图（React Flow）
-- Entity / Relation / Action 模板
+- 对象-关系网络图（React Flow）
+- Object / Relation / Action 模板
 
 ```bash
 cd bkn_editor

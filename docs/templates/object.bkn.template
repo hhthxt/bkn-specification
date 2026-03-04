@@ -1,7 +1,7 @@
 ---
-type: entity
-id: {entity_id}
-name: {实体名称}
+type: object
+id: {object_id}
+name: {对象名称}
 version: 1.0.0
 spec_version: 1.0.0
 network: {network_id}
@@ -10,7 +10,7 @@ owner: {owner}
 tags: [{标签1}, {标签2}]
 ---
 
-## Entity: {entity_id}
+## Object: {object_id}
 
 {详细描述}
 

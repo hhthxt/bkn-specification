@@ -40,8 +40,8 @@ export function AIGenerateDialog({
 
   // Quick prompt templates
   const quickPrompts = [
-    { label: '新建实体', prompt: '帮我创建一个新的实体类，包含 Data Source、Primary Key、Display Key 等完整定义' },
-    { label: '新建关系', prompt: '帮我创建一个新的关系，连接两个已存在的实体' },
+    { label: '新建对象', prompt: '帮我创建一个新的对象类，包含 Data Source、Primary Key、Display Key 等完整定义' },
+    { label: '新建关系', prompt: '帮我创建一个新的关系，连接两个已存在的对象' },
     { label: '新建行动', prompt: '帮我创建一个新的行动，包含 Trigger Condition、Tool Configuration 和 Parameter Binding' },
   ];
 
@@ -80,7 +80,7 @@ export function AIGenerateDialog({
 角色: BKN (Business Knowledge Network) 专家
 
 BKN 格式规则: 
-  - Entity / Relation / Action 的 Markdown 格式
+  - Object / Relation / Action 的 Markdown 格式
   - Frontmatter 类型定义
   - 表格格式规范
 
@@ -95,7 +95,7 @@ ${currentFileContext}
 输出约束:
   1. 仅输出 BKN Markdown 内容（含 YAML frontmatter）
   2. 不包含代码块围栏
-  3. 使用项目中已存在的实体/关系 ID
+  3. 使用项目中已存在的对象/关系 ID
   4. 使用中文作为显示名和描述
   5. 确保所有必填字段存在
 
@@ -229,20 +229,19 @@ ${resolvedUserPrompt}`;
     // Resolve @ mentions first
     const resolvedPrompt = resolveMentions(userPrompt);
     
-    // 简单的模拟生成逻辑，根据提示词返回示例内容
     const lowerPrompt = resolvedPrompt.toLowerCase();
     
-    if (lowerPrompt.includes('实体') || lowerPrompt.includes('entity')) {
+    if (lowerPrompt.includes('对象') || lowerPrompt.includes('object')) {
       return `---
-type: entity
-id: new_entity
-name: 新实体
+type: object
+id: new_object
+name: 新对象
 network: k8s-topology
 ---
 
-## Entity: new_entity
+## Object: new_object
 
-**新实体** - 这是一个由AI生成的实体示例
+**新对象** - 这是一个由AI生成的对象示例
 
 ### Data Source
 
@@ -257,16 +256,16 @@ network: k8s-topology
 | Property | Display Name | Type | Description | Primary Key | Index |
 |----------|--------------|------|--------------|:------------:|:-----:|
 | id | ID | int64 | Primary key ID | YES | YES |
-| name | 名称 | VARCHAR | 实体名称 | | YES |
-| status | 状态 | VARCHAR | 实体状态 | | YES |
+| name | 名称 | VARCHAR | 对象名称 | | YES |
+| status | 状态 | VARCHAR | 对象状态 | | YES |
 
 ### Logic Properties
 
-#### entity_metrics
+#### object_metrics
 
 - **类型**: metric
-- **来源**: entity_metric (metric-model)
-- **说明**: 实体监控指标
+- **来源**: object_metric (metric-model)
+- **说明**: 对象监控指标
 
 | Parameter | Source | Binding |
 |-----------|--------|---------|
@@ -296,7 +295,7 @@ network: k8s-topology
 
 ### Business Semantics
 
-这是一个示例关系定义，用于连接两个实体。`;
+这是一个示例关系定义，用于连接两个对象。`;
     } else if (lowerPrompt.includes('行动') || lowerPrompt.includes('action')) {
       return `---
 type: action
@@ -310,7 +309,7 @@ action_type: modify
 
 **新行动** - 这是一个由AI生成的行动示例
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | pod | modify |
 
@@ -334,21 +333,21 @@ condition:
 
 | Parameter | Source | Binding | Description |
 |-----------|--------|---------|-------------|
-| id | property | id | 实体ID |
-| name | property | name | 实体名称 |`;
+| id | property | id | 对象ID |
+| name | property | name | 对象名称 |`;
     }
     
-    // 默认返回实体模板
+    // 默认返回对象模板
     return `---
-type: entity
-id: generated_entity
-name: 生成的实体
+type: object
+id: generated_object
+name: 生成的对象
 network: k8s-topology
 ---
 
-## Entity: generated_entity
+## Object: generated_object
 
-**生成的实体** - AI生成的示例实体
+**生成的对象** - AI生成的示例对象
 
 ### Data Source
 
@@ -647,7 +646,7 @@ network: k8s-topology
                 ref={textareaRef}
                 value={prompt}
                 onChange={(e) => handlePromptChange(e.target.value)}
-                placeholder="例如：帮我定义一个 Deployment 实体类，包含 Data Source、Primary Key、Display Key... 使用 @文件名 或 @数据资源名 引用项目内容"
+                placeholder="例如：帮我定义一个 Deployment 对象类，包含 Data Source、Primary Key、Display Key... 使用 @文件名 或 @数据资源名 引用项目内容"
                 className="w-full min-h-[100px] p-3 border rounded-md bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 disabled={isGenerating}
                 onKeyDown={(e) => {

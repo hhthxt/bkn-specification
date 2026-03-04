@@ -18,10 +18,10 @@ var columnAliases = map[string]string{
 	"起点": "Source", "终点": "Target", "必须": "Required",
 	"起点属性": "Source Property", "终点属性": "Target Property",
 	"参数": "Parameter", "来源": "Source", "绑定": "Binding",
-	"工具": "Tool ID", "绑定实体": "Bound Entity", "行动类型": "Action Type",
-	"实体": "Entity", "检查": "Check", "条件": "Condition", "消息": "Message",
+	"工具": "Tool ID", "绑定对象": "Bound Object", "行动类型": "Action Type",
+	"对象": "Object", "检查": "Check", "条件": "Condition", "消息": "Message",
 	"表达式": "Expression", "索引配置": "Index Config",
-	"对象": "Object", "影响说明": "Impact Description",
+	"影响说明": "Impact Description",
 }
 
 // Section name aliases
@@ -30,12 +30,12 @@ var sectionAliases = map[string]string{
 	"逻辑属性": "Logic Properties", "业务语义": "Business Semantics",
 	"关联定义": "Endpoints", "映射规则": "Mapping Rules", "映射视图": "Mapping View",
 	"起点映射": "Source Mapping", "终点映射": "Target Mapping",
-	"绑定实体": "Bound Entity", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
+	"绑定对象": "Bound Object", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
 	"工具配置": "Tool Configuration", "参数绑定": "Parameter Binding",
 	"调度配置": "Schedule", "影响范围": "Scope of Impact", "执行说明": "Execution Description",
 }
 
-var definitionRE = regexp.MustCompile(`(?m)^##\s+(Entity|Relation|Action):\s*(\S+)`)
+var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action):\s*(\S+)`)
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
 var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
@@ -328,12 +328,12 @@ func parseMappingRules(sectionText string) []MappingRule {
 	return out
 }
 
-func parseEntityBlock(blockID, blockText string) Entity {
+func parseObjectBlock(blockID, blockText string) BknObject {
 	name, desc := parseDisplayName(blockText)
 	tags, owner := parseInlineMeta(blockText)
 	sections := extractSections(blockText, "###")
 
-	entity := Entity{
+	obj := BknObject{
 		ID:          blockID,
 		Name:        name,
 		Description: desc,
@@ -341,21 +341,21 @@ func parseEntityBlock(blockID, blockText string) Entity {
 		Owner:       owner,
 	}
 	if s, ok := sections["Data Source"]; ok {
-		entity.DataSource = parseDataSource(s)
+		obj.DataSource = parseDataSource(s)
 	}
 	if s, ok := sections["Data Properties"]; ok {
-		entity.DataProperties = parseDataProperties(s)
+		obj.DataProperties = parseDataProperties(s)
 	}
 	if s, ok := sections["Property Override"]; ok {
-		entity.PropertyOverrides = parsePropertyOverrides(s)
+		obj.PropertyOverrides = parsePropertyOverrides(s)
 	}
 	if s, ok := sections["Logic Properties"]; ok {
-		entity.LogicProperties = parseLogicProperties(s)
+		obj.LogicProperties = parseLogicProperties(s)
 	}
 	if s, ok := sections["Business Semantics"]; ok {
-		entity.BusinessSemantics = s
+		obj.BusinessSemantics = s
 	}
-	return entity
+	return obj
 }
 
 func parseRelationBlock(blockID, blockText string) Relation {
@@ -393,8 +393,8 @@ func parseActionBlock(blockID, blockText string) Action {
 	}
 	boundRows := parseTable(strings.Split(blockText, "\n"))
 	for _, row := range boundRows {
-		if _, ok := row["Bound Entity"]; ok {
-			action.BoundEntity = row["Bound Entity"]
+		if _, ok := row["Bound Object"]; ok {
+			action.BoundObject = row["Bound Object"]
 			action.ActionType = row["Action Type"]
 			break
 		}
@@ -410,7 +410,7 @@ func parseActionBlock(blockID, blockText string) Action {
 		rows := parseTable(strings.Split(s, "\n"))
 		for _, row := range rows {
 			action.PreConditions = append(action.PreConditions, PreCondition{
-				Entity:    row["Entity"],
+				Object:    row["Object"],
 				Check:     row["Check"],
 				Condition: row["Condition"],
 				Message:   row["Message"],
@@ -482,7 +482,7 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 		Owner:       strVal(data, "owner"),
 		SpecVersion: strVal(data, "spec_version"),
 		RiskLevel:   strVal(data, "risk_level"),
-		Entity:      strVal(data, "entity"),
+		Object:      strVal(data, "object"),
 		Relation:    strVal(data, "relation"),
 		Source:      strVal(data, "source"),
 	}
@@ -507,7 +507,7 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 		"type": true, "id": true, "name": true, "version": true, "tags": true,
 		"description": true, "includes": true, "network": true, "namespace": true,
 		"owner": true, "spec_version": true, "enabled": true, "risk_level": true,
-		"requires_approval": true, "entity": true, "relation": true, "source": true,
+		"requires_approval": true, "object": true, "relation": true, "source": true,
 	}
 	fm.Extra = make(map[string]any)
 	for k, v := range data {
@@ -526,10 +526,10 @@ func strVal(m map[string]any, key string) string {
 }
 
 // ParseBody parses the Markdown body of a .bkn file into lists of definitions.
-func ParseBody(text string) ([]Entity, []Relation, []Action) {
+func ParseBody(text string) ([]BknObject, []Relation, []Action) {
 	_, body := splitFrontmatter(text)
 	matches := definitionRE.FindAllStringSubmatchIndex(body, -1)
-	var entities []Entity
+	var objects []BknObject
 	var relations []Relation
 	var actions []Action
 
@@ -546,15 +546,15 @@ func ParseBody(text string) ([]Entity, []Relation, []Action) {
 		blockText = hrSplit[0]
 
 		switch defType {
-		case "Entity":
-			entities = append(entities, parseEntityBlock(defID, blockText))
+		case "Object":
+			objects = append(objects, parseObjectBlock(defID, blockText))
 		case "Relation":
 			relations = append(relations, parseRelationBlock(defID, blockText))
 		case "Action":
 			actions = append(actions, parseActionBlock(defID, blockText))
 		}
 	}
-	return entities, relations, actions
+	return objects, relations, actions
 }
 
 // ParseDataTables parses .bknd body into DataTable list.
@@ -568,13 +568,13 @@ func ParseDataTables(text string, fm *Frontmatter, sourcePath string) ([]DataTab
 	}
 	_, body := splitFrontmatter(text)
 
-	hasEntity := strings.TrimSpace(fm.Entity) != ""
+	hasObject := strings.TrimSpace(fm.Object) != ""
 	hasRelation := strings.TrimSpace(fm.Relation) != ""
-	if hasEntity && hasRelation {
-		return nil, errors.New("type: data frontmatter must have exactly one of entity or relation, got both")
+	if hasObject && hasRelation {
+		return nil, errors.New("type: data frontmatter must have exactly one of object or relation, got both")
 	}
-	if !hasEntity && !hasRelation {
-		return nil, errors.New("type: data frontmatter must have exactly one of entity or relation, got neither")
+	if !hasObject && !hasRelation {
+		return nil, errors.New("type: data frontmatter must have exactly one of object or relation, got neither")
 	}
 
 	if !headingRE.MatchString(body) {
@@ -591,13 +591,13 @@ func ParseDataTables(text string, fm *Frontmatter, sourcePath string) ([]DataTab
 	}
 
 	isRelation := hasRelation
-	entityOrRelation := fm.Relation
+	objectOrRelation := fm.Relation
 	if !isRelation {
-		entityOrRelation = fm.Entity
+		objectOrRelation = fm.Object
 	}
 
 	return []DataTable{{
-		EntityOrRelation: entityOrRelation,
+		ObjectOrRelation: objectOrRelation,
 		IsRelation:       isRelation,
 		Columns:          columns,
 		Rows:             rows,
@@ -623,10 +623,10 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 			SourcePath:  sourcePath,
 		}, nil
 	}
-	entities, relations, actions := ParseBody(text)
+	objects, relations, actions := ParseBody(text)
 	return &BknDocument{
 		Frontmatter: *fm,
-		Entities:    entities,
+		Objects:     objects,
 		Relations:   relations,
 		Actions:     actions,
 		SourcePath:  sourcePath,

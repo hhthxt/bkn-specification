@@ -18,17 +18,17 @@ tags: [{标签1}, {标签2}]
 
 {详细描述}
 
-### Bound Entity
+### Bound Object
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
-| {entity_id} | modify |
+| {object_id} | modify |
 
 ### Trigger Condition
 
 ```yaml
 condition:
-  object_type_id: {entity_id}
+  object_type_id: {object_id}
   field: {property_name}
   operation: {operator}
   value: {value}
@@ -40,16 +40,16 @@ condition:
 
 <!-- 可选：执行前的数据前置条件，不满足则阻止执行 -->
 
-| Entity | Check | Condition | Message |
+| Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
-| {entity_id} | relation:{relation_id} | exist | {违反说明} |
-| {entity_id} | property:{property_name} | {op} {value} | {违反说明} |
+| {object_id} | relation:{relation_id} | exist | {违反说明} |
+| {object_id} | property:{property_name} | {op} {value} | {违反说明} |
 
 ### 影响范围
 
 | 影响对象 | 影响描述 |
 |----------|----------|
-| {entity_id} | {影响描述} |
+| {object_id} | {影响描述} |
 
 ### 工具配置
 

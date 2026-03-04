@@ -15,9 +15,9 @@ import { useBKNStore } from '@/lib/store';
 import { AIGenerateDialog } from '@/components/AIGenerate/AIGenerateDialog';
 import type { editor } from 'monaco-editor';
 
-const ENTITY_TEMPLATE = `## Entity: new_entity
+const OBJECT_TEMPLATE = `## Object: new_object
 
-**实体名称** - 描述
+**对象名称** - 描述
 
 ### Data Source
 
@@ -53,7 +53,7 @@ const RELATION_TEMPLATE = `## Relation: new_relation
 
 | Source | Target | Type |
 |--------|--------|------|
-| source_entity | target_entity | direct |
+| source | target | direct |
 
 ### Mapping Rules
 
@@ -70,15 +70,15 @@ const ACTION_TEMPLATE = `## Action: new_action
 
 **行动名称** - 描述
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
-| entity_id | modify |
+| object_id | modify |
 
 ### Trigger Condition
 
 \`\`\`yaml
 condition:
-  object_type_id: entity_id
+  object_type_id: object_id
   field: status
   operation: ==
   value: Failed
@@ -215,9 +215,9 @@ export function BKEditor({ onContentChange }: EditorProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => insertTemplate(ENTITY_TEMPLATE)}>
+              <DropdownMenuItem onClick={() => insertTemplate(OBJECT_TEMPLATE)}>
                 <FileText className="h-4 w-4 mr-2" />
-                添加实体 (Entity)
+                添加对象 (Object)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => insertTemplate(RELATION_TEMPLATE)}>
                 <GitBranch className="h-4 w-4 mr-2" />

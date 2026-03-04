@@ -27,10 +27,10 @@ pip install -e ".[api]"
 ```python
 from bkn import load
 
-doc = load("examples/supplychain-hd/entities.bkn")
+doc = load("examples/supplychain-hd/objects.bkn")
 print(doc.frontmatter.type)   # fragment
-print(len(doc.entities))      # 12
-for e in doc.entities:
+print(len(doc.objects))      # 12
+for e in doc.objects:
     print(e.id, e.name, len(e.data_properties), "个属性")
 ```
 
@@ -44,7 +44,7 @@ from bkn import load_network
 network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
-print(len(network.all_entities))      # 12
+print(len(network.all_objects))       # 12
 print(len(network.all_relations))     # 14
 print(len(network.all_actions))       # 0
 ```
@@ -62,13 +62,13 @@ network = load_network("examples/supplychain-hd/supplychain.bkn")
 transformer = KweaverTransformer(
     branch="main",
     base_version="",
-    id_prefix="supplychain_",   # 实体/关系 ID 前缀，如 po -> supplychain_po
+    id_prefix="supplychain_",   # 对象/关系 ID 前缀，如 po -> supplychain_po
 )
 
 # 获取 JSON 字典
 payload = transformer.to_json(network)
 # payload["knowledge_network"]  - 创建知识网络请求体
-# payload["object_types"]       - 对象类（实体）列表
+# payload["object_types"]       - 对象类列表
 # payload["relation_types"]    - 关系类列表
 
 # 或写入文件
@@ -130,13 +130,13 @@ from bkn import parse, parse_frontmatter, parse_body
 
 text = """
 ---
-type: entity
-id: my_entity
-name: My Entity
+type: object
+id: my_object
+name: My Object
 ---
 
-## Entity: my_entity
-**My Entity** - 示例实体
+## Object: my_object
+**My Object** - 示例对象
 
 ### Data Source
 | Type | ID | Name |
@@ -152,14 +152,14 @@ name: My Entity
 doc = parse(text)
 ```
 
-### 6. 访问实体与关系结构
+### 6. 访问对象与关系结构
 
 ```python
-entity = network.all_entities[0]
-print(entity.data_source.type, entity.data_source.id)
-for dp in entity.data_properties:
+obj = network.all_objects[0]
+print(obj.data_source.type, obj.data_source.id)
+for dp in obj.data_properties:
     print(dp.property, dp.type, dp.primary_key)
-for po in entity.property_overrides:
+for po in obj.property_overrides:
     print(po.property, po.index_config)   # fulltext(standard) + vector(id)
 
 relation = network.all_relations[0]
@@ -176,14 +176,14 @@ from bkn import load
 
 doc = load("examples/risk/data/risk_scenario.bknd")
 table = doc.data_tables[0]
-print(table.entity_or_relation)  # risk_scenario
+print(table.object_or_relation)  # risk_scenario
 print(table.columns)             # ["scenario_id", "name", ...]
 print(len(table.rows))           # 数据行数
 ```
 
 ### 7. 风险评估
 
-在 BKN 中带 **`risk`** 标签的实体与关系参与风险计算。Action 模型拥有运行时/计算属性 **`risk`**（取值 `allow` | `not_allow`），由风险评估模块根据当前场景与带 risk 标签的知识计算得出。
+在 BKN 中带 **`risk`** 标签的对象与关系参与风险计算。Action 模型拥有运行时/计算属性 **`risk`**（取值 `allow` | `not_allow`），由风险评估模块根据当前场景与带 risk 标签的知识计算得出。
 
 ```python
 from bkn import load_network, evaluate_risk
@@ -210,7 +210,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 
 | 模块 | 说明 |
 |------|------|
-| `bkn.models` | 数据模型：BknDocument、Entity、Relation、Action、DataProperty、PropertyOverride 等 |
+| `bkn.models` | 数据模型：BknDocument、BknObject、Relation、Action、DataProperty、PropertyOverride 等 |
 | `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头 |
 | `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes |
 | `bkn.risk` | 风险评估：evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" |
@@ -223,7 +223,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 |------|------|------|
 | `branch` | 分支名 | `"main"` |
 | `base_version` | 基础版本 | `""` |
-| `id_prefix` | 实体/关系 ID 前缀（如 `supplychain_` 使 `po` 变为 `supplychain_po`） | `""` |
+| `id_prefix` | 对象/关系 ID 前缀（如 `supplychain_` 使 `po` 变为 `supplychain_po`） | `""` |
 
 ## 测试
 

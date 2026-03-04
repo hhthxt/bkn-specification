@@ -1,5 +1,5 @@
 ---
-type: entity
+type: object
 id: service
 name: Service服务
 version: 1.0.0
@@ -7,7 +7,7 @@ network: k8s-modular
 tags: [拓扑架构, 网络, Kubernetes]
 ---
 
-## Entity: service
+## Object: service
 
 Kubernetes 服务抽象层，提供稳定的访问入口。
 

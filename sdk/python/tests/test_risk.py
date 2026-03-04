@@ -87,9 +87,9 @@ def test_evaluate_risk_scenario_filters_rules(network):
     ) == "unknown"
 
 
-def test_network_has_risk_tagged_entities(network):
-    """The risk fragment defines entities with reserved Tags: __risk__."""
-    risk_entities = [e for e in network.all_entities if "__risk__" in (e.tags or [])]
-    assert len(risk_entities) >= 1
-    ids = [e.id for e in risk_entities]
+def test_network_has_risk_tagged_objects(network):
+    """The risk fragment defines objects with reserved Tags: __risk__."""
+    risk_objects = [e for e in network.all_objects if "__risk__" in (e.tags or [])]
+    assert len(risk_objects) >= 1
+    ids = [e.id for e in risk_objects]
     assert "risk_scenario" in ids or "risk_rule" in ids

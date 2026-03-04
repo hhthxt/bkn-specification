@@ -1,6 +1,6 @@
 ---
 name: bkn-creator
-description: Generate BKN (Business Knowledge Network) files for modeling entities, relations, and actions. Optionally import to kweaver via API. Use when the user asks to create a BKN file, define a knowledge network, model entities/relations, generate .bkn files, import to kweaver, or run BKN/SDK scripts.
+description: Generate BKN (Business Knowledge Network) files for modeling objects, relations, and actions. Optionally import to kweaver via API. Use when the user asks to create a BKN file, define a knowledge network, model objects/relations, generate .bkn files, import to kweaver, or run BKN/SDK scripts.
 ---
 
 # BKN Creator
@@ -9,9 +9,9 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 
 ## Workflow
 
-1. **Understand requirements**: identify the business domain, entities, relations, and actions
+1. **Understand requirements**: identify the business domain, objects, relations, and actions
 2. **Read the spec**: see [specification.md](specification.md) for format rules
-3. **Pick a template**: see [templates/](templates/) for each type (entity, relation, action, network)
+3. **Pick a template**: see [templates/](templates/) for each type (object, relation, action, network)
 4. **Generate `.bkn` files**: follow the output rules below
 5. **(Optional) Import to kweaver**: use the Python SDK
 6. **(Optional) Run scripts**: validate, transform, or import via built-in scripts
@@ -51,13 +51,13 @@ When the user asks to validate, convert, or import, run the corresponding script
 Choose an organization style based on network size:
 
 **Modular** (recommended for large networks, team collaboration):
-Each entity/relation/action in its own file, with an `index.bkn` root.
+Each object/relation/action in its own file, with an `index.bkn` root.
 See `examples/k8s-modular/` for this pattern.
 
 ```
 my-network/
 ├── index.bkn
-├── entities/
+├── objects/
 │   ├── order.bkn
 │   └── customer.bkn
 ├── relations/
@@ -67,13 +67,13 @@ my-network/
 ```
 
 **By-type split** (suitable for medium networks):
-Group all entities, relations, actions into separate fragment files.
+Group all objects, relations, actions into separate fragment files.
 See `examples/k8s-network/` for this pattern.
 
 ```
 my-network/
 ├── index.bkn
-├── entities.bkn
+├── objects.bkn
 ├── relations.bkn
 └── actions.bkn
 ```
@@ -82,11 +82,11 @@ my-network/
 
 Read the appropriate template before generating:
 
-- `templates/entity.bkn.template` — entity with Data Properties, Property Override, Logic Properties
+- `templates/object.bkn.template` — object with Data Properties, Property Override, Logic Properties
 - `templates/relation.bkn.template` — relation with Endpoints, Mapping Rules (direct and data_view)
 - `templates/action.bkn.template` — action with Trigger, Pre-conditions, Tool Configuration, Schedule
-- `templates/network.bkn.template` — network index with inline entity/relation/action definitions
-- `templates/data.bknd.template` — instance data file for entities with Data Source Type `bknd`
+- `templates/network.bkn.template` — network index with inline object/relation/action definitions
+- `templates/data.bknd.template` — instance data file for objects with Data Source Type `bknd`
 
 Fill in `{placeholders}`, remove unused optional sections, and remove template comments.
 
@@ -94,13 +94,13 @@ Fill in `{placeholders}`, remove unused optional sections, and remove template c
 
 1. Output **only** valid BKN Markdown (frontmatter + body). No extra explanation around the file content.
 2. Do **not** wrap the entire output in a code fence.
-3. Use existing entity/relation IDs when referencing other definitions in the same network.
+3. Use existing object/relation IDs when referencing other definitions in the same network.
 4. Follow table column names exactly as defined in the spec.
 5. IDs: lowercase letters, digits, underscores. Display names and descriptions in Chinese unless specified otherwise.
 6. Required fields: `type`, `id`, `name`, `network` in frontmatter.
-   - Entity: must have Data Source + at least one Primary Key and one Display Key.
+   - Object: must have Data Source + at least one Primary Key and one Display Key.
    - Relation: must have Endpoints + Mapping Rules.
-   - Action: must have Bound Entity + Trigger Condition.
+   - Action: must have Bound Object + Trigger Condition.
 
 ## Kweaver Import
 

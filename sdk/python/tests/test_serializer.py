@@ -10,10 +10,10 @@ from bkn import load, parse, to_bknd, to_bknd_from_table
 class TestToBknd:
     """Test to_bknd() serialization."""
 
-    def test_to_bknd_entity(self):
-        """Serialize entity data to .bknd format."""
+    def test_to_bknd_object(self):
+        """Serialize object data to .bknd format."""
         md = to_bknd(
-            entity_id="scenario",
+            object_id="scenario",
             rows=[
                 {"scenario_id": "s1", "name": "场景1", "category": "integrity"},
                 {"scenario_id": "s2", "name": "场景2", "category": "availability"},
@@ -22,7 +22,7 @@ class TestToBknd:
             source="PFMEA模板.xlsx",
         )
         assert "type: data" in md
-        assert "entity: scenario" in md
+        assert "object: scenario" in md
         assert "network: recoverable-network" in md
         assert "source: PFMEA模板.xlsx" in md
         assert "# scenario" in md
@@ -39,29 +39,29 @@ class TestToBknd:
             network="recoverable-network",
         )
         assert "relation: rs_under_scenario" in md
-        assert "entity:" not in md or "entity: rs_under_scenario" not in md
+        assert "object:" not in md or "object: rs_under_scenario" not in md
         assert "# rs_under_scenario" in md
         assert "| rs_id | scenario_id |" in md
 
     def test_to_bknd_empty_rows(self):
         """Empty rows produce valid .bknd with header only."""
         md = to_bknd(
-            entity_id="scenario",
+            object_id="scenario",
             rows=[],
             network="test",
             columns=["id", "name"],
         )
         assert "type: data" in md
-        assert "entity: scenario" in md
+        assert "object: scenario" in md
         assert "# scenario" in md
 
-    def test_to_bknd_requires_entity_or_relation(self):
-        """Must specify either entity_id or relation_id."""
+    def test_to_bknd_requires_object_or_relation(self):
+        """Must specify either object_id or relation_id."""
         with pytest.raises(ValueError, match="Specify either"):
             to_bknd(rows=[], network="test")
         with pytest.raises(ValueError, match="not both"):
             to_bknd(
-                entity_id="e",
+                object_id="e",
                 relation_id="r",
                 rows=[],
                 network="test",
@@ -71,11 +71,11 @@ class TestToBknd:
 class TestToBkndFromTable:
     """Test to_bknd_from_table() and DataTable.to_bknd()."""
 
-    def test_round_trip_entity(self):
+    def test_round_trip_object(self):
         """Parse .bknd -> serialize -> parse yields same data."""
         text = """---
 type: data
-entity: scenario
+object: scenario
 network: recoverable-network
 source: PFMEA模板.xlsx
 ---
@@ -92,7 +92,7 @@ source: PFMEA模板.xlsx
         serialized = to_bknd_from_table(table)
         doc2 = parse(serialized)
         t2 = doc2.data_tables[0]
-        assert t2.entity_or_relation == table.entity_or_relation
+        assert t2.object_or_relation == table.object_or_relation
         assert t2.columns == table.columns
         assert t2.rows == table.rows
         assert t2.network == table.network
@@ -116,6 +116,6 @@ network: recoverable-network
         serialized = table.to_bknd()
         doc2 = parse(serialized)
         t2 = doc2.data_tables[0]
-        assert t2.entity_or_relation == "rs_under_scenario"
+        assert t2.object_or_relation == "rs_under_scenario"
         assert t2.is_relation is True
         assert t2.rows == [{"rs_id": "r1", "scenario_id": "s1"}]

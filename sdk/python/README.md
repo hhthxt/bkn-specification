@@ -27,10 +27,10 @@ Requires Python 3.9+.
 ```python
 from bkn import load
 
-doc = load("examples/supplychain-hd/entities.bkn")
+doc = load("examples/supplychain-hd/objects.bkn")
 print(doc.frontmatter.type)   # fragment
-print(len(doc.entities))      # 12
-for e in doc.entities:
+print(len(doc.objects))      # 12
+for e in doc.objects:
     print(e.id, e.name, len(e.data_properties), "properties")
 ```
 
@@ -44,7 +44,7 @@ from bkn import load_network
 network = load_network("examples/supplychain-hd/supplychain.bkn")
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
-print(len(network.all_entities))      # 12
+print(len(network.all_objects))       # 12
 print(len(network.all_relations))     # 14
 print(len(network.all_actions))       # 0
 ```
@@ -62,13 +62,13 @@ network = load_network("examples/supplychain-hd/supplychain.bkn")
 transformer = KweaverTransformer(
     branch="main",
     base_version="",
-    id_prefix="supplychain_",   # Entity/relation ID prefix, e.g. po -> supplychain_po
+    id_prefix="supplychain_",   # Object/relation ID prefix, e.g. po -> supplychain_po
 )
 
 # Get JSON dict
 payload = transformer.to_json(network)
 # payload["knowledge_network"]  - Create knowledge network request body
-# payload["object_types"]      - Object types (entities) list
+# payload["object_types"]      - Object types list
 # payload["relation_types"]    - Relation types list
 
 # Or write to files
@@ -130,13 +130,13 @@ from bkn import parse, parse_frontmatter, parse_body
 
 text = """
 ---
-type: entity
-id: my_entity
-name: My Entity
+type: object
+id: my_object
+name: My Object
 ---
 
-## Entity: my_entity
-**My Entity** - Example entity
+## Object: my_object
+**My Object** - Example object
 
 ### Data Source
 | Type | ID | Name |
@@ -152,14 +152,14 @@ name: My Entity
 doc = parse(text)
 ```
 
-### 6. Access entity and relation structure
+### 6. Access object and relation structure
 
 ```python
-entity = network.all_entities[0]
-print(entity.data_source.type, entity.data_source.id)
-for dp in entity.data_properties:
+obj = network.all_objects[0]
+print(obj.data_source.type, obj.data_source.id)
+for dp in obj.data_properties:
     print(dp.property, dp.type, dp.primary_key)
-for po in entity.property_overrides:
+for po in obj.property_overrides:
     print(po.property, po.index_config)   # fulltext(standard) + vector(id)
 
 relation = network.all_relations[0]
@@ -176,7 +176,7 @@ from bkn import load
 
 doc = load("examples/risk/data/risk_scenario.bknd")
 table = doc.data_tables[0]
-print(table.entity_or_relation)  # risk_scenario
+print(table.object_or_relation)  # risk_scenario
 print(table.columns)             # ["scenario_id", "name", ...]
 print(len(table.rows))           # number of data rows
 ```
@@ -187,7 +187,7 @@ print(len(table.rows))           # number of data rows
 from bkn import to_bknd, to_bknd_from_table, load
 
 # From structured data
-md = to_bknd(entity_id="risk_scenario", rows=[{"scenario_id": "s1", "name": "Test", ...}], network="recoverable-network")
+md = to_bknd(object_id="risk_scenario", rows=[{"scenario_id": "s1", "name": "Test", ...}], network="recoverable-network")
 
 # From a parsed DataTable (round-trip)
 doc = load("examples/risk/data/risk_scenario.bknd")
@@ -199,7 +199,7 @@ md = table.to_bknd()
 
 ### 7. Risk assessment
 
-Entities and relations tagged with the reserved **`__risk__`** tag in BKN participate in the built-in risk evaluation. The Action model has a runtime/computed property **`risk`** (values `allow` | `not_allow`), filled by the risk assessment module based on the current scenario and risk-tagged knowledge.
+Objects and relations tagged with the reserved **`__risk__`** tag in BKN participate in the built-in risk evaluation. The Action model has a runtime/computed property **`risk`** (values `allow` | `not_allow`), filled by the risk assessment module based on the current scenario and risk-tagged knowledge.
 
 ```python
 from bkn import load_network, evaluate_risk
@@ -226,7 +226,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 
 | Module | Description |
 |--------|-------------|
-| `bkn.models` | Dataclass models: BknDocument, Entity, Relation, Action, DataProperty, PropertyOverride, etc. |
+| `bkn.models` | Dataclass models: BknDocument, BknObject, Relation, Action, DataProperty, PropertyOverride, etc. |
 | `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
 | `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
 | `bkn.risk` | Risk assessment: evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" |
@@ -239,7 +239,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 |-----------|-------------|---------|
 | `branch` | Branch name | `"main"` |
 | `base_version` | Base version string | `""` |
-| `id_prefix` | Entity/relation ID prefix (e.g. `supplychain_` makes `po` -> `supplychain_po`) | `""` |
+| `id_prefix` | Object/relation ID prefix (e.g. `supplychain_` makes `po` -> `supplychain_po`) | `""` |
 
 ## Testing
 

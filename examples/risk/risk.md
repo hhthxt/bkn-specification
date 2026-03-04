@@ -1,6 +1,6 @@
 # Risk 风险类设计与交互逻辑
 
-本文档描述 BKN 中**风险（risk）**的设计定位、风险相关实体/关系，以及风险评估与执行的交互逻辑。对应 BKN 定义见 [index.bkn](index.bkn)（聚合 [risk-fragment.bkn](risk-fragment.bkn) 与 [actions.bkn](actions.bkn)）。
+本文档描述 BKN 中**风险（risk）**的设计定位、风险相关对象/关系，以及风险评估与执行的交互逻辑。对应 BKN 定义见 [index.bkn](index.bkn)（聚合 [risk-fragment.bkn](risk-fragment.bkn) 与 [actions.bkn](actions.bkn)）。
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### 1.1 内置 tag `__risk__`（保留，用户不得使用）
 
-- **`__risk__`** 为规范**内置保留** tag，仅用于参与「内置风险评估」的实体与关系；**用户不得将 `__risk__` 用于自定义用途**。
+- **`__risk__`** 为规范**内置保留** tag，仅用于参与「内置风险评估」的对象与关系；**用户不得将 `__risk__` 用于自定义用途**。
 - 凡参与**内置**风险评估的定义，在头部增加 **`- **Tags**: __risk__`**。AI 应用与内置评估模块通过该 tag 识别风险相关定义。
 
 ### 1.2 与 Action 的关系
@@ -23,20 +23,20 @@
 
 ### 1.3 开放性：自定义风险类与评估函数
 
-- 用户可按需求定义**自己的风险类**：使用**非保留** tag（如 `compliance`、`audit`）定义实体/关系，不参与内置评估，由用户自己的逻辑消费。
+- 用户可按需求定义**自己的风险类**：使用**非保留** tag（如 `compliance`、`audit`）定义对象/关系，不参与内置评估，由用户自己的逻辑消费。
 - 用户可提供**自己的风险评估函数**：签名与内置 `evaluate_risk` 兼容（如 `(network, action_id, context, **kwargs) -> str`），在运行时替换或与内置评估组合使用。
 - 内置的 `__risk__` 与默认 `evaluate_risk` 仅为一种可选实现，不排斥用户扩展或替换。
 
 ---
 
-## 2. 风险相关实体与关系
+## 2. 风险相关对象与关系
 
-### 2.1 实体概览
+### 2.1 对象概览
 
 | 定义 | 类型 | 说明 | Tags |
 |------|------|------|------|
-| **risk_scenario** | Entity | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
-| **risk_rule** | Entity | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
+| **risk_scenario** | Object | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
+| **risk_rule** | Object | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
 | **rule_under_scenario** | Relation | 规则归属场景（risk_rule → risk_scenario） | __risk__ |
 
 ### 2.2 risk_scenario（风险场景）

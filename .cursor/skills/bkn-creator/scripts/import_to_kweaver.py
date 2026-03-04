@@ -23,7 +23,7 @@ def main() -> int:
     p.add_argument("--account-id", default="", help="Required for internal mode")
     p.add_argument("--account-type", default="", help="Required for internal mode")
     p.add_argument("--business-domain", default="", help="Business domain header")
-    p.add_argument("--id-prefix", default="", help="ID prefix for entity/relation IDs")
+    p.add_argument("--id-prefix", default="", help="ID prefix for object/relation IDs")
     p.add_argument("--dry-run", action="store_true", help="Transform only, do not call API")
     args = p.parse_args()
 

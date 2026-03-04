@@ -16,7 +16,7 @@ def _escape_cell(val: str | int | float | None) -> str:
 
 
 def to_bknd(
-    entity_id: str | None = None,
+    object_id: str | None = None,
     relation_id: str | None = None,
     rows: list[dict[str, str | int | float | None]] | None = None,
     network: str = "",
@@ -26,8 +26,8 @@ def to_bknd(
     """Serialize structured data to .bknd Markdown format.
 
     Args:
-        entity_id: Entity ID (use with relation_id=None for entity data).
-        relation_id: Relation ID (use with entity_id=None for relation data).
+        object_id: Object ID (use with relation_id=None for object data).
+        relation_id: Relation ID (use with object_id=None for relation data).
         rows: Data rows as list of dicts. Keys must match column names.
         network: Network ID.
         source: Optional provenance (e.g. source file).
@@ -36,14 +36,14 @@ def to_bknd(
     Returns:
         Full .bknd file content (frontmatter + Markdown table).
     """
-    if entity_id and relation_id:
-        raise ValueError("Specify either entity_id or relation_id, not both")
-    if not entity_id and not relation_id:
-        raise ValueError("Specify either entity_id or relation_id")
+    if object_id and relation_id:
+        raise ValueError("Specify either object_id or relation_id, not both")
+    if not object_id and not relation_id:
+        raise ValueError("Specify either object_id or relation_id")
     if not rows:
         rows = []
 
-    target_id = relation_id if relation_id else entity_id
+    target_id = relation_id if relation_id else object_id
     is_relation = bool(relation_id)
 
     if columns is None and rows:
@@ -59,7 +59,7 @@ def to_bknd(
     if is_relation:
         fm_lines.append(f"relation: {relation_id}")
     else:
-        fm_lines.append(f"entity: {entity_id}")
+        fm_lines.append(f"object: {object_id}")
     if source:
         fm_lines.append(f"source: {source}")
     fm_lines.append("---")
@@ -98,7 +98,7 @@ def to_bknd_from_table(
     """
     net = network or table.network
     cols = table.columns if table.columns else (list(table.rows[0].keys()) if table.rows else [])
-    if relation_id := (table.entity_or_relation if table.is_relation else None):
+    if relation_id := (table.object_or_relation if table.is_relation else None):
         return to_bknd(
             relation_id=relation_id,
             rows=table.rows,
@@ -107,7 +107,7 @@ def to_bknd_from_table(
             columns=cols,
         )
     return to_bknd(
-        entity_id=table.entity_or_relation,
+        object_id=table.object_or_relation,
         rows=table.rows,
         network=net,
         source=source,

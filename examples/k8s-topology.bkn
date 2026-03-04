@@ -13,15 +13,15 @@ Kubernetes 集群的核心资源拓扑结构，用于运维监控和故障分析
 
 ## 网络概览
 
-- **实体**: Node（节点）、Pod（容器组）、Service（服务）
+- **对象**: Node（节点）、Pod（容器组）、Service（服务）
 - **关系**: Node 包含 Pod（pod_belongs_node）、Service 路由 Pod（service_routes_pod）
 - **行动**: restart_pod（重启 Pod）、cordon_node（隔离 Node）
 
 ---
 
-# Entities
+# Objects
 
-## Entity: pod
+## Object: pod
 
 **Pod Instance** - Kubernetes 中的最小部署单元，一个或多个容器的集合
 
@@ -84,7 +84,7 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 ---
 
-## Entity: node
+## Object: node
 
 **Node** - Kubernetes 集群中的工作节点，承载 Pod 运行
 
@@ -109,7 +109,7 @@ Pod 的自定义算子，用于执行复杂计算逻辑。
 
 ---
 
-## Entity: service
+## Object: service
 
 **Service服务** - Kubernetes 服务抽象层，提供稳定的访问入口
 
@@ -189,7 +189,7 @@ Service 通过 selector 匹配 Pod，将流量路由到后端 Pod。
 
 **重启Pod** - 当 Pod 状态异常时，自动执行重启操作以恢复服务
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | pod | modify |
 
@@ -209,7 +209,7 @@ condition:
 
 ### Pre-conditions
 
-| Entity | Check | Condition | Message |
+| Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
 | pod | relation:pod_belongs_node | exist | Pod 必须已调度到某个 Node |
 
@@ -260,7 +260,7 @@ condition:
 
 **Cordon Node** - 将故障节点标记为不可调度，防止新 Pod 被调度到该节点
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | node | modify |
 
@@ -278,7 +278,7 @@ condition:
 
 ### Pre-conditions
 
-| Entity | Check | Condition | Message |
+| Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
 | node | property:node_status | != Ready | Node 状态必须为非 Ready 时才执行隔离 |
 
@@ -315,7 +315,7 @@ condition:
 
 | 类型 | 数量 |
 |------|------|
-| 实体类 | 3 |
+| 对象类 | 3 |
 | 关系类 | 2 |
 | 行动类 | 2 |
 

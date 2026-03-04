@@ -23,7 +23,7 @@ class Frontmatter:
     enabled: Optional[bool] = None
     risk_level: str = ""
     requires_approval: Optional[bool] = None
-    entity: str = ""
+    object: str = ""
     relation: str = ""
     source: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
@@ -109,7 +109,7 @@ class ToolConfig:
 @dataclass
 class PreCondition:
     """### Pre-conditions table row."""
-    entity: str = ""
+    object: str = ""
     check: str = ""
     condition: str = ""
     message: str = ""
@@ -123,8 +123,8 @@ class Schedule:
 
 
 @dataclass
-class Entity:
-    """## Entity: {id} block."""
+class BknObject:
+    """## Object: {id} block."""
     id: str = ""
     name: str = ""
     description: str = ""
@@ -156,7 +156,7 @@ class Action:
     id: str = ""
     name: str = ""
     description: str = ""
-    bound_entity: str = ""
+    bound_object: str = ""
     action_type: str = ""
     trigger_condition: str = ""
     pre_conditions: list[PreCondition] = field(default_factory=list)
@@ -173,7 +173,7 @@ class Action:
 class DataTable:
     """A data table parsed from a .bknd (type: data) document."""
 
-    entity_or_relation: str = ""
+    object_or_relation: str = ""
     is_relation: bool = False
     columns: list[str] = field(default_factory=list)
     rows: list[dict[str, str]] = field(default_factory=list)
@@ -190,7 +190,7 @@ class DataTable:
 class BknDocument:
     """A parsed .bkn/.bknd file: frontmatter + body definitions/data tables."""
     frontmatter: Frontmatter = field(default_factory=Frontmatter)
-    entities: list[Entity] = field(default_factory=list)
+    objects: list[BknObject] = field(default_factory=list)
     relations: list[Relation] = field(default_factory=list)
     actions: list[Action] = field(default_factory=list)
     data_tables: list[DataTable] = field(default_factory=list)
@@ -204,10 +204,10 @@ class BknNetwork:
     includes: list[BknDocument] = field(default_factory=list)
 
     @property
-    def all_entities(self) -> list[Entity]:
-        result = list(self.root.entities)
+    def all_objects(self) -> list[BknObject]:
+        result = list(self.root.objects)
         for doc in self.includes:
-            result.extend(doc.entities)
+            result.extend(doc.objects)
         return result
 
     @property

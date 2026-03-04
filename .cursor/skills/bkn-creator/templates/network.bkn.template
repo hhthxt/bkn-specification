@@ -6,7 +6,7 @@ version: 1.0.0
 tags: [{标签1}, {标签2}]
 description: {网络描述}
 # includes:                    # 按类型拆分时，引用子文件
-#   - entities.bkn
+#   - objects.bkn
 #   - relations.bkn
 #   - actions.bkn
 ---
@@ -17,17 +17,17 @@ description: {网络描述}
 
 ## 网络概览
 
-- **实体**: 在此列出实体类
+- **对象**: 在此列出对象类
 - **关系**: 在此列出关系类
 - **行动**: 在此列出行动类
 
 ---
 
-# Entities
+# Objects
 
-## Entity: {entity_id}
+## Object: {object_id}
 
-**{实体名称}** - {简短描述}
+**{对象名称}** - {简短描述}
 
 ### Data Source
 
@@ -75,7 +75,7 @@ description: {网络描述}
 
 | Source | Target | Type |
 |--------|--------|------|
-| {source_entity} | {target_entity} | direct |
+| {source} | {target} | direct |
 
 ### Mapping Rules
 
@@ -95,15 +95,15 @@ description: {网络描述}
 
 **{行动名称}** - {简短描述}
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
-| {entity_id} | add | modify | delete |
+| {object_id} | add | modify | delete |
 
 ### Trigger Condition
 
 ```yaml
 condition:
-  object_type_id: {entity_id}
+  object_type_id: {object_id}
   field: {property_name}
   operation: {operator}
   value: {value}

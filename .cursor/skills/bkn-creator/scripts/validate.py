@@ -24,7 +24,7 @@ def main() -> int:
         network = load_network(path)
         fm = network.root.frontmatter
         print(f"type: {fm.type} id: {fm.id} name: {fm.name}")
-        print(f"entities: {len(network.all_entities)} relations: {len(network.all_relations)} actions: {len(network.all_actions)}")
+        print(f"objects: {len(network.all_objects)} relations: {len(network.all_relations)} actions: {len(network.all_actions)}")
         return 0
     except Exception as e:
         print(f"Validation failed: {e}", file=sys.stderr)

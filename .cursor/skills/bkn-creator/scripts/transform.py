@@ -17,7 +17,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Transform BKN to kweaver JSON files")
     p.add_argument("path", help="Path to .bkn file or network index (e.g. examples/k8s-modular/index.bkn)")
     p.add_argument("-o", "--output", default="output", help="Output directory (default: output)")
-    p.add_argument("--id-prefix", default="", help="ID prefix for entity/relation IDs")
+    p.add_argument("--id-prefix", default="", help="ID prefix for object/relation IDs")
     args = p.parse_args()
     path = Path(args.path)
     if not path.exists():

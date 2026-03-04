@@ -16,7 +16,7 @@ from typing import Any
 from bkn.models import (
     Action,
     BknNetwork,
-    Entity,
+    BknObject,
     Frontmatter,
     PropertyOverride,
     Relation,
@@ -25,7 +25,7 @@ from bkn.models import (
 from bkn.transformers.base import Transformer
 
 # ---------------------------------------------------------------------------
-# BKN type -> kweaver type mapping (reverse of what gen_entities_bkn.js did)
+# BKN type -> kweaver type mapping (reverse of what gen_objects_bkn.js did)
 # ---------------------------------------------------------------------------
 _TYPE_TO_KWEAVER: dict[str, str] = {
     "VARCHAR": "string",
@@ -145,26 +145,26 @@ class KweaverTransformer(Transformer):
             payload["tags"] = fm.tags
         return payload
 
-    # -- Object Types (Entities) ----------------------------------------------
+    # -- Object Types --------------------------------------------------------
 
-    def _build_override_map(self, entity: Entity) -> dict[str, PropertyOverride]:
+    def _build_override_map(self, obj: BknObject) -> dict[str, PropertyOverride]:
         """Index property overrides by property name for fast lookup."""
-        return {po.property: po for po in entity.property_overrides}
+        return {po.property: po for po in obj.property_overrides}
 
-    def transform_entity(self, entity: Entity) -> dict[str, Any]:
-        """Transform a BKN Entity to a kweaver CreateObjectTypes item."""
-        override_map = self._build_override_map(entity)
+    def transform_object(self, obj: BknObject) -> dict[str, Any]:
+        """Transform a BknObject to a kweaver CreateObjectTypes item."""
+        override_map = self._build_override_map(obj)
 
         primary_keys = [
-            dp.property for dp in entity.data_properties if dp.primary_key
+            dp.property for dp in obj.data_properties if dp.primary_key
         ]
         display_keys = [
-            dp.property for dp in entity.data_properties if dp.display_key
+            dp.property for dp in obj.data_properties if dp.display_key
         ]
         display_key = display_keys[0] if display_keys else ""
 
         data_props: list[dict[str, Any]] = []
-        for dp in entity.data_properties:
+        for dp in obj.data_properties:
             kweaver_type = _map_type(dp.type)
             prop_dict: dict[str, Any] = {
                 "name": dp.property,
@@ -187,7 +187,7 @@ class KweaverTransformer(Transformer):
             data_props.append(prop_dict)
 
         result: dict[str, Any] = {
-            "name": entity.name or entity.id,
+            "name": obj.name or obj.id,
             "branch": self.branch,
             "base_version": self.base_version,
             "primary_keys": primary_keys,
@@ -195,21 +195,21 @@ class KweaverTransformer(Transformer):
             "data_properties": data_props,
         }
 
-        full_id = self._full_id(entity.id)
+        full_id = self._full_id(obj.id)
         if full_id:
             result["id"] = full_id
 
-        if entity.tags:
-            result["tags"] = entity.tags
-        if entity.description:
-            result["comment"] = entity.description
+        if obj.tags:
+            result["tags"] = obj.tags
+        if obj.description:
+            result["comment"] = obj.description
 
-        if entity.data_source:
-            ds = entity.data_source
+        if obj.data_source:
+            ds = obj.data_source
             result["data_source"] = {
                 "type": ds.type,
                 "id": ds.id,
-                "name": ds.name or entity.name or entity.id,
+                "name": ds.name or obj.name or obj.id,
             }
 
         return result
@@ -262,7 +262,7 @@ class KweaverTransformer(Transformer):
             "branch": self.branch,
             "base_version": self.base_version,
             "action_type": action.action_type or "add",
-            "object_type_id": self._full_id(action.bound_entity) if action.bound_entity else "",
+            "object_type_id": self._full_id(action.bound_object) if action.bound_object else "",
             "schedule": {"type": "", "expression": ""},
         }
 
@@ -318,7 +318,7 @@ class KweaverTransformer(Transformer):
         return {
             "knowledge_network": self.transform_network(network.root.frontmatter),
             "object_types": [
-                self.transform_entity(e) for e in network.all_entities
+                self.transform_object(e) for e in network.all_objects
             ],
             "relation_types": [
                 self.transform_relation(r) for r in network.all_relations

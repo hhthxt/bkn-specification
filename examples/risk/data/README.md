@@ -4,16 +4,16 @@
 
 ## `.bknd` 文件格式
 
-`.bknd` 为 BKN 数据文件，扩展名与 `.bkn`（schema）区分。格式：YAML frontmatter（`type: data`、`entity` 或 `relation`、`network`、可选 `source`）+ Markdown 表格。列名需与 schema 中 Data Properties 一致。
+`.bknd` 为 BKN 数据文件，扩展名与 `.bkn`（schema）区分。格式：YAML frontmatter（`type: data`、`object` 或 `relation`、`network`、可选 `source`）+ Markdown 表格。列名需与 schema 中 Data Properties 一致。
 
-仅当 Entity 的 Data Source 为 `bknd` 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的实体数据来自外部系统，不可用 `.bknd` 编辑。
+仅当 Object 的 Data Source 为 `bknd` 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的对象数据来自外部系统，不可用 `.bknd` 编辑。
 
 ## 文件列表（新模型）
 
 | 文件 | 类型 | 对应 schema ID |
 |------|------|----------------|
-| `risk_scenario.bknd` | entity data | `risk_scenario` |
-| `risk_rule.bknd` | entity data | `risk_rule` |
+| `risk_scenario.bknd` | object data | `risk_scenario` |
+| `risk_rule.bknd` | object data | `risk_rule` |
 
 ## 生成与序列化
 

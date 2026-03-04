@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAllFiles } from '@/lib/storage';
 import { parseBKNNetwork, parseBKNFile } from '@/lib/bkn-parser';
 import { useBKNStore } from '@/lib/store';
-import type { Entity, Relation, Action, LogicProperty } from '@/types/bkn';
+import type { BknObject, Relation, Action, LogicProperty } from '@/types/bkn';
 import { FileText, GitBranch, Zap, Network, BarChart3, FunctionSquare, ChevronDown, ChevronRight } from 'lucide-react';
 import { getMockDataSource, getMockLogicPropertyData } from '@/lib/mock-data-sources';
 
@@ -64,11 +64,11 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 };
 
 interface GraphViewProps {
-  onNodeClick?: (nodeId: string, type: 'entity' | 'action') => void;
+  onNodeClick?: (nodeId: string, type: 'object' | 'action') => void;
 }
 
 export function GraphView({ onNodeClick }: GraphViewProps) {
-  const [selectedNode, setSelectedNode] = useState<{ id: string; type: 'entity' | 'action'; data: Entity | Action } | null>(null);
+  const [selectedNode, setSelectedNode] = useState<{ id: string; type: 'object' | 'action'; data: BknObject | Action } | null>(null);
   const [selectedRelation, setSelectedRelation] = useState<{ id: string; data: Relation } | null>(null);
   const { network } = useBKNStore();
   const [files, setFiles] = useState<Record<string, string>>({});
@@ -95,7 +95,7 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
       return parseBKNNetwork(bknFiles);
     } catch (e) {
       console.error('Failed to parse network:', e);
-      return { id: '', name: '', entities: [], relations: [], actions: [], files: [] };
+      return { id: '', name: '', objects: [], relations: [], actions: [], files: [] };
     }
   }, [network]);
 
@@ -104,10 +104,10 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
-    // Create entity nodes
-    networkData.entities.forEach((entity) => {
+    // Create object nodes
+    networkData.objects.forEach((obj) => {
       nodes.push({
-        id: `entity-${entity.id}`,
+        id: `object-${obj.id}`,
         type: 'default',
         position: { x: 0, y: 0 }, // Will be set by dagre
         data: {
@@ -115,13 +115,13 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
             <div className="flex items-center gap-2 p-2">
               <FileText className="h-4 w-4 text-emerald-500" />
               <div>
-                <div className="font-semibold text-foreground">{entity.name}</div>
-                <div className="text-xs text-foreground/70">{entity.id}</div>
+                <div className="font-semibold text-foreground">{obj.name}</div>
+                <div className="text-xs text-foreground/70">{obj.id}</div>
               </div>
             </div>
           ),
-          entity,
-          type: 'entity',
+          bknObject: obj,
+          type: 'object',
         },
         style: {
           background: 'hsl(var(--card))',
@@ -167,10 +167,10 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
         },
       });
 
-      // Connect action to entity with animated dashed line
+      // Connect action to object with animated dashed line
       edges.push({
-        id: `edge-${action.entityId}-${action.id}`,
-        source: `entity-${action.entityId}`,
+        id: `edge-${action.objectId}-${action.id}`,
+        source: `object-${action.objectId}`,
         target: actionNodeId,
         type: 'smoothstep',
         animated: true,
@@ -191,14 +191,14 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
 
     // Create relation edges
     networkData.relations.forEach((relation) => {
-      const sourceExists = networkData.entities.some(e => e.id === relation.source);
-      const targetExists = networkData.entities.some(e => e.id === relation.target);
+      const sourceExists = networkData.objects.some(e => e.id === relation.source);
+      const targetExists = networkData.objects.some(e => e.id === relation.target);
 
       if (sourceExists && targetExists) {
         edges.push({
           id: `relation-${relation.id}`,
-          source: `entity-${relation.source}`,
-          target: `entity-${relation.target}`,
+          source: `object-${relation.source}`,
+          target: `object-${relation.target}`,
           type: 'smoothstep',
           animated: false,
           markerEnd: {
@@ -232,9 +232,9 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
   const onNodeClickHandler = useCallback(
     (_event: React.MouseEvent, node: Node) => {
       const nodeData = node.data;
-      if (nodeData.type === 'entity') {
-        setSelectedNode({ id: node.id, type: 'entity', data: nodeData.entity });
-        onNodeClick?.(nodeData.entity.id, 'entity');
+      if (nodeData.type === 'object') {
+        setSelectedNode({ id: node.id, type: 'object', data: nodeData.bknObject });
+        onNodeClick?.(nodeData.bknObject.id, 'object');
       } else if (nodeData.type === 'action') {
         setSelectedNode({ id: node.id, type: 'action', data: nodeData.action });
         onNodeClick?.(nodeData.action.id, 'action');
@@ -256,17 +256,17 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
     <div className="flex flex-col h-full border-l bg-card">
       <div className="p-2 border-b">
         <h2 className="text-sm font-semibold">网络图</h2>
-        {networkData.entities.length === 0 && networkData.relations.length === 0 && (
+        {networkData.objects.length === 0 && networkData.relations.length === 0 && (
           <p className="text-xs text-muted-foreground mt-1">暂无数据</p>
         )}
       </div>
       <div className="flex-1 relative">
-        {networkData.entities.length === 0 ? (
+        {networkData.objects.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <div className="text-center">
               <Network className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>暂无网络数据</p>
-              <p className="text-xs mt-2">创建实体和关系后，网络图将自动更新</p>
+              <p className="text-xs mt-2">创建对象和关系后，网络图将自动更新</p>
             </div>
           </div>
         ) : (
@@ -290,7 +290,7 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
             <Controls />
             <MiniMap 
               nodeColor={(node) => {
-                if (node.data?.type === 'entity') return 'hsl(142 76% 36%)';
+                if (node.data?.type === 'object') return 'hsl(142 76% 36%)';
                 if (node.data?.type === 'action') return 'hsl(38 92% 50%)';
                 return '#ccc';
               }}
@@ -305,7 +305,7 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selectedNode?.type === 'entity' ? (
+              {selectedNode?.type === 'object' ? (
                 <FileText className="h-5 w-5 text-green-500" />
               ) : (
                 <Zap className="h-5 w-5 text-orange-500" />
@@ -314,8 +314,8 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh]">
-            {selectedNode && selectedNode.type === 'entity' ? (
-              <EntityDetails entity={selectedNode.data as Entity} />
+            {selectedNode && selectedNode.type === 'object' ? (
+              <ObjectDetails bknObject={selectedNode.data as BknObject} />
             ) : selectedNode ? (
               <ActionDetails action={selectedNode.data as Action} />
             ) : null}
@@ -341,35 +341,35 @@ export function GraphView({ onNodeClick }: GraphViewProps) {
   );
 }
 
-function EntityDetails({ entity }: { entity: Entity }) {
+function ObjectDetails({ bknObject }: { bknObject: BknObject }) {
   return (
     <div className="space-y-4">
       <div>
         <h3 className="font-semibold mb-2">基本信息</h3>
         <div className="space-y-1 text-sm">
-          <div><span className="text-muted-foreground">ID:</span> {entity.id}</div>
-          {entity.network && <div><span className="text-muted-foreground">网络:</span> {entity.network}</div>}
-          {entity.namespace && <div><span className="text-muted-foreground">命名空间:</span> {entity.namespace}</div>}
-          {entity.primaryKey && <div><span className="text-muted-foreground">Primary Key:</span> {entity.primaryKey}</div>}
-          {entity.displayKey && <div><span className="text-muted-foreground">Display Key:</span> {entity.displayKey}</div>}
+          <div><span className="text-muted-foreground">ID:</span> {bknObject.id}</div>
+          {bknObject.network && <div><span className="text-muted-foreground">网络:</span> {bknObject.network}</div>}
+          {bknObject.namespace && <div><span className="text-muted-foreground">命名空间:</span> {bknObject.namespace}</div>}
+          {bknObject.primaryKey && <div><span className="text-muted-foreground">Primary Key:</span> {bknObject.primaryKey}</div>}
+          {bknObject.displayKey && <div><span className="text-muted-foreground">Display Key:</span> {bknObject.displayKey}</div>}
         </div>
       </div>
 
-      {entity.dataSource && (
+      {bknObject.dataSource && (
         <div>
           <h3 className="font-semibold mb-2">Data Source</h3>
           <div className="text-sm">
-            <div><span className="text-muted-foreground">Type:</span> {entity.dataSource.type}</div>
-            <div><span className="text-muted-foreground">ID:</span> {entity.dataSource.id}</div>
+            <div><span className="text-muted-foreground">Type:</span> {bknObject.dataSource.type}</div>
+            <div><span className="text-muted-foreground">ID:</span> {bknObject.dataSource.id}</div>
           </div>
         </div>
       )}
 
-      {entity.properties && entity.properties.length > 0 && (
+      {bknObject.properties && bknObject.properties.length > 0 && (
         <div>
           <h3 className="font-semibold mb-2">Property Override</h3>
           <div className="text-sm space-y-2">
-            {entity.properties.map((prop, idx) => (
+            {bknObject.properties.map((prop, idx) => (
               <div key={idx} className="border-l-2 pl-3 py-1">
                 <div className="font-medium">{prop.name}</div>
                 {prop.displayName && (
@@ -390,25 +390,25 @@ function EntityDetails({ entity }: { entity: Entity }) {
         </div>
       )}
 
-      {entity.logicProperties && entity.logicProperties.length > 0 && (
+      {bknObject.logicProperties && bknObject.logicProperties.length > 0 && (
         <div>
           <h3 className="font-semibold mb-2">逻辑属性</h3>
           <div className="text-sm space-y-3">
-            {entity.logicProperties.map((prop, idx) => (
+            {bknObject.logicProperties.map((prop, idx) => (
               <LogicPropertyCard
                 key={idx}
                 property={prop}
-                entityId={entity.id}
+                objectId={bknObject.id}
               />
             ))}
           </div>
         </div>
       )}
 
-      {entity.description && (
+      {bknObject.description && (
         <div>
           <h3 className="font-semibold mb-2">描述</h3>
-          <p className="text-sm text-muted-foreground">{entity.description}</p>
+          <p className="text-sm text-muted-foreground">{bknObject.description}</p>
         </div>
       )}
     </div>
@@ -422,7 +422,7 @@ function ActionDetails({ action }: { action: Action }) {
         <h3 className="font-semibold mb-2">基本信息</h3>
         <div className="space-y-1 text-sm">
           <div><span className="text-muted-foreground">ID:</span> {action.id}</div>
-          <div><span className="text-muted-foreground">Bound Entity:</span> {action.entityId}</div>
+          <div><span className="text-muted-foreground">Bound Object:</span> {action.objectId}</div>
           <div><span className="text-muted-foreground">Action Type:</span> {action.actionType}</div>
           {action.network && <div><span className="text-muted-foreground">网络:</span> {action.network}</div>}
           {action.enabled !== undefined && (
@@ -584,9 +584,9 @@ function DataSourcePreview({ dataSourceId }: { dataSourceId: string }) {
   );
 }
 
-function LogicPropertyCard({ property, entityId }: { property: LogicProperty; entityId: string }) {
+function LogicPropertyCard({ property, objectId }: { property: LogicProperty; objectId: string }) {
   const [expanded, setExpanded] = useState(false);
-  const mockData = getMockLogicPropertyData(entityId, property.name);
+  const mockData = getMockLogicPropertyData(objectId, property.name);
   const isMetric = property.type === 'metric';
   const Icon = isMetric ? BarChart3 : FunctionSquare;
 

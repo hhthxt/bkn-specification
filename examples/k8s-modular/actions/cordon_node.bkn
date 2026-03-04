@@ -18,9 +18,9 @@ tags: [运维操作, 节点管理]
 
 将故障节点标记为不可调度，防止新 Pod 被调度到该节点。
 
-### Bound Entity
+### Bound Object
 
-| Bound Entity | Action Type |
+| Bound Object | Action Type |
 |--------------|-------------|
 | node | modify |
 
@@ -38,7 +38,7 @@ condition:
 
 ### Pre-conditions
 
-| Entity | Check | Condition | Message |
+| Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
 | node | property:node_status | != Ready | Node 状态必须为非 Ready 时才执行隔离 |
 

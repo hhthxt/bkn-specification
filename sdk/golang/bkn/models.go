@@ -16,7 +16,7 @@ type Frontmatter struct {
 	Enabled          *bool    `yaml:"enabled"`
 	RiskLevel        string   `yaml:"risk_level"`
 	RequiresApproval *bool    `yaml:"requires_approval"`
-	Entity           string   `yaml:"entity"`
+	Object           string   `yaml:"object"`
 	Relation         string   `yaml:"relation"`
 	Source           string   `yaml:"source"`
 	Extra            map[string]any
@@ -93,7 +93,7 @@ type ToolConfig struct {
 
 // PreCondition is a ### Pre-conditions table row.
 type PreCondition struct {
-	Entity    string
+	Object    string
 	Check     string
 	Condition string
 	Message   string
@@ -105,8 +105,8 @@ type Schedule struct {
 	Expression string
 }
 
-// Entity is a ## Entity: {id} block.
-type Entity struct {
+// BknObject is a ## Object: {id} block.
+type BknObject struct {
 	ID                string
 	Name              string
 	Description       string
@@ -136,7 +136,7 @@ type Action struct {
 	ID                   string
 	Name                 string
 	Description          string
-	BoundEntity          string
+	BoundObject          string
 	ActionType           string
 	TriggerCondition     string
 	PreConditions        []PreCondition
@@ -150,7 +150,7 @@ type Action struct {
 
 // DataTable is a data table parsed from a .bknd (type: data) document.
 type DataTable struct {
-	EntityOrRelation string
+	ObjectOrRelation string
 	IsRelation       bool
 	Columns          []string
 	Rows             []map[string]string
@@ -161,7 +161,7 @@ type DataTable struct {
 // BknDocument is a parsed .bkn/.bknd file: frontmatter + body definitions/data tables.
 type BknDocument struct {
 	Frontmatter Frontmatter
-	Entities    []Entity
+	Objects     []BknObject
 	Relations   []Relation
 	Actions     []Action
 	DataTables  []DataTable
@@ -174,12 +174,12 @@ type BknNetwork struct {
 	Includes []BknDocument
 }
 
-// AllEntities returns all entities from root and included documents.
-func (n *BknNetwork) AllEntities() []Entity {
-	var out []Entity
-	out = append(out, n.Root.Entities...)
+// AllObjects returns all objects from root and included documents.
+func (n *BknNetwork) AllObjects() []BknObject {
+	var out []BknObject
+	out = append(out, n.Root.Objects...)
 	for _, doc := range n.Includes {
-		out = append(out, doc.Entities...)
+		out = append(out, doc.Objects...)
 	}
 	return out
 }

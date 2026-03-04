@@ -44,11 +44,11 @@ func TestParseRiskFragment(t *testing.T) {
 	if doc.Frontmatter.Type != "fragment" {
 		t.Errorf("expected type fragment, got %q", doc.Frontmatter.Type)
 	}
-	if len(doc.Entities) < 2 {
-		t.Errorf("expected at least 2 entities, got %d", len(doc.Entities))
+	if len(doc.Objects) < 2 {
+		t.Errorf("expected at least 2 objects, got %d", len(doc.Objects))
 	}
 	var foundScenario, foundRule bool
-	for _, e := range doc.Entities {
+	for _, e := range doc.Objects {
 		if e.ID == "risk_scenario" {
 			foundScenario = true
 		}
@@ -57,7 +57,7 @@ func TestParseRiskFragment(t *testing.T) {
 		}
 	}
 	if !foundScenario || !foundRule {
-		t.Errorf("expected risk_scenario and risk_rule entities")
+		t.Errorf("expected risk_scenario and risk_rule objects")
 	}
 }
 
@@ -92,8 +92,8 @@ func TestParseDataFile(t *testing.T) {
 		t.Fatalf("expected 1 data table, got %d", len(doc.DataTables))
 	}
 	dt := doc.DataTables[0]
-	if dt.EntityOrRelation != "risk_scenario" {
-		t.Errorf("expected entity risk_scenario, got %q", dt.EntityOrRelation)
+	if dt.ObjectOrRelation != "risk_scenario" {
+		t.Errorf("expected object risk_scenario, got %q", dt.ObjectOrRelation)
 	}
 	if len(dt.Rows) < 1 {
 		t.Errorf("expected at least 1 row")
@@ -107,11 +107,11 @@ func TestLoadNetwork(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load network: %v", err)
 	}
-	entities := net.AllEntities()
+	objects := net.AllObjects()
 	actions := net.AllActions()
 	tables := net.AllDataTables()
-	if len(entities) < 2 {
-		t.Errorf("expected entities from includes, got %d", len(entities))
+	if len(objects) < 2 {
+		t.Errorf("expected objects from includes, got %d", len(objects))
 	}
 	if len(actions) < 1 {
 		t.Errorf("expected actions from includes, got %d", len(actions))
@@ -122,15 +122,15 @@ func TestLoadNetwork(t *testing.T) {
 }
 
 func TestValidateDataTable(t *testing.T) {
-	schema := &Entity{
-		ID: "test_entity",
+	schema := &BknObject{
+		ID: "test_object",
 		DataProperties: []DataProperty{
 			{Property: "id", Constraint: "not_null", PrimaryKey: true},
 			{Property: "name"},
 		},
 	}
 	table := &DataTable{
-		EntityOrRelation: "test_entity",
+		ObjectOrRelation: "test_object",
 		Columns:          []string{"id", "name"},
 		Rows:             []map[string]string{{"id": "1", "name": "a"}},
 	}
@@ -141,14 +141,14 @@ func TestValidateDataTable(t *testing.T) {
 }
 
 func TestValidateDataTable_NotNullFails(t *testing.T) {
-	schema := &Entity{
-		ID: "test_entity",
+	schema := &BknObject{
+		ID: "test_object",
 		DataProperties: []DataProperty{
 			{Property: "id", Constraint: "not_null", PrimaryKey: true},
 		},
 	}
 	table := &DataTable{
-		EntityOrRelation: "test_entity",
+		ObjectOrRelation: "test_object",
 		Columns:          []string{"id"},
 		Rows:             []map[string]string{{"id": ""}},
 	}
@@ -170,7 +170,7 @@ func TestValidateDataTable_NotNullFails(t *testing.T) {
 
 func TestToBkndRoundTrip(t *testing.T) {
 	table := &DataTable{
-		EntityOrRelation: "test_entity",
+		ObjectOrRelation: "test_object",
 		Columns:          []string{"id", "name"},
 		Rows: []map[string]string{
 			{"id": "1", "name": "a"},

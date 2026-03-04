@@ -15,10 +15,10 @@ The core documentation is the **BKN Language Specification**:
 
 | Concept | Description |
 |---------|-------------|
-| Entity | Business object types (e.g. Pod, Node, Service) |
-| Relation | Links between entities |
-| Action | Operations on entities (with tool/MCP binding) |
-| data_view | Data source mapping for entities and relations |
+| Object | Business object types (e.g. Pod, Node, Service) |
+| Relation | Links between objects |
+| Action | Operations on objects (with tool/MCP binding) |
+| data_view | Data source mapping for objects and relations |
 
 ### File Organization
 
@@ -30,7 +30,7 @@ The core documentation is the **BKN Language Specification**:
 │   └── templates/            # BKN file templates
 └── examples/                 # Example networks (Kubernetes topology)
     ├── k8s-topology.bkn      # Single-file example
-    ├── k8s-network/          # Split by type (entities, relations, actions)
+    ├── k8s-network/          # Split by type (objects, relations, actions)
     └── k8s-modular/          # One definition per file
 ```
 
@@ -39,8 +39,8 @@ The core documentation is the **BKN Language Specification**:
 This repo includes **BKN Editor**, a demo web app for editing and visualizing BKN files:
 
 - File tree and Monaco editor for `.bkn` files
-- Graph view of entities and relations (React Flow)
-- Templates for Entity, Relation, Action
+- Graph view of objects and relations (React Flow)
+- Templates for Object, Relation, Action
 
 ```bash
 cd bkn_editor

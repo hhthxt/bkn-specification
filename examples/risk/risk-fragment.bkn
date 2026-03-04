@@ -1,7 +1,7 @@
 ---
 type: fragment
 id: risk-tagged
-name: Risk-Tagged Entities and Relations
+name: Risk-Tagged Objects and Relations
 version: 1.0.0
 network: recoverable-network
 namespace: resilience.dr
@@ -13,11 +13,11 @@ includes:
 
 # Risk-Related Definitions (Tag-Based)
 
-本片段中的实体均带 **Tags: __risk__**（内置保留 tag，用户不得使用），用于参与内置风险评估。AI 应用可通过该 tag 筛选风险相关定义。
+本片段中的对象均带 **Tags: __risk__**（内置保留 tag，用户不得使用），用于参与内置风险评估。AI 应用可通过该 tag 筛选风险相关定义。
 
 ---
 
-## Entity: risk_scenario
+## Object: risk_scenario
 
 **Risk Scenario** - 风险发生的场景（内置 __risk__）
 
@@ -43,11 +43,11 @@ includes:
 ### Business Semantics
 
 - 带 __risk__ tag 的场景，用于表达「在何种情况下执行某动作存在风险」。
-- 内置或用户提供的风险评估函数根据 context（如 scenario_id）与此类实体实例计算 Action 的 risk（allow/not_allow）。
+- 内置或用户提供的风险评估函数根据 context（如 scenario_id）与此类对象实例计算 Action 的 risk（allow/not_allow）。
 
 ---
 
-## Entity: risk_rule
+## Object: risk_rule
 
 **Risk Rule** - 风险规则：某场景下某 action 是否禁止执行（内置 __risk__）
 
@@ -72,7 +72,7 @@ includes:
 ### Business Semantics
 
 - 每条规则表示：在 scenario_id 下，对 action_id 的允许结果为 allowed。
-- 风险评估模块查询带 __risk__ tag 的此类实体实例，匹配 scenario_id + action_id 得到 allow/not_allow。
+- 风险评估模块查询带 __risk__ tag 的此类对象实例，匹配 scenario_id + action_id 得到 allow/not_allow。
 
 ---
 

@@ -53,14 +53,14 @@ class TestLoadNetworks:
         from bkn import load_network
         path = EXAMPLES_DIR / "supplychain-hd" / "supplychain.bkn"
         net = load_network(path)
-        assert len(net.all_entities) == 12
+        assert len(net.all_objects) == 12
         assert len(net.all_relations) == 14
 
     def test_k8s_topology_single_file(self):
         from bkn import load_network
         path = EXAMPLES_DIR / "k8s-topology.bkn"
         net = load_network(path)
-        assert len(net.all_entities) >= 3
+        assert len(net.all_objects) >= 3
         assert len(net.all_relations) >= 2
         assert len(net.all_actions) >= 2
 
@@ -68,16 +68,16 @@ class TestLoadNetworks:
         from bkn import load_network
         path = EXAMPLES_DIR / "k8s-network" / "index.bkn"
         net = load_network(path)
-        assert len(net.all_entities) >= 3
+        assert len(net.all_objects) >= 3
         assert len(net.all_relations) >= 2
         assert len(net.all_actions) >= 2
 
     def test_k8s_modular_with_includes(self):
-        """k8s-modular index.bkn includes all entity/relation/action files."""
+        """k8s-modular index.bkn includes all object/relation/action files."""
         from bkn import load_network
         path = EXAMPLES_DIR / "k8s-modular" / "index.bkn"
         net = load_network(path)
-        assert len(net.all_entities) == 3
+        assert len(net.all_objects) == 3
         assert len(net.all_relations) == 2
         assert len(net.all_actions) == 2
 
@@ -87,5 +87,5 @@ class TestLoadNetworks:
         path = EXAMPLES_DIR / "risk" / "risk-fragment.bkn"
         net = load_network(path)
         assert len(net.all_data_tables) == 2
-        ids = {t.entity_or_relation for t in net.all_data_tables}
+        ids = {t.object_or_relation for t in net.all_data_tables}
         assert ids == {"risk_scenario", "risk_rule"}

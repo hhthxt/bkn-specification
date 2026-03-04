@@ -12,16 +12,16 @@
 
 | type | 说明 |
 |------|------|
-| entity | 单个实体定义 |
+| object | 单个对象定义 |
 | relation | 单个关系定义 |
 | action | 单个行动定义 |
 | network | 含多个定义的网络文件 |
 | fragment | 混合片段 |
-| data | 数据文件（建议 `.bknd`，承载实体/关系实例行） |
+| data | 数据文件（建议 `.bknd`，承载对象/关系实例行） |
 
 ## `.bknd` 数据文件（type: data）
 
-用于承载**知识原生**实例数据，不承载 schema 定义。仅当 Entity 的 Data Source 为 `bknd` 或未指定 data_view 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的实体数据来自外部系统，不可用 `.bknd` 编辑。
+用于承载**知识原生**实例数据，不承载 schema 定义。仅当 Object 的 Data Source 为 `bknd` 或未指定 data_view 时，才使用 `.bknd` 维护数据；Data Source 为 `data_view` 的对象数据来自外部系统，不可用 `.bknd` 编辑。
 
 Frontmatter 示例：
 
@@ -29,26 +29,26 @@ Frontmatter 示例：
 ---
 type: data
 network: recoverable-network
-entity: scenario   # 或 relation: rs_under_scenario（二选一）
+object: scenario   # 或 relation: rs_under_scenario（二选一）
 source: PFMEA模板.xlsx   # 可选，数据来源
 ---
 ```
 
-正文使用「一个标题 + 一个 Markdown 表格」，列名需与目标实体 Data Properties（或关系映射字段）保持一致。
+正文使用「一个标题 + 一个 Markdown 表格」，列名需与目标对象 Data Properties（或关系映射字段）保持一致。
 
-## 实体 (Entity)
+## 对象 (Object)
 
 ```yaml
 ---
-type: entity
-id: {entity_id}        # 小写+下划线
+type: object
+id: {object_id}        # 小写+下划线
 name: {显示名称}
 network: {network_id}
 ---
 ```
 
 正文结构（与 network/fragment 内嵌定义保持一致）：
-- `## Entity: {entity_id}`
+- `## Object: {object_id}`
 - `**{显示名称}**` + 简短描述
 - （可选）定义级元数据：`- **Tags**: tag1, tag2`、`- **Owner**: owner`
 - `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name}
@@ -102,18 +102,18 @@ action_type: add | modify | delete
 正文：
 - `## Action: {action_id}`
 - `**{显示名称}**` + 简短描述
-- `### Bound Entity`：表格 Bound Entity | Action Type
+- `### Bound Object`：表格 Bound Object | Action Type
 - `### Trigger Condition`：YAML 块，含 condition.object_type_id、field、operation、value
-- `### Pre-conditions`（可选）：表格 Entity | Check | Condition | Message，Check 为 property:{name} 或 relation:{id}
+- `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message，Check 为 property:{name} 或 relation:{id}
 - `### Tool Configuration`（可选）：Type | Toolbox ID | Tool ID
 - `### Parameter Binding`（可选）：Parameter | Type | Source | Binding | Description，Source 为 property/input/const
-- `### Scope of Impact`（可选）：Object | Impact Description
+- `### Scope of Impact`（可选）：Impacted Object | Impact Description
 
 ## 输出规则（必须遵守）
 
 1. **仅输出 BKN Markdown**：含 frontmatter 和 body，无多余说明
 2. **不要包裹代码块**：不要用 \`\`\`markdown 包裹整体输出
-3. **引用已存在的 ID**：entity/relation 引用时，使用项目中已有的 id
+3. **引用已存在的 ID**：object/relation 引用时，使用项目中已有的 id
 4. **表格格式**：按上述列名严格对齐
 5. **命名**：ID 使用小写字母、数字、下划线；显示名和描述用中文（除非另有要求）
-6. **必填字段**：type、id、name、network；Entity 需 Data Source 和 Primary Key/Display Key；Relation 需 Endpoints 和 Mapping Rules；Action 需 Bound Entity 和 Trigger Condition
+6. **必填字段**：type、id、name、network；Object 需 Data Source 和 Primary Key/Display Key；Relation 需 Endpoints 和 Mapping Rules；Action 需 Bound Object 和 Trigger Condition

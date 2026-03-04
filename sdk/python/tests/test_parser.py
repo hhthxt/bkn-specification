@@ -40,14 +40,14 @@ class TestSupplychainNetwork:
         assert "供应链" in fm.tags
         assert len(fm.includes) == 2
 
-    def test_entity_count(self, network: BknNetwork):
-        assert len(network.all_entities) == 12
+    def test_object_count(self, network: BknNetwork):
+        assert len(network.all_objects) == 12
 
     def test_relation_count(self, network: BknNetwork):
         assert len(network.all_relations) == 14
 
-    def test_entity_po_parsed(self, network: BknNetwork):
-        po = next((e for e in network.all_entities if e.id == "po"), None)
+    def test_object_po_parsed(self, network: BknNetwork):
+        po = next((e for e in network.all_objects if e.id == "po"), None)
         assert po is not None
         assert po.name == "采购订单"
         assert len(po.data_properties) > 0
@@ -58,14 +58,14 @@ class TestSupplychainNetwork:
         dk_props = [dp for dp in po.data_properties if dp.display_key]
         assert len(dk_props) >= 1
 
-    def test_entity_po_data_source(self, network: BknNetwork):
-        po = next(e for e in network.all_entities if e.id == "po")
+    def test_object_po_data_source(self, network: BknNetwork):
+        po = next(e for e in network.all_objects if e.id == "po")
         assert po.data_source is not None
         assert po.data_source.type == "data_view"
         assert po.data_source.name == "erp_purchase_order"
 
-    def test_entity_po_property_overrides(self, network: BknNetwork):
-        po = next(e for e in network.all_entities if e.id == "po")
+    def test_object_po_property_overrides(self, network: BknNetwork):
+        po = next(e for e in network.all_objects if e.id == "po")
         assert len(po.property_overrides) > 0
         org_override = next(
             (o for o in po.property_overrides if o.property == "org_name"), None
@@ -74,16 +74,16 @@ class TestSupplychainNetwork:
         assert "fulltext" in org_override.index_config
         assert "vector" in org_override.index_config
 
-    def test_entity_tags(self, network: BknNetwork):
-        po = next(e for e in network.all_entities if e.id == "po")
+    def test_object_tags(self, network: BknNetwork):
+        po = next(e for e in network.all_objects if e.id == "po")
         assert "已审核" in po.tags
 
-    def test_entity_product_logic_properties(self, network: BknNetwork):
+    def test_object_product_logic_properties(self, network: BknNetwork):
         product = next(
-            (e for e in network.all_entities if e.id == "product"), None
+            (e for e in network.all_objects if e.id == "product"), None
         )
         if product is None:
-            pytest.skip("product entity not found")
+            pytest.skip("product object not found")
         assert len(product.logic_properties) > 0
 
     def test_relation_product2bom(self, network: BknNetwork):
@@ -124,12 +124,12 @@ class TestK8sTopology:
         assert fm.id == "k8s-topology"
         assert fm.version == "1.0.0"
 
-    def test_has_entities(self, doc: BknDocument):
-        assert len(doc.entities) >= 3
-        entity_ids = {e.id for e in doc.entities}
-        assert "pod" in entity_ids
-        assert "node" in entity_ids
-        assert "service" in entity_ids
+    def test_has_objects(self, doc: BknDocument):
+        assert len(doc.objects) >= 3
+        object_ids = {e.id for e in doc.objects}
+        assert "pod" in object_ids
+        assert "node" in object_ids
+        assert "service" in object_ids
 
     def test_has_relations(self, doc: BknDocument):
         assert len(doc.relations) >= 2
@@ -137,15 +137,15 @@ class TestK8sTopology:
     def test_has_actions(self, doc: BknDocument):
         assert len(doc.actions) >= 1
 
-    def test_pod_entity(self, doc: BknDocument):
-        pod = next(e for e in doc.entities if e.id == "pod")
+    def test_pod_object(self, doc: BknDocument):
+        pod = next(e for e in doc.objects if e.id == "pod")
         assert "Pod" in pod.name
         assert len(pod.data_properties) > 0
 
     def test_action_parsed(self, doc: BknDocument):
         action = doc.actions[0]
         assert action.id
-        assert action.bound_entity
+        assert action.bound_object
 
 
 # ---------------------------------------------------------------------------
@@ -156,9 +156,9 @@ class TestParserUnits:
     """Unit tests for low-level parser functions."""
 
     def test_simple_frontmatter(self):
-        text = "---\ntype: entity\nid: test\nname: Test\n---\n\n## Entity: test\n"
+        text = "---\ntype: object\nid: test\nname: Test\n---\n\n## Object: test\n"
         fm = parse_frontmatter(text)
-        assert fm.type == "entity"
+        assert fm.type == "object"
         assert fm.id == "test"
         assert fm.name == "Test"
 
@@ -173,19 +173,19 @@ class TestParserUnits:
         assert fm.tags == ["a", "b", "c"]
 
     def test_frontmatter_with_includes(self):
-        text = "---\ntype: network\nid: n1\nincludes:\n  - entities.bkn\n  - relations.bkn\n---\n"
+        text = "---\ntype: network\nid: n1\nincludes:\n  - objects.bkn\n  - relations.bkn\n---\n"
         fm = parse_frontmatter(text)
-        assert fm.includes == ["entities.bkn", "relations.bkn"]
+        assert fm.includes == ["objects.bkn", "relations.bkn"]
 
-    def test_parse_entity_block(self):
+    def test_parse_object_block(self):
         text = """---
 type: fragment
 id: test
 ---
 
-## Entity: my_entity
+## Object: my_object
 
-**My Entity** - A test entity
+**My Object** - A test object
 
 - **Tags**: tag1, tag2
 
@@ -200,14 +200,14 @@ id: test
 | Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
 |----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
 | id | ID | int64 | | Primary key | YES | | YES |
-| name | Name | VARCHAR | not_null | Entity name | | YES | YES |
+| name | Name | VARCHAR | not_null | Object name | | YES | YES |
 """
-        entities, relations, actions = parse_body(text)
-        assert len(entities) == 1
-        e = entities[0]
-        assert e.id == "my_entity"
-        assert e.name == "My Entity"
-        assert e.description == "A test entity"
+        objects, relations, actions = parse_body(text)
+        assert len(objects) == 1
+        e = objects[0]
+        assert e.id == "my_object"
+        assert e.name == "My Object"
+        assert e.description == "A test object"
         assert e.tags == ["tag1", "tag2"]
         assert e.data_source is not None
         assert e.data_source.id == "123"
@@ -231,7 +231,7 @@ id: test
 
 | Source | Target | Type | Required | Min | Max |
 |--------|--------|------|----------|-----|-----|
-| entity_a | entity_b | direct | NO | 0 | - |
+| object_a | object_b | direct | NO | 0 | - |
 
 ### Mapping Rules
 
@@ -246,7 +246,7 @@ id: test
         assert r.name == "A relates to B"
         assert r.tags == ["tested"]
         assert len(r.endpoints) == 1
-        assert r.endpoints[0].source == "entity_a"
+        assert r.endpoints[0].source == "object_a"
         assert len(r.mapping_rules) == 1
         assert r.mapping_rules[0].source_property == "a_id"
 
@@ -254,7 +254,7 @@ id: test
         text = """---
 type: data
 network: recoverable-network
-entity: scenario
+object: scenario
 source: PFMEA模板.xlsx
 ---
 
@@ -267,20 +267,20 @@ source: PFMEA模板.xlsx
 """
         fm = parse_frontmatter(text)
         assert fm.type == "data"
-        assert fm.entity == "scenario"
+        assert fm.object == "scenario"
         assert fm.source == "PFMEA模板.xlsx"
 
         tables = parse_data_tables(text, frontmatter=fm)
         assert len(tables) == 1
         table = tables[0]
-        assert table.entity_or_relation == "scenario"
+        assert table.object_or_relation == "scenario"
         assert table.is_relation is False
         assert table.columns == ["scenario_id", "name", "category"]
         assert len(table.rows) == 2
         assert table.rows[0]["scenario_id"] == "s1"
 
         doc = parse(text, source_path="/fake/scenario.bknd")
-        assert len(doc.entities) == 0
+        assert len(doc.objects) == 0
         assert len(doc.relations) == 0
         assert len(doc.actions) == 0
         assert len(doc.data_tables) == 1
@@ -288,11 +288,11 @@ source: PFMEA模板.xlsx
         assert table.source_path == "/fake/scenario.bknd"
         assert table.network == "recoverable-network"
 
-    def test_parse_data_file_entity_relation_both_raises(self):
-        """type: data with both entity and relation raises ValueError."""
+    def test_parse_data_file_object_relation_both_raises(self):
+        """type: data with both object and relation raises ValueError."""
         text = """---
 type: data
-entity: scenario
+object: scenario
 relation: rs_under_scenario
 network: n
 ---
@@ -302,11 +302,11 @@ network: n
 |-----|
 | v   |
 """
-        with pytest.raises(ValueError, match="exactly one of entity or relation"):
+        with pytest.raises(ValueError, match="exactly one of object or relation"):
             parse_data_tables(text)
 
-    def test_parse_data_file_entity_relation_neither_raises(self):
-        """type: data with neither entity nor relation raises ValueError."""
+    def test_parse_data_file_object_relation_neither_raises(self):
+        """type: data with neither object nor relation raises ValueError."""
         text = """---
 type: data
 network: n
@@ -324,7 +324,7 @@ network: n
         """type: data with no heading raises ValueError."""
         text = """---
 type: data
-entity: scenario
+object: scenario
 network: n
 ---
 
@@ -339,7 +339,7 @@ network: n
         """type: data with heading but no valid table raises ValueError."""
         text = """---
 type: data
-entity: scenario
+object: scenario
 network: n
 ---
 

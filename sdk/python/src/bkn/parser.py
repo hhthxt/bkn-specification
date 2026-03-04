@@ -10,11 +10,11 @@ import yaml
 from bkn.models import (
     Action,
     BknDocument,
+    BknObject,
     DataTable,
     DataProperty,
     DataSource,
     Endpoint,
-    Entity,
     Frontmatter,
     LogicProperty,
     LogicPropertyParameter,
@@ -58,10 +58,10 @@ _COLUMN_ALIASES: dict[str, str] = {
     # Tool Configuration
     "工具": "Tool ID",
     # Action
-    "绑定实体": "Bound Entity",
+    "绑定对象": "Bound Object",
     "行动类型": "Action Type",
     # Pre-conditions
-    "实体": "Entity",
+    "对象": "Object",
     "检查": "Check",
     "条件": "Condition",
     "消息": "Message",
@@ -86,7 +86,7 @@ _SECTION_ALIASES: dict[str, str] = {
     "映射视图": "Mapping View",
     "起点映射": "Source Mapping",
     "终点映射": "Target Mapping",
-    "绑定实体": "Bound Entity",
+    "绑定对象": "Bound Object",
     "触发条件": "Trigger Condition",
     "前置条件": "Pre-conditions",
     "工具配置": "Tool Configuration",
@@ -378,30 +378,30 @@ def _parse_mapping_rules(section_text: str) -> list[MappingRule]:
     return rules
 
 
-def _parse_entity_block(block_id: str, block_text: str) -> Entity:
-    """Parse a ## Entity: {id} block into an Entity model."""
+def _parse_object_block(block_id: str, block_text: str) -> BknObject:
+    """Parse a ## Object: {id} block into a BknObject model."""
     name, desc = _parse_display_name(block_text)
     tags, owner = _parse_inline_meta(block_text)
     sections = _extract_sections(block_text)
 
-    entity = Entity(id=block_id, name=name, description=desc, tags=tags, owner=owner)
+    obj = BknObject(id=block_id, name=name, description=desc, tags=tags, owner=owner)
 
     if "Data Source" in sections:
-        entity.data_source = _parse_data_source(sections["Data Source"])
+        obj.data_source = _parse_data_source(sections["Data Source"])
 
     if "Data Properties" in sections:
-        entity.data_properties = _parse_data_properties(sections["Data Properties"])
+        obj.data_properties = _parse_data_properties(sections["Data Properties"])
 
     if "Property Override" in sections:
-        entity.property_overrides = _parse_property_overrides(sections["Property Override"])
+        obj.property_overrides = _parse_property_overrides(sections["Property Override"])
 
     if "Logic Properties" in sections:
-        entity.logic_properties = _parse_logic_properties(sections["Logic Properties"])
+        obj.logic_properties = _parse_logic_properties(sections["Logic Properties"])
 
     if "Business Semantics" in sections:
-        entity.business_semantics = sections["Business Semantics"]
+        obj.business_semantics = sections["Business Semantics"]
 
-    return entity
+    return obj
 
 
 def _parse_relation_block(block_id: str, block_text: str) -> Relation:
@@ -433,8 +433,8 @@ def _parse_action_block(block_id: str, block_text: str) -> Action:
 
     bound_rows = _parse_table(block_text.splitlines())
     for row in bound_rows:
-        if "Bound Entity" in row:
-            action.bound_entity = row["Bound Entity"]
+        if "Bound Object" in row:
+            action.bound_object = row["Bound Object"]
             action.action_type = row.get("Action Type", "")
             break
 
@@ -446,7 +446,7 @@ def _parse_action_block(block_id: str, block_text: str) -> Action:
         rows = _parse_table(sections["Pre-conditions"].splitlines())
         for row in rows:
             action.pre_conditions.append(PreCondition(
-                entity=row.get("Entity", ""),
+                object=row.get("Object", ""),
                 check=row.get("Check", ""),
                 condition=row.get("Condition", ""),
                 message=row.get("Message", ""),
@@ -488,7 +488,7 @@ def _parse_action_block(block_id: str, block_text: str) -> Action:
 # ---------------------------------------------------------------------------
 
 _DEFINITION_RE = re.compile(
-    r"^##\s+(Entity|Relation|Action):\s*(\S+)",
+    r"^##\s+(Object|Relation|Action):\s*(\S+)",
     re.MULTILINE,
 )
 
@@ -512,7 +512,7 @@ def parse_frontmatter(text: str) -> Frontmatter:
         owner=str(data.get("owner", "")),
         spec_version=str(data.get("spec_version", "")),
         risk_level=str(data.get("risk_level", "")),
-        entity=str(data.get("entity", "")),
+        object=str(data.get("object", "")),
         relation=str(data.get("relation", "")),
         source=str(data.get("source", "")),
     )
@@ -530,19 +530,19 @@ def parse_frontmatter(text: str) -> Frontmatter:
         "type", "id", "name", "version", "tags", "description",
         "includes", "network", "namespace", "owner", "spec_version",
         "enabled", "risk_level", "requires_approval",
-        "entity", "relation", "source",
+        "object", "relation", "source",
     }
     fm.extra = {k: v for k, v in data.items() if k not in known_keys}
 
     return fm
 
 
-def parse_body(text: str) -> tuple[list[Entity], list[Relation], list[Action]]:
+def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]]:
     """Parse the Markdown body of a .bkn file into lists of definitions."""
     _, body = _split_frontmatter(text)
 
     matches = list(_DEFINITION_RE.finditer(body))
-    entities: list[Entity] = []
+    objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
 
@@ -556,14 +556,14 @@ def parse_body(text: str) -> tuple[list[Entity], list[Relation], list[Action]]:
         hr_split = re.split(r"^\s*---\s*$", block_text, flags=re.MULTILINE)
         block_text = hr_split[0]
 
-        if def_type == "Entity":
-            entities.append(_parse_entity_block(def_id, block_text))
+        if def_type == "Object":
+            objects.append(_parse_object_block(def_id, block_text))
         elif def_type == "Relation":
             relations.append(_parse_relation_block(def_id, block_text))
         elif def_type == "Action":
             actions.append(_parse_action_block(def_id, block_text))
 
-    return entities, relations, actions
+    return objects, relations, actions
 
 
 def parse_data_tables(
@@ -574,22 +574,22 @@ def parse_data_tables(
     """Parse .bknd body into DataTable list.
 
     Raises:
-        ValueError: If entity and relation are both set or both empty (must be
+        ValueError: If object and relation are both set or both empty (must be
             mutually exclusive). If no valid table header or table is found.
     """
     fm = frontmatter or parse_frontmatter(text)
     _, body = _split_frontmatter(text)
 
-    has_entity = bool(fm.entity.strip())
+    has_object = bool(fm.object.strip())
     has_relation = bool(fm.relation.strip())
-    if has_entity and has_relation:
+    if has_object and has_relation:
         raise ValueError(
-            "type: data frontmatter must have exactly one of entity or relation, "
-            f"got both: entity={fm.entity!r}, relation={fm.relation!r}"
+            "type: data frontmatter must have exactly one of object or relation, "
+            f"got both: object={fm.object!r}, relation={fm.relation!r}"
         )
-    if not has_entity and not has_relation:
+    if not has_object and not has_relation:
         raise ValueError(
-            "type: data frontmatter must have exactly one of entity or relation, "
+            "type: data frontmatter must have exactly one of object or relation, "
             "got neither"
         )
 
@@ -609,11 +609,11 @@ def parse_data_tables(
         )
 
     is_relation = has_relation
-    entity_or_relation = fm.relation if is_relation else fm.entity
+    object_or_relation = fm.relation if is_relation else fm.object
 
     return [
         DataTable(
-            entity_or_relation=entity_or_relation,
+            object_or_relation=object_or_relation,
             is_relation=is_relation,
             columns=columns,
             rows=rows,
@@ -626,17 +626,17 @@ def parse_data_tables(
 def parse(text: str, source_path: str = "") -> BknDocument:
     """Parse a complete .bkn file into a BknDocument."""
     frontmatter = parse_frontmatter(text)
-    entities: list[Entity] = []
+    objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
     data_tables: list[DataTable] = []
     if frontmatter.type == "data":
         data_tables = parse_data_tables(text, frontmatter=frontmatter, source_path=source_path)
     else:
-        entities, relations, actions = parse_body(text)
+        objects, relations, actions = parse_body(text)
     return BknDocument(
         frontmatter=frontmatter,
-        entities=entities,
+        objects=objects,
         relations=relations,
         actions=actions,
         data_tables=data_tables,

@@ -8,7 +8,7 @@ version: 1.0.0
 
 # Relations
 
-本文件定义 Kubernetes 网络中实体之间的关系。
+本文件定义 Kubernetes 网络中对象之间的关系。
 
 ---
 
