@@ -24,7 +24,7 @@
 ### 1.3 开放性：自定义风险类与评估函数
 
 - 用户可按需求定义**自己的风险类**：使用**非保留** tag（如 `compliance`、`audit`）定义对象/关系，不参与内置评估，由用户自己的逻辑消费。
-- 用户可提供**自己的风险评估函数**：签名与内置 `evaluate_risk` 兼容（如 `(network, action_id, context, **kwargs) -> str`），在运行时替换或与内置评估组合使用。
+- 用户可提供**自己的风险评估函数**：签名与内置 `evaluate_risk` 兼容（如 `(network, action_id, context, **kwargs) -> RiskResult`），在运行时替换或与内置评估组合使用。
 - 内置的 `__risk__` 与默认 `evaluate_risk` 仅为一种可选实现，不排斥用户扩展或替换。
 
 ---
@@ -35,11 +35,13 @@
 
 | 定义 | 类型 | 说明 | Tags |
 |------|------|------|------|
-| **risk_scenario** | Object | 风险发生的场景（在何种情况下考虑风险） | __risk__ |
+| **risk_scenario** | Object | 风险发生的场景（在何种情况下考虑风险）**可选** | __risk__ |
 | **risk_rule** | Object | 风险规则：在某场景下对某 Action 是否允许执行 | __risk__ |
-| **rule_under_scenario** | Relation | 规则归属场景（risk_rule → risk_scenario） | __risk__ |
+| **rule_under_scenario** | Relation | 规则归属场景（risk_rule → risk_scenario）**可选** | __risk__ |
 
-### 2.2 risk_scenario（风险场景）
+**risk_scenario 为可选**：若所有规则均为全局规则（不依赖场景），可不定义任何 risk_scenario 实例，也不需要引入 `risk_scenario.bknd`。
+
+### 2.2 risk_scenario（风险场景，**此对象为可选**）
 
 - **主键**：`scenario_id`（VARCHAR, not_null, regex:`^[a-z0-9_\-]+$`）
 - **属性**：
@@ -63,19 +65,20 @@
 | Property | Type | Constraint | 说明 |
 |----------|------|------------|------|
 | rule_id | VARCHAR | not_null; regex | 规则唯一标识（主键） |
-| scenario_id | VARCHAR | not_null; regex | 适用场景 ID |
+| scenario_id | VARCHAR | regex（**可选**；空=全局规则） | 适用场景 ID |
 | action_id | VARCHAR | not_null; regex | 涉及的 Action ID |
 | allowed | bool | not_null | 该场景下该 action 是否允许 |
+| risk_level | int32 | range(0,5) | 风险等级（0=最低，5=最高；用户可自定义量级） |
 | reason | TEXT | | 原因说明 |
 
-- **语义**：一条规则即「在 scenario_id 下，对 action_id 的允许结果为 allowed」。评估时用规则实例列表（risk_rules）匹配当前 context 与待执行 action，得到 allow/not_allow。
+- **语义**：一条规则即「在 scenario_id 下，对 action_id 的允许结果为 allowed」，并携带 risk_level 和 reason。`scenario_id` 可选；为空时该规则为**全局规则**，不区分场景。评估时用规则实例列表（risk_rules）匹配当前 context 与待执行 action，得到 decision、risk_level、reason。
 
 ### 2.4 Relation: rule_under_scenario
 
 - **Source**: `risk_rule` → **Target**: `risk_scenario`
 - **Mapping**: `risk_rule.scenario_id` → `risk_scenario.scenario_id`
-- **基数**: N:1（多条规则属于同一场景）
-- **语义**：每条风险规则归属于一个风险场景。评估时按 context 中的 `scenario_id` 匹配场景，再查找该场景下的规则。
+- **基数**: N:0..1（每条规则属于至多一个场景，也可以不属于任何场景）
+- **语义**：每条风险规则可归属于至多一个风险场景。只有当 `risk_rule.scenario_id` 非空时，此关系才存在。评估时按 context 中的 `scenario_id` 匹配场景，再查找该场景下的规则。
 
 ---
 
@@ -94,16 +97,29 @@ flowchart LR
     D[evaluate_risk]
   end
   subgraph output [输出]
-    E["allow / not_allow / unknown"]
+    E["RiskResult"]
+    E1["decision"]
+    E2["risk_level"]
+    E3["reason"]
   end
   A --> D
   B --> D
   C --> D
   D --> E
+  E --> E1
+  E --> E2
+  E --> E3
 ```
 
 - **输入**：待执行的 `action_id`、当前 **context**（可选包含 `scenario_id`）、以及可选规则实例列表 **risk_rules**（来自图库/API/配置）。
-- **输出**：**allow**、**not_allow** 或 **unknown**，供执行侧决定是否放行该 action。
+- **输出**：**RiskResult** 结构体，包含三字段：
+  - **decision**：`allow`、`not_allow` 或 `unknown`
+  - **risk_level**：`int | None`（0~5 推荐；unknown 时为 None）
+  - **reason**：原因字符串
+
+**两种使用模式**：
+- **内置模式**：不传 `evaluator`，使用 risk_rules 按规则匹配计算。
+- **自定义模式**：传入 `evaluator` 函数，完全由用户逻辑决定 RiskResult。
 
 ### 3.2 context（上下文）
 
@@ -123,15 +139,52 @@ flowchart LR
 
 ### 3.4 评估结果规则（三态）
 
-- 若存在**任意一条**匹配规则且 **`allowed == False`**，则返回 **not_allow**。
-- 若存在匹配规则且所有匹配规则均为 **`allowed == True`**，则返回 **allow**。
-- 若未传入 risk_rules 或没有任何规则匹配当前 scenario + action，则返回 **unknown**。
+- **not_allow**：若存在**任意一条**匹配规则且 **`allowed == False`**。取**第一条** such 规则的 `risk_level` 和 `reason`。
+- **allow**：若存在匹配规则且所有匹配规则均为 **`allowed == True`**。取所有匹配规则中**最高 risk_level** 规则的值作为 `risk_level` 和 `reason`。
+- **unknown**：若未传入 risk_rules 或没有任何规则匹配当前 scenario + action。`risk_level=None`，`reason=""`。
 
 ### 3.5 与执行侧的交互
 
 - **allow**：执行侧可以执行该 Action；若规则中带有额外约束（如限流、脱敏），由执行侧根据规则元数据自行处理。
 - **not_allow**：执行侧应阻断该 Action，并可按规则原因或策略 ID 做告警、审批流转等。
 - **unknown**：评估引擎信息不足，无法给出明确结论。执行侧可按业务策略决定处理方式，例如：默认放行、要求人工审批、或保守拒绝。
+
+### 3.6 自定义风险评估函数
+
+用户可注入自定义评估函数，完全接管风险评估逻辑。适用于需要调用外部策略引擎、图库或复杂业务规则的场景。
+
+**Python 示例**：
+
+```python
+from bkn.risk import RiskResult, evaluate_risk
+
+def my_evaluator(network, action_id, context, risk_rules=None, **kwargs):
+    if action_id == "grant_root_admin":
+        return RiskResult(decision="not_allow", risk_level=5, reason="全局禁止提权")
+    return RiskResult(decision="unknown")
+
+result = evaluate_risk(network, "grant_root_admin", {}, evaluator=my_evaluator)
+print(result.decision)    # "not_allow"
+print(result.risk_level)   # 5
+print(result.reason)      # "全局禁止提权"
+```
+
+**Go 示例**：
+
+```go
+myEvaluator := func(network *bkn.BknNetwork, actionID string, context map[string]any, riskRules []map[string]any) bkn.RiskResult {
+    if actionID == "grant_root_admin" {
+        lv := 5
+        return bkn.RiskResult{Decision: bkn.NotAllow, RiskLevel: &lv, Reason: "全局禁止提权"}
+    }
+    return bkn.RiskResult{Decision: bkn.Unknown}
+}
+
+result := bkn.EvaluateRiskWith(myEvaluator, network, "grant_root_admin", map[string]any{}, nil)
+fmt.Println(result.Decision)   // "not_allow"
+fmt.Println(*result.RiskLevel)  // 5
+fmt.Println(result.Reason)     // "全局禁止提权"
+```
 
 ---
 
@@ -164,6 +217,7 @@ risk_rules = [
         "scenario_id": "sec_t_01",
         "action_id": "restart_erp",
         "allowed": False,
+        "risk_level": 5,
         "reason": "SEC-T-01: 月末财务绝对封网; control_action=absolute_block",
     },
 ]
@@ -171,7 +225,9 @@ risk_rules = [
 result = evaluate_risk(
     network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules
 )
-assert result == "not_allow"
+assert result.decision == "not_allow"
+print(result.risk_level)  # 5
+print(result.reason)      # 规则中的 reason
 ```
 
 > 同一场景下 `restart_pod` 和 `ddl_alter` 也会被阻断（均有 allowed=false 的规则）。
@@ -195,6 +251,7 @@ risk_rules = [
         "scenario_id": "sec_c_02",
         "action_id": "batch_restart_nodes",
         "allowed": True,
+        "risk_level": 2,
         "reason": "SEC-C-02: 雪崩防波及; control_action=throttle; auth_level=HotL",
     },
 ]
@@ -202,7 +259,9 @@ risk_rules = [
 result = evaluate_risk(
     network, "batch_restart_nodes", {"scenario_id": "sec_c_02"}, risk_rules=risk_rules
 )
-assert result == "allow"
+assert result.decision == "allow"
+print(result.risk_level)  # 2
+print(result.reason)      # 含 control_action=throttle
 ```
 
 > `evaluate_risk` 返回 allow，但 reason 中携带 `control_action=throttle`，执行侧可据此做限流处理。
@@ -226,6 +285,7 @@ risk_rules = [
         "scenario_id": "sec_n_01",
         "action_id": "open_firewall_rule",
         "allowed": False,
+        "risk_level": 5,
         "reason": "SEC-N-01: 跨网段网络隔离红线; control_action=direct_reject",
     },
 ]
@@ -233,7 +293,7 @@ risk_rules = [
 result = evaluate_risk(
     network, "open_firewall_rule", {"scenario_id": "sec_n_01"}, risk_rules=risk_rules
 )
-assert result == "not_allow"
+assert result.decision == "not_allow"
 ```
 
 ### 4.4 示例四：无规则匹配 — 信息不足（unknown）
@@ -249,11 +309,11 @@ risk_rules = [
 result = evaluate_risk(
     network, "deploy_firmware", {"scenario_id": "sec_t_01"}, risk_rules=risk_rules
 )
-assert result == "unknown"
+assert result.decision == "unknown"
 
 # 不传入任何规则时，也返回 unknown
 result = evaluate_risk(network, "restart_erp", {"scenario_id": "sec_t_01"})
-assert result == "unknown"
+assert result.decision == "unknown"
 ```
 
 > `unknown` 表示评估引擎无法给出明确结论。执行侧可按自身业务策略处理：
@@ -274,10 +334,10 @@ global_rules = [
 
 # context 不传 scenario_id → 跳过场景过滤，仅按 action_id 匹配
 result = evaluate_risk(network, "grant_root_admin", {}, risk_rules=global_rules)
-assert result == "not_allow"
+assert result.decision == "not_allow"
 
 result = evaluate_risk(network, "query_sensitive_data", {}, risk_rules=global_rules)
-assert result == "allow"
+assert result.decision == "allow"
 
 # 混合使用：全局规则 + 场景规则
 mixed_rules = [
@@ -288,15 +348,15 @@ mixed_rules = [
 # 不传 scenario → 全局规则生效（两条 action_id 都匹配，第一条 allowed=True，
 # 第二条 scenario 不参与过滤也匹配到，allowed=False → not_allow）
 result = evaluate_risk(network, "restart_erp", {}, risk_rules=mixed_rules)
-assert result == "not_allow"
+assert result.decision == "not_allow"
 
 # 传入非封网场景 → 只有全局规则匹配（scenario_id 不同跳过第二条） → allow
 result = evaluate_risk(network, "restart_erp", {"scenario_id": "sec_c_02"}, risk_rules=mixed_rules)
-assert result == "allow"
+assert result.decision == "allow"
 
 # 传入封网场景 → 两条都匹配，第二条 allowed=False → not_allow
 result = evaluate_risk(network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=mixed_rules)
-assert result == "not_allow"
+assert result.decision == "not_allow"
 ```
 
 > 无场景模式适合简单场景：只需要按 action 做全局门控，不需要区分何种业务场景。
@@ -317,6 +377,7 @@ risk_rules = [
         "scenario_id": r["scenario_id"],
         "action_id": r["action_id"],
         "allowed": r["allowed"],
+        "risk_level": r.get("risk_level"),
         "reason": r.get("reason", ""),
     }
     for r in raw_rules
@@ -326,13 +387,13 @@ risk_rules = [
 result = evaluate_risk(
     network, "grant_root_admin", {"scenario_id": "sec_p_01"}, risk_rules=risk_rules
 )
-assert result == "not_allow"
+assert result.decision == "not_allow"
 
 # 在 sec_d_03（核心商业机密防外泄）场景下查询敏感数据 — allowed=true，可执行但需脱敏
 result = evaluate_risk(
     network, "query_sensitive_data", {"scenario_id": "sec_d_03"}, risk_rules=risk_rules
 )
-assert result == "allow"
+assert result.decision == "allow"
 ```
 
 ---

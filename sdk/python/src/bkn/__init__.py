@@ -26,7 +26,7 @@ from bkn.parser import (
     parse_data_tables,
 )
 from bkn.loader import load, load_network
-from bkn.risk import evaluate_risk
+from bkn.risk import RiskResult, evaluate_risk
 from bkn.serializer import to_bknd, to_bknd_from_table
 from bkn.validator import validate_data_table, validate_network_data
 
@@ -56,6 +56,7 @@ __all__ = [
     "parse_data_tables",
     "load",
     "load_network",
+    "RiskResult",
     "evaluate_risk",
     "to_bknd",
     "to_bknd_from_table",

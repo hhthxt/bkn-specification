@@ -205,43 +205,67 @@ func TestToBkndRoundTrip(t *testing.T) {
 func TestEvaluateRisk(t *testing.T) {
 	net := &BknNetwork{}
 	// No rules -> unknown
-	if got := EvaluateRisk(net, "any_action", map[string]any{"scenario_id": "any"}, nil); got != Unknown {
-		t.Errorf("expected unknown, got %q", got)
+	if got := EvaluateRisk(net, "any_action", map[string]any{"scenario_id": "any"}, nil); got.Decision != Unknown {
+		t.Errorf("expected unknown, got %q", got.Decision)
 	}
 	// Rule forbids -> not_allow
 	rules := []map[string]any{
-		{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": false},
+		{"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": false, "risk_level": 5, "reason": "blocked"},
 	}
-	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules); got != NotAllow {
-		t.Errorf("expected not_allow, got %q", got)
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules); got.Decision != NotAllow {
+		t.Errorf("expected not_allow, got %q", got.Decision)
+	}
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules); got.RiskLevel == nil || *got.RiskLevel != 5 {
+		t.Errorf("expected risk_level 5, got %v", got.RiskLevel)
 	}
 	// Rule allows -> allow
 	rulesAllow := []map[string]any{
-		{"scenario_id": "sec_c_02", "action_id": "batch_restart_nodes", "allowed": true},
+		{"scenario_id": "sec_c_02", "action_id": "batch_restart_nodes", "allowed": true, "risk_level": 2},
 	}
-	if got := EvaluateRisk(net, "batch_restart_nodes", map[string]any{"scenario_id": "sec_c_02"}, rulesAllow); got != Allow {
-		t.Errorf("expected allow, got %q", got)
+	if got := EvaluateRisk(net, "batch_restart_nodes", map[string]any{"scenario_id": "sec_c_02"}, rulesAllow); got.Decision != Allow {
+		t.Errorf("expected allow, got %q", got.Decision)
 	}
 	// No match -> unknown
 	rulesOther := []map[string]any{
 		{"scenario_id": "other", "action_id": "other_action", "allowed": false},
 	}
-	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rulesOther); got != Unknown {
-		t.Errorf("expected unknown (no match), got %q", got)
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rulesOther); got.Decision != Unknown {
+		t.Errorf("expected unknown (no match), got %q", got.Decision)
 	}
 	// No scenario in context -> match by action_id only
 	rulesGlobal := []map[string]any{
 		{"action_id": "grant_root_admin", "allowed": false},
 	}
-	if got := EvaluateRisk(net, "grant_root_admin", map[string]any{}, rulesGlobal); got != NotAllow {
-		t.Errorf("expected not_allow (no scenario filter), got %q", got)
+	if got := EvaluateRisk(net, "grant_root_admin", map[string]any{}, rulesGlobal); got.Decision != NotAllow {
+		t.Errorf("expected not_allow (no scenario filter), got %q", got.Decision)
 	}
-	if got := EvaluateRisk(net, "grant_root_admin", nil, rulesGlobal); got != NotAllow {
-		t.Errorf("expected not_allow (nil context), got %q", got)
+	if got := EvaluateRisk(net, "grant_root_admin", nil, rulesGlobal); got.Decision != NotAllow {
+		t.Errorf("expected not_allow (nil context), got %q", got.Decision)
 	}
 	// Scenario in context filters out rules with different scenario
-	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_c_02"}, rules); got != Unknown {
-		t.Errorf("expected unknown (scenario mismatch), got %q", got)
+	if got := EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_c_02"}, rules); got.Decision != Unknown {
+		t.Errorf("expected unknown (scenario mismatch), got %q", got.Decision)
+	}
+}
+
+func TestEvaluateRiskWith(t *testing.T) {
+	net := &BknNetwork{}
+	myEvaluator := func(network *BknNetwork, actionID string, context map[string]any, riskRules []map[string]any) RiskResult {
+		if actionID == "grant_root_admin" {
+			lv := 5
+			return RiskResult{Decision: NotAllow, RiskLevel: &lv, Reason: "全局禁止提权"}
+		}
+		return RiskResult{Decision: Unknown}
+	}
+	got := EvaluateRiskWith(myEvaluator, net, "grant_root_admin", map[string]any{}, nil)
+	if got.Decision != NotAllow {
+		t.Errorf("expected not_allow, got %q", got.Decision)
+	}
+	if got.RiskLevel == nil || *got.RiskLevel != 5 {
+		t.Errorf("expected risk_level 5, got %v", got.RiskLevel)
+	}
+	if got.Reason != "全局禁止提权" {
+		t.Errorf("expected reason 全局禁止提权, got %q", got.Reason)
 	}
 }
 

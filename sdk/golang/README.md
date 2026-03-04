@@ -92,10 +92,25 @@ func main() {
 
     // Risk evaluation
     rules := []map[string]any{
-        {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": false},
+        {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": false, "risk_level": 5, "reason": "月末封网"},
     }
-    outcome := bkn.EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules)
-    fmt.Println(outcome) // "not_allow"
+    result := bkn.EvaluateRisk(net, "restart_erp", map[string]any{"scenario_id": "sec_t_01"}, rules)
+    fmt.Println(result.Decision)  // "not_allow"
+    if result.RiskLevel != nil {
+        fmt.Println(*result.RiskLevel) // 5
+    }
+    fmt.Println(result.Reason) // "月末封网"
+
+    // Custom evaluator
+    myEvaluator := func(network *bkn.BknNetwork, actionID string, context map[string]any, riskRules []map[string]any) bkn.RiskResult {
+        if actionID == "grant_root_admin" {
+            lv := 5
+            return bkn.RiskResult{Decision: bkn.NotAllow, RiskLevel: &lv, Reason: "全局禁止提权"}
+        }
+        return bkn.RiskResult{Decision: bkn.Unknown}
+    }
+    result2 := bkn.EvaluateRiskWith(myEvaluator, net, "grant_root_admin", map[string]any{}, nil)
+    fmt.Println(result2.Decision) // "not_allow"
 }
 ```
 
@@ -113,7 +128,8 @@ func main() {
 | `ValidateNetworkData(network)` | Validate all DataTables in network |
 | `ToBknd(opts)` | Serialize rows to .bknd format |
 | `ToBkndFromTable(table, network, source)` | Serialize DataTable to .bknd |
-| `EvaluateRisk(network, actionID, context, riskRules)` | Return "allow" or "not_allow" |
+| `EvaluateRisk(network, actionID, context, riskRules)` | Return RiskResult (Decision, RiskLevel, Reason) |
+| `EvaluateRiskWith(evaluator, network, actionID, context, riskRules)` | Invoke custom evaluator, return RiskResult |
 
 ## Tests
 

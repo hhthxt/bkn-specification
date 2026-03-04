@@ -199,28 +199,41 @@ md = table.to_bknd()
 
 ### 7. Risk assessment
 
-Objects and relations tagged with the reserved **`__risk__`** tag in BKN participate in the built-in risk evaluation. The Action model has a runtime/computed property **`risk`** (values `allow` | `not_allow`), filled by the risk assessment module based on the current scenario and risk-tagged knowledge.
+Objects and relations tagged with the reserved **`__risk__`** tag in BKN participate in the built-in risk evaluation. The Action model has a runtime/computed property **`risk`**, filled by the risk assessment module based on the current scenario and risk-tagged knowledge.
+
+`evaluate_risk` returns a **`RiskResult`** with three fields: `decision`, `risk_level`, and `reason`.
 
 ```python
-from bkn import load_network, evaluate_risk
+from bkn import load_network, evaluate_risk, RiskResult
 
-network = load_network("examples/risk/risk-fragment.bkn")
-# With no rule data, result is allow (permissive default)
-result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"})
-# result == "allow"
+network = load_network("examples/risk/index.bkn")
 
 # Pass risk_rules when you have instance data (e.g. from a graph or API)
 rules = [
-    {"scenario_id": "prod_db", "action_id": "restore_from_backup", "allowed": False},
+    {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False, "risk_level": 5, "reason": "月末封网"},
 ]
-result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"}, risk_rules=rules)
-# result == "not_allow"
+result = evaluate_risk(network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=rules)
+print(result.decision)    # "not_allow"
+print(result.risk_level)  # 5
+print(result.reason)      # "月末封网"
 ```
 
-- **Tagging**: In BKN, add `- **Tags**: __risk__` to definitions that participate in the built-in risk evaluation (reserved tag; users must not use it for custom purposes). You can define your own risk-like classes with other tags and your own evaluator.
-- **Action.risk**: The `Action` dataclass has a `risk` field (empty by default); call `evaluate_risk()` and assign the result when you need the computed value.
-- **Full evaluation**: When the SDK has no instance data, `evaluate_risk` returns `"allow"` by default; pass `risk_rules` (list of dicts with `scenario_id`, `action_id`, `allowed`) to get allow/not_allow from your data source.
-- **Custom evaluator**: Implement the `RiskEvaluator` protocol (same signature as `evaluate_risk`) and use it in place of or in combination with the default; the reserved tag `__risk__` and `evaluate_risk` are one optional implementation.
+**Custom evaluator** — inject your own logic:
+
+```python
+def my_evaluator(network, action_id, context, risk_rules=None, **kwargs):
+    if action_id == "grant_root_admin":
+        return RiskResult(decision="not_allow", risk_level=5, reason="全局禁止提权")
+    return RiskResult(decision="unknown")
+
+result = evaluate_risk(network, "grant_root_admin", {}, evaluator=my_evaluator)
+print(result.decision)   # "not_allow"
+print(result.risk_level) # 5
+```
+
+- **Tagging**: In BKN, add `- **Tags**: __risk__` to definitions that participate in the built-in risk evaluation (reserved tag; users must not use it for custom purposes).
+- **RiskResult**: `decision` ("allow" | "not_allow" | "unknown"), `risk_level` (int | None, 0–5 recommended), `reason` (str).
+- **Custom evaluator**: Pass `evaluator=my_func` to fully replace the built-in logic; the evaluator must return `RiskResult`.
 
 ## Modules
 
@@ -229,7 +242,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 | `bkn.models` | Dataclass models: BknDocument, BknObject, Relation, Action, DataProperty, PropertyOverride, etc. |
 | `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
 | `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
-| `bkn.risk` | Risk assessment: evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" |
+| `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
 | `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |
 

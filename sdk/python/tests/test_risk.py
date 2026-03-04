@@ -20,30 +20,40 @@ def network():
 def test_evaluate_risk_no_rules_returns_unknown(network):
     """With no risk_rules, result is unknown (insufficient info)."""
     from bkn.risk import evaluate_risk
-    assert evaluate_risk(network, "any_action", {"scenario_id": "any"}) == "unknown"
-    assert evaluate_risk(network, "restart_erp", {}) == "unknown"
+    result = evaluate_risk(network, "any_action", {"scenario_id": "any"})
+    assert result.decision == "unknown"
+    assert result.risk_level is None
+    assert result.reason == ""
+    result2 = evaluate_risk(network, "restart_erp", {})
+    assert result2.decision == "unknown"
 
 
 def test_evaluate_risk_not_allow_when_rule_forbids(network):
     """When a rule has allowed=False for the given scenario+action, return not_allow."""
     from bkn.risk import evaluate_risk
     rules = [
-        {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False},
+        {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False, "risk_level": 5, "reason": "blocked"},
     ]
-    assert evaluate_risk(
+    result = evaluate_risk(
         network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=rules
-    ) == "not_allow"
+    )
+    assert result.decision == "not_allow"
+    assert result.risk_level == 5
+    assert "blocked" in result.reason
 
 
 def test_evaluate_risk_allow_when_rule_allows(network):
     """When a rule has allowed=True, return allow."""
     from bkn.risk import evaluate_risk
     rules = [
-        {"scenario_id": "sec_c_02", "action_id": "batch_restart_nodes", "allowed": True},
+        {"scenario_id": "sec_c_02", "action_id": "batch_restart_nodes", "allowed": True, "risk_level": 2, "reason": "throttle"},
     ]
-    assert evaluate_risk(
+    result = evaluate_risk(
         network, "batch_restart_nodes", {"scenario_id": "sec_c_02"}, risk_rules=rules
-    ) == "allow"
+    )
+    assert result.decision == "allow"
+    assert result.risk_level == 2
+    assert "throttle" in result.reason
 
 
 def test_evaluate_risk_no_match_returns_unknown(network):
@@ -52,28 +62,34 @@ def test_evaluate_risk_no_match_returns_unknown(network):
     rules = [
         {"scenario_id": "other_scenario", "action_id": "other_action", "allowed": False},
     ]
-    assert evaluate_risk(
+    result = evaluate_risk(
         network, "restart_erp", {"scenario_id": "sec_t_01"}, risk_rules=rules
-    ) == "unknown"
+    )
+    assert result.decision == "unknown"
 
 
 def test_evaluate_risk_no_scenario_matches_by_action_only(network):
     """Without scenario_id in context, rules match by action_id alone."""
     from bkn.risk import evaluate_risk
     rules = [
-        {"action_id": "grant_root_admin", "allowed": False},
+        {"action_id": "grant_root_admin", "allowed": False, "risk_level": 5},
     ]
-    assert evaluate_risk(network, "grant_root_admin", {}, risk_rules=rules) == "not_allow"
-    assert evaluate_risk(network, "grant_root_admin", None, risk_rules=rules) == "not_allow"
+    result = evaluate_risk(network, "grant_root_admin", {}, risk_rules=rules)
+    assert result.decision == "not_allow"
+    assert result.risk_level == 5
+    result2 = evaluate_risk(network, "grant_root_admin", None, risk_rules=rules)
+    assert result2.decision == "not_allow"
 
 
 def test_evaluate_risk_no_scenario_allow(network):
     """Global rule with allowed=True, no scenario filtering."""
     from bkn.risk import evaluate_risk
     rules = [
-        {"action_id": "query_sensitive_data", "allowed": True},
+        {"action_id": "query_sensitive_data", "allowed": True, "risk_level": 2},
     ]
-    assert evaluate_risk(network, "query_sensitive_data", {}, risk_rules=rules) == "allow"
+    result = evaluate_risk(network, "query_sensitive_data", {}, risk_rules=rules)
+    assert result.decision == "allow"
+    assert result.risk_level == 2
 
 
 def test_evaluate_risk_scenario_filters_rules(network):
@@ -82,9 +98,35 @@ def test_evaluate_risk_scenario_filters_rules(network):
     rules = [
         {"scenario_id": "sec_t_01", "action_id": "restart_erp", "allowed": False},
     ]
-    assert evaluate_risk(
+    result = evaluate_risk(
         network, "restart_erp", {"scenario_id": "sec_c_02"}, risk_rules=rules
-    ) == "unknown"
+    )
+    assert result.decision == "unknown"
+
+
+def test_evaluate_risk_custom_evaluator(network):
+    """Custom evaluator is called when provided."""
+    from bkn.risk import RiskResult, evaluate_risk
+
+    def my_evaluator(network, action_id, context, risk_rules=None, **kwargs):
+        if action_id == "grant_root_admin":
+            return RiskResult(decision="not_allow", risk_level=5, reason="全局禁止提权")
+        return RiskResult(decision="unknown")
+
+    result = evaluate_risk(network, "grant_root_admin", {}, evaluator=my_evaluator)
+    assert result.decision == "not_allow"
+    assert result.risk_level == 5
+    assert "全局禁止提权" in result.reason
+
+    result2 = evaluate_risk(network, "other_action", {}, evaluator=my_evaluator)
+    assert result2.decision == "unknown"
+
+
+def test_risk_result_str_backward_compat(network):
+    """RiskResult.__str__ returns decision for backward compatibility."""
+    from bkn.risk import RiskResult
+    r = RiskResult(decision="allow", risk_level=2, reason="ok")
+    assert str(r) == "allow"
 
 
 def test_network_has_risk_tagged_objects(network):
