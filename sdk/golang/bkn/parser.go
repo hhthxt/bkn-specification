@@ -90,12 +90,8 @@ func splitFrontmatter(text string) (fm string, body string) {
 
 func splitRow(row string) []string {
 	row = strings.TrimSpace(row)
-	if strings.HasPrefix(row, "|") {
-		row = row[1:]
-	}
-	if strings.HasSuffix(row, "|") {
-		row = row[:len(row)-1]
-	}
+	row = strings.TrimPrefix(row, "|")
+	row = strings.TrimSuffix(row, "|")
 	parts := strings.Split(row, "|")
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
@@ -182,12 +178,8 @@ func parseTableColumns(tableLines []string) []string {
 		return nil
 	}
 	header := strings.TrimSpace(tableLines[0])
-	if strings.HasPrefix(header, "|") {
-		header = header[1:]
-	}
-	if strings.HasSuffix(header, "|") {
-		header = header[:len(header)-1]
-	}
+	header = strings.TrimPrefix(header, "|")
+	header = strings.TrimSuffix(header, "|")
 	parts := strings.Split(header, "|")
 	var cols []string
 	for _, p := range parts {
@@ -202,13 +194,14 @@ func parseInlineMeta(text string) (tags []string, owner string) {
 		if len(m) >= 3 {
 			key := strings.TrimSpace(m[1])
 			val := strings.TrimSpace(m[2])
-			if key == "Tags" {
+			switch key {
+			case "Tags":
 				for _, t := range strings.Split(val, ",") {
 					if s := strings.TrimSpace(t); s != "" {
 						tags = append(tags, s)
 					}
 				}
-			} else if key == "Owner" {
+			case "Owner":
 				owner = val
 			}
 		}
