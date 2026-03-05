@@ -45,15 +45,15 @@ condition:
 | {object_id} | relation:{relation_id} | exist | {违反说明} |
 | {object_id} | property:{property_name} | {op} {value} | {违反说明} |
 
-### 影响范围
+### Scope of Impact
 
-| 影响对象 | 影响描述 |
-|----------|----------|
+| Impacted Object | Impact Description |
+|-----------------|---------------------|
 | {object_id} | {影响描述} |
 
-### 工具配置
+### Tool Configuration
 
-| 类型 | 工具箱ID | 工具ID |
+| Type | Toolbox ID | Tool ID |
 |------|----------|--------|
 | tool | {box_id} | {tool_id} |
 
@@ -70,11 +70,11 @@ condition:
 | {param} | string | input | - | {说明} |
 | {param} | string | const | {value} | {说明} |
 
-### 调度配置
+### Schedule
 
 <!-- 可选 -->
 
-| 类型 | 表达式 |
+| Type | Expression |
 |------|--------|
 | FIX_RATE | {interval} |
 

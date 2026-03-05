@@ -9,12 +9,13 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 
 ## Workflow
 
-1. **Understand requirements**: identify the business domain, objects, relations, and actions
-2. **Read the spec**: see [specification.md](specification.md) for format rules
-3. **Pick a template**: see [templates/](templates/) for each type (object, relation, action, network)
-4. **Generate `.bkn` files**: follow the output rules below
-5. **(Optional) Import to kweaver**: use the Python SDK
-6. **(Optional) Run scripts**: validate, transform, or import via built-in scripts
+**顺序**：先读规范 → 再选模板 → 再生成输出。
+
+1. **理解需求**：识别业务域、对象、关系、行动
+2. **读规范**：加载 [references/specification.md](references/specification.md)，按格式规则生成
+3. **选模板**：从 [assets/](assets/) 选取对应类型（object、relation、action、network、data）
+4. **生成 `.bkn` 文件**：按下方 Output Rules 输出
+5. **（可选）校验/导入**：运行 `scripts/` 中的 validate、transform 或 import_to_kweaver
 
 ## Scripts
 
@@ -78,15 +79,15 @@ my-network/
 └── actions.bkn
 ```
 
-## Templates
+## Templates (assets/)
 
 Read the appropriate template before generating:
 
-- `templates/object.bkn.template` — object with Data Properties, Property Override, Logic Properties
-- `templates/relation.bkn.template` — relation with Endpoints, Mapping Rules (direct and data_view)
-- `templates/action.bkn.template` — action with Trigger, Pre-conditions, Tool Configuration, Schedule
-- `templates/network.bkn.template` — network index with inline object/relation/action definitions
-- `templates/data.bknd.template` — instance data file for objects with Data Source Type `bknd`
+- `assets/object.bkn.template` — object with Data Properties, Property Override, Logic Properties
+- `assets/relation.bkn.template` — relation with Endpoints, Mapping Rules (direct and data_view)
+- `assets/action.bkn.template` — action with Trigger, Pre-conditions, Tool Configuration, Schedule
+- `assets/network.bkn.template` — network index with inline object/relation/action definitions
+- `assets/data.bknd.template` — instance data file for objects with Data Source Type `bknd`
 
 Fill in `{placeholders}`, remove unused optional sections, and remove template comments.
 
@@ -154,3 +155,30 @@ client.create_relation_types(kn_id, payload["relation_types"])
 ```
 
 For full API details, read `sdk/python/src/bkn/transformers/kweaver/client.py`.
+
+---
+
+## 使用流程（最小验证）
+
+1. **读规范**：`references/specification.md`
+2. **套模板**：从 `assets/` 选对应模板，替换 `{placeholders}`
+3. **可选脚本**：`scripts/validate.py` 校验、`scripts/transform.py` 导出、`scripts/import_to_kweaver.py` 导入
+
+## 目录树（维护基线）
+
+```
+bkn-creator/
+├── SKILL.md
+├── references/
+│   └── specification.md
+├── assets/
+│   ├── object.bkn.template
+│   ├── relation.bkn.template
+│   ├── action.bkn.template
+│   ├── network.bkn.template
+│   └── data.bknd.template
+└── scripts/
+    ├── validate.py
+    ├── transform.py
+    └── import_to_kweaver.py
+```
