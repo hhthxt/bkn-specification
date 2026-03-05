@@ -90,3 +90,5 @@ venv/
 
 # output files
 output/
+
+local_test/
