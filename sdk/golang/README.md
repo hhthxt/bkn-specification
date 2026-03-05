@@ -2,6 +2,10 @@
 
 Go SDK for parsing, validating, and transforming BKN files. Provides feature parity with the [Python SDK](../python/README.md) for core functionality.
 
+## Requirements
+
+- **Go 1.24+**
+
 ## Status
 
 Implemented. The Go SDK supports:
