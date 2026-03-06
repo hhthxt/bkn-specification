@@ -493,7 +493,7 @@ _DEFINITION_RE = re.compile(
 )
 
 _VALID_BKN_TYPES = frozenset(
-    {"network", "object", "relation", "action", "fragment", "data", "delete"}
+    {"network", "object", "relation", "action", "fragment", "data", "risk"}
 )
 
 
@@ -648,7 +648,7 @@ def parse(text: str, source_path: str = "") -> BknDocument:
     if not type_val:
         raise ValueError(
             "BKN frontmatter must include a valid 'type' field "
-            "(network, object, relation, action, fragment, data, or delete)."
+            "(network, object, relation, action, fragment, data, or risk)."
         )
     if type_val not in _VALID_BKN_TYPES:
         raise ValueError(

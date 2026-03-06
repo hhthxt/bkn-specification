@@ -1,1 +1,0 @@
-export { BKEditor } from './Editor';

@@ -29,6 +29,8 @@ from bkn.loader import load, load_network
 from bkn.risk import RiskResult, evaluate_risk
 from bkn.serializer import to_bknd, to_bknd_from_table
 from bkn.validator import validate_data_table, validate_network_data
+from bkn.delete import DeleteTarget, DeletePlan, plan_delete, network_without
+from bkn.checksum import generate_checksum_file, verify_checksum_file
 
 __version__ = "0.1.0"
 
@@ -62,4 +64,10 @@ __all__ = [
     "to_bknd_from_table",
     "validate_data_table",
     "validate_network_data",
+    "DeleteTarget",
+    "DeletePlan",
+    "plan_delete",
+    "network_without",
+    "generate_checksum_file",
+    "verify_checksum_file",
 ]

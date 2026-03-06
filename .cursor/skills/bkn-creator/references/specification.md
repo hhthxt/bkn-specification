@@ -20,6 +20,7 @@
 | object | 单个对象定义 |
 | relation | 单个关系定义 |
 | action | 单个行动定义 |
+| risk | 单个风险定义 |
 | network | 含多个定义的网络文件 |
 | fragment | 混合片段 |
 | data | 数据文件（建议 `.bknd`，承载对象/关系实例行） |
@@ -128,6 +129,11 @@ requires_approval: true  # 是否需要审批才能启用/执行
 - `### Tool Configuration`（可选）：Type | Toolbox ID | Tool ID
 - `### Parameter Binding`（可选）：Parameter | Type | Source | Binding | Description，Source 为 property/input/const
 - `### Scope of Impact`（可选）：Impacted Object | Impact Description
+
+## 更新与删除（无 patch 模型）
+
+- 定义文件导入 = add/modify（upsert）；修改即编辑文件后重新导入
+- 删除元素通过 SDK/CLI delete API 执行，不通过 BKN 文件；**不要生成 type: delete 或 type: patch 文件**
 
 ## 输出规则（必须遵守）
 

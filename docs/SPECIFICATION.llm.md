@@ -20,8 +20,10 @@
 | object | 单个对象定义 |
 | relation | 单个关系定义 |
 | action | 单个行动定义 |
+| risk | 单个风险定义 |
 | network | 含多个定义的网络文件 |
 | fragment | 混合片段 |
+| data | 数据文件，承载 object/relation 的实例数据行（建议 `.bknd`） |
 
 ## 对象 (Object)
 
@@ -38,7 +40,7 @@ network: {network_id}
 - `## Object: {object_id}`
 - `**{显示名称}**` + 简短描述
 - （可选）定义级元数据：`- **Tags**: tag1, tag2`、`- **Owner**: owner`
-- `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name}
+- `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name} 或 bknd | {object_id} | {display_name}。仅当 Data Source 为 `bknd` 时可为该对象创建 `.bknd` 数据文件；`data_view` 时不可用 `.bknd`
 - `### Data Properties`（必须）：表格，列 Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index
   - 至少标记一个 `Primary Key: YES`（主键）和一个 `Display Key: YES`（展示键）
   - 最简形式可只含 Property | Primary Key | Display Key 三列
@@ -90,11 +92,24 @@ action_type: add | modify | delete
 - `## Action: {action_id}`
 - `**{显示名称}**` + 简短描述
 - `### Bound Object`：表格 Bound Object | Action Type
-- `### Trigger Condition`：YAML 块，含 condition.object_type_id、field、operation、value
+- `### Trigger Condition`：YAML 块，含 field、operation、value（field 为属性名，operation 为 ==/!=/>/</>=/<=/in/not_in/exist/not_exist，value 为比较值）
 - `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message，Check 为 property:{name} 或 relation:{id}
-- `### Tool Configuration`（可选）：Type | Toolbox ID | Tool ID
-- `### Parameter Binding`（可选）：Parameter | Type | Source | Binding | Description，Source 为 property/input/const
+- `### Tool Configuration`（必须）：Type | Tool ID 或 Type | MCP。tool 时列 Type | Tool ID；mcp 时列 Type | MCP
+- `### Parameter Binding`（必须）：Parameter | Type | Source | Binding | Description，Source 为 property/input/const
 - `### Scope of Impact`（可选）：Object | Impact Description
+
+## 风险 (Risk)
+
+风险定义独立于 action。正文结构：`## Risk: {risk_id}`、`### 管控范围`、`### 管控策略`、`### 前置检查`（可选）、`### 回滚方案`（可选）、`### 审计要求`（可选）。
+
+## 数据文件 (type: data / .bknd)
+
+仅当 Object 的 Data Source 为 `bknd` 时，可为该对象创建 `.bknd` 数据文件。Data Source 为 `data_view` 的对象数据来自外部系统，**不要**为其生成 `.bknd`。Frontmatter 示例：`type: data`、`network`、`object` 或 `relation`（二选一）。正文为标题 + 一个表格，列名与目标 object 的 Data Properties 一致。
+
+## 更新与删除（无 patch 模型）
+
+- 定义文件导入 = add/modify（upsert）；修改即编辑文件后重新导入
+- 删除元素通过 SDK/CLI delete API 执行，不通过 BKN 文件；**不要生成 type: delete 或 type: patch 文件**
 
 ## 输出规则（必须遵守）
 
@@ -103,4 +118,4 @@ action_type: add | modify | delete
 3. **引用已存在的 ID**：object/relation 引用时，使用项目中已有的 id
 4. **表格格式**：按上述列名严格对齐
 5. **命名**：ID 使用小写字母、数字、下划线；显示名和描述用中文（除非另有要求）
-6. **必填字段**：type、id、name、network；Object 需 Data Source 和 Primary Key/Display Key；Relation 需 Endpoints 和 Mapping Rules；Action 需 Bound Object 和 Trigger Condition
+6. **必填字段**：type、id、name、network；Object 需 Data Source 和 Primary Key/Display Key；Relation 需 Endpoints 和 Mapping Rules；Action 需 Bound Object、Trigger Condition、Tool Configuration 和 Parameter Binding

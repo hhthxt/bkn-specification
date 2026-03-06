@@ -385,3 +385,76 @@ func TestLoad_UnsupportedExtension(t *testing.T) {
 		t.Errorf("expected extension error, got %q", err.Error())
 	}
 }
+
+func TestPlanDelete(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "index.bkn")
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Skipf("example not found: %v", err)
+	}
+	plan := PlanDelete(net, []DeleteTarget{{Type: "object", ID: "pod"}}, true)
+	if !plan.OK() {
+		t.Errorf("expected ok, got not_found=%v", plan.NotFound)
+	}
+	if len(plan.Targets) != 1 || plan.Targets[0].ID != "pod" {
+		t.Errorf("expected 1 target pod, got %v", plan.Targets)
+	}
+}
+
+func TestPlanDelete_NotFound(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "index.bkn")
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Skipf("example not found: %v", err)
+	}
+	plan := PlanDelete(net, []DeleteTarget{{Type: "object", ID: "nonexistent"}}, true)
+	if plan.OK() {
+		t.Error("expected not ok for nonexistent target")
+	}
+	if len(plan.NotFound) != 1 {
+		t.Errorf("expected 1 not_found, got %v", plan.NotFound)
+	}
+}
+
+func TestNetworkWithout(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "index.bkn")
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Skipf("example not found: %v", err)
+	}
+	orig := len(net.AllObjects())
+	out := NetworkWithout(net, []DeleteTarget{{Type: "object", ID: "pod"}})
+	if len(out.AllObjects()) != orig-1 {
+		t.Errorf("expected %d objects, got %d", orig-1, len(out.AllObjects()))
+	}
+	for _, o := range out.AllObjects() {
+		if o.ID == "pod" {
+			t.Error("pod should be removed")
+		}
+	}
+}
+
+func TestGenerateAndVerifyChecksum(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-checksum-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+	os.Mkdir(filepath.Join(dir, "objects"), 0755)
+	os.WriteFile(filepath.Join(dir, "objects", "pod.bkn"), []byte("---\ntype: object\nid: pod\nname: Pod\nnetwork: k8s\n---\n\n## Object: pod\n**Pod**\n"), 0644)
+
+	content, err := GenerateChecksumFile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(content, "sha256:") || !strings.Contains(content, "objects/pod.bkn") {
+		t.Errorf("unexpected content: %s", content)
+	}
+	ok, errs := VerifyChecksumFile(dir)
+	if !ok {
+		t.Errorf("verify failed: %v", errs)
+	}
+}

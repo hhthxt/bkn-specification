@@ -20,6 +20,7 @@ This document defines the complete syntax specification for BKN.
 | object | Business object type (e.g., Pod/Node/Service) |
 | relation | Relationship type connecting two objects (e.g., belongs_to, routes_to) |
 | action | Operation definition on an object (can bind to tool or mcp) |
+| risk | Risk type; structured modeling of execution risk for actions and objects |
 
 **Object Structure**
 
@@ -54,8 +55,6 @@ This document defines the complete syntax specification for BKN.
 | network | File type `type: network`; top-level container for a complete knowledge network |
 | fragment | File type `type: fragment`; mixed snippet containing multiple object/relation/action definitions |
 | data | File type `type: data`; instance data file (recommended `.bknd` extension) |
-| delete | File type `type: delete`; explicitly declares definitions to be removed |
-| patch | File type `type: patch`; incremental modification to an existing file |
 | namespace | Namespace; used for large-scale organization and avoiding ID conflicts |
 | spec_version | Specification version; identifies which BKN spec version a file conforms to |
 
@@ -68,9 +67,11 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | `#` | Objects | Section: all object definitions in this file | `# Objects` |
 | `#` | Relations | Section: all relation definitions | `# Relations` |
 | `#` | Actions | Section: all action definitions | `# Actions` |
+| `#` | Risks | Section: all risk definitions | `# Risks` |
 | `##` | Object | Individual object definition | `## Object: {id}` |
 | `##` | Relation | Individual relation definition | `## Relation: {id}` |
 | `##` | Action | Individual action definition | `## Action: {id}` |
+| `##` | Risk | Individual risk definition | `## Risk: {id}` |
 | `###` | Data Source | The data view this object maps from | `### Data Source` |
 | `###` | Data Properties | Explicit list of fields (name, type, PK, index) | `### Data Properties` |
 | `###` | Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
@@ -93,7 +94,7 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | — | Display Key | Field used for UI label / search display | Data Properties table column |
 | — | Action Type | add \| modify \| delete | table column |
 
-Table column names (canonical): Type, ID, Name, Property, Display Name, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Object, Action Type; Object, Check, Condition, Message; Object, Impact Description.
+Table column names (canonical): Type, ID, Name, Property, Display Name, Type, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Object, Action Type; Object, Check, Condition, Message; Object, Impact Description.
 
 ## File Format
 
@@ -152,8 +153,8 @@ To support scalable collaboration, approval, and audit, use the following fields
 | Field | Applicable type | Description |
 |-------|-----------------|-------------|
 | `spec_version` | all | Specification version used by this file (inherits document spec_version by default) |
-| `namespace` | object/relation/action/fragment/delete | Namespace/package name for large-scale organization and conflict avoidance (e.g., `platform.k8s`) |
-| `owner` | object/relation/action/fragment/delete | Owner/team (for audit and approval routing) |
+| `namespace` | object/relation/action/fragment | Namespace/package name for large-scale organization and conflict avoidance (e.g., `platform.k8s`) |
+| `owner` | object/relation/action/fragment | Owner/team (for audit and approval routing) |
 | `enabled` | action | Whether enabled (default `false` recommended; import does not imply enablement) |
 | `risk_level` | action | Risk level (`low|medium|high` for approval and release strategy) |
 | `requires_approval` | action | Whether approval is required to enable/execute |
@@ -167,8 +168,8 @@ To support scalable collaboration, approval, and audit, use the following fields
 | `relation` | Single relation definition | Standalone relation file, directly importable |
 | `action` | Single action definition | Standalone action file, directly importable |
 | `fragment` | Mixed fragment | Contains multiple types of partial definitions |
+| `risk` | Single risk definition | Standalone risk file, directly importable |
 | `data` | Data file | Carries instance rows for object/relation definitions (recommended `.bknd`) |
-| `delete` | Delete marker | Marks definitions to be deleted |
 
 ### Network File (type: network)
 
@@ -231,7 +232,7 @@ requires_approval: boolean       # Optional, whether approval required
 ---
 ```
 
-> **Dynamic risk property**: The Action runtime property `risk` (values `allow` | `not_allow`) is computed by the built-in or a user-provided risk evaluation function from the current scenario and knowledge tagged with `__risk__`; it is not declared in this frontmatter.
+> **Dynamic risk property**: The Action runtime property `risk` (values `allow` | `not_allow` | `unknown`) is computed by the built-in or a user-provided risk evaluation function from the current scenario and knowledge tagged with `__risk__`; it is not declared in this frontmatter. When no rules match or evaluation fails, returns `unknown`; the execution layer handles per business policy.
 
 ### Mixed Fragment (type: fragment)
 
@@ -247,18 +248,17 @@ owner: string                    # Optional, owner/team
 ---
 ```
 
-### Delete Marker (type: delete)
+### Single Risk File (type: risk)
 
 ```yaml
 ---
-type: delete                     # Delete marker
-network: string                  # Target network ID (recommended required for import determinism)
+type: risk                       # Single risk definition
+id: string                       # Risk type ID, unique identifier
+name: string                     # Risk display name
+version: string                  # Optional, version
+network: string                  # Network ID (recommended required)
 namespace: string                # Optional, namespace/package
 owner: string                    # Optional, owner/team
-targets:                         # Definitions to delete
-  - object: pod
-  - relation: pod_belongs_node
-  - action: restart_pod
 ---
 ```
 
@@ -301,6 +301,19 @@ Use one heading (`#` or `##`) plus one GFM table. Table headers should align wit
 - Column names should align with schema definitions to avoid implicit fields
 - A single `type: data` file should contain one table for better versioning and auditing
 
+### Data Source and Editability
+
+An object's Data Source determines whether its data may be written to `.bknd`:
+
+| Data Source Type | Data Source | `.bknd` Allowed |
+|------------------|-------------|-----------------|
+| `data_view` | External system (ERP, DB, API) | **No**; data is maintained by the external system, `.bknd` does not apply |
+| `bknd` | BKN-native data | **Yes**; `.bknd` is the data source, readable and writable |
+| No Data Source | Platform default | Platform-dependent |
+
+- When an Object's Data Source is `data_view`, do not create `.bknd` files for that object; data is provided by the external system.
+- When an Object's Data Source is `bknd`, data is stored in `.bknd` files and is editable and versionable.
+
 ---
 
 ## Object Definition Specification
@@ -320,6 +333,10 @@ Use one heading (`#` or `##`) plus one GFM table. Table headers should align wit
 | Type | ID | Name |
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
+| bknd | {object_id} | {display_name} |
+
+- `data_view`: Data from external system; do not maintain via `.bknd`
+- `bknd`: BKN-native data; carried by `.bknd` files, editable
 
 ### Data Properties
 
@@ -387,7 +404,7 @@ In fragment or network files, multiple objects or relations may each have differ
 
 - **Reserved tag**: **`__risk__`** is a built-in reserved tag used only for objects and relations that participate in the built-in risk assessment. **Users must not use `__risk__` for custom purposes**, to avoid conflicting with built-in behavior.
 - Add `- **Tags**: __risk__` in the definition header of objects and relations that participate in the built-in risk evaluation. AI applications and the built-in evaluator use this tag to identify risk-related definitions.
-- Actions have a **runtime/computed property** `risk` (see Action definition section), with values `allow` | `not_allow`, computed by the built-in or a user-provided risk evaluation function from the current scenario and data tagged with `__risk__`; it is **not written in BKN files**.
+- Actions have a **runtime/computed property** `risk` (see Action definition section), with values `allow` | `not_allow` | `unknown`, computed by the built-in or a user-provided risk evaluation function from the current scenario and data tagged with `__risk__`; it is **not written in BKN files**. When no rules match or evaluation fails, returns `unknown`; the execution layer handles per business policy.
 
 **Openness**: Users may define **their own risk-like classes** (using **non-reserved** tags, e.g. `compliance`, `audit`) and **their own risk evaluation functions**; the built-in `__risk__` and default evaluator are one optional implementation and do not preclude extension or replacement.
 
@@ -660,7 +677,7 @@ or
 | {param_name} | string | input | - | {description} |
 | {param_name} | string | const | {value} | {description} |
 
-### Schedule Configuration
+### Schedule
 
 (Optional)
 
@@ -696,8 +713,8 @@ Action definitions connect to execution surface (tool/mcp). For stability and se
 | Pre-conditions | NO | Data conditions required before execution |
 | Tool Configuration | YES | Tool or MCP to execute |
 | Parameter Binding | YES | Parameter source configuration |
-| Schedule Configuration | NO | Scheduled execution configuration |
-| risk (computed) | - | Runtime property: `allow` \| `not_allow`, computed by built-in or user-provided evaluator from scenario and data tagged with `__risk__`; not written in BKN |
+| Schedule | NO | Scheduled execution configuration |
+| risk (computed) | - | Runtime property: `allow` \| `not_allow` \| `unknown`, computed by built-in or user-provided evaluator from scenario and data tagged with `__risk__`; not written in BKN. When no rules match or evaluation fails, returns `unknown` |
 
 ### Trigger Condition Operators
 
@@ -777,6 +794,71 @@ Combined constraints use **logical AND** — all constraints must be satisfied s
 
 ---
 
+## Risk Definition Specification
+
+Risk is the fourth basic type, for structured modeling of execution risk for actions and objects. Risk is independent of Action; Action's `risk_level` declares "how dangerous," Risk declares "how to control."
+
+### Syntax
+
+```markdown
+## Risk: {risk_id}
+
+**{Display Name}** - {Brief description}
+
+### Control Scope
+
+| Controlled Object | Controlled Action | Risk Level |
+|-------------------|-------------------|------------|
+| {object_id} | {action_id} | low | medium | high |
+
+### Control Strategy
+
+| Condition | Strategy |
+|-----------|----------|
+| {condition_description} | {strategy_description} |
+
+### Pre-checks
+
+(Optional)
+
+| Check Item | Type | Description |
+|------------|------|-------------|
+| {check_name} | permission | {description} |
+| {check_name} | simulation | {description} |
+| {check_name} | approval | {description} |
+| {check_name} | precondition | {description} |
+
+### Rollback Plan
+
+(Optional) Recovery strategy for failures or misoperations...
+
+### Audit Requirements
+
+(Optional) Audit logs, alert notifications...
+```
+
+### Field Summary
+
+| Field | Required | Description |
+|-------|:--------:|-------------|
+| risk_id | YES | Unique risk type ID, lowercase letters, digits, underscores |
+| Display Name | YES | Human-readable name |
+| Control Scope | YES | Associated object/action types and risk levels |
+| Control Strategy | YES | Condition-based control rules (at least one) |
+| Pre-checks | NO | Pre-execution check list |
+| Rollback Plan | NO | Failure recovery strategy |
+| Audit Requirements | NO | Audit log and alert configuration |
+
+### Risk Levels
+
+| Level | Meaning | Default Control |
+|-------|---------|-----------------|
+| `low` | Read-only or no-side-effect operations | No approval, direct execution |
+| `medium` | Side effects but reversible | Recommend confirmation, audit log |
+| `high` | Irreversible or high-impact | Approval + action simulation + full audit required |
+
+---
+
 ## Common Syntax Elements
 
 ### Table Format
@@ -839,8 +921,8 @@ For key information:
 
 Heading levels are consistent across all file types:
 
-- `#` - Document/group heading (for example network title, or `# Objects` / `# Relations` / `# Actions`)
-- `##` - Definition heading (`## Object:` / `## Relation:` / `## Action:`)
+- `#` - Document/group heading (for example network title, or `# Objects` / `# Relations` / `# Actions` / `# Risks`)
+- `##` - Definition heading (`## Object:` / `## Relation:` / `## Action:` / `## Risk:`)
 - `###` - In-definition sections (Data Source, Data Properties, Mapping Rules, Trigger Condition, etc.)
 - `####` - Sub-items (for example logic property names)
 
@@ -895,11 +977,32 @@ Network description...
 
 ### Pattern 3: One Definition per File (Large Networks, Recommended)
 
-Each object, relation, and action in its own file:
+Each object, relation, action, and risk in its own file. Two orchestration entry points are supported:
+
+**Pattern A: SKILL.md orchestration** (Agent Skill standard)
 
 ```
-k8s-network/
-├── index.bkn                    # type: network
+{business_dir}/
+├── SKILL.md                     # agentskills.io standard entry; network topology, index, usage guide
+├── objects/
+│   ├── material.bkn             # type: object
+│   └── inventory.bkn           # type: object
+├── relations/
+│   └── material_to_inventory.bkn # type: relation
+├── actions/
+│   ├── check_inventory.bkn      # type: action
+│   └── adjust_inventory.bkn    # type: action
+├── risks/
+│   └── inventory_adjustment_risk.bkn  # type: risk
+└── data/                        # optional, .bknd instance data
+    └── scenario.bknd
+```
+
+**Pattern B: index.bkn orchestration** (traditional index mode)
+
+```
+{business_dir}/
+├── index.bkn                    # type: network or fragment, network entry
 ├── objects/
 │   ├── pod.bkn                  # type: object
 │   ├── node.bkn                 # type: object
@@ -907,10 +1010,15 @@ k8s-network/
 ├── relations/
 │   ├── pod_belongs_node.bkn     # type: relation
 │   └── service_routes_pod.bkn   # type: relation
-└── actions/
-    ├── restart_pod.bkn          # type: action
-    └── cordon_node.bkn          # type: action
+├── actions/
+│   ├── restart_pod.bkn          # type: action
+│   └── cordon_node.bkn          # type: action
+├── risks/
+│   └── pod_restart_risk.bkn     # type: risk
+└── data/                        # optional, .bknd instance data
 ```
+
+Directory names (`objects/`, `relations/`, `actions/`, `risks/`, `data/`) are conventions; the file `type` field is the authoritative definition type.
 
 **Single object file example** (`pod.bkn`):
 
@@ -986,7 +1094,7 @@ Where `network_id` comes from:
 **Replace (full overwrite)** is recommended by default:
 
 - When `key` already exists, replace the old definition with the imported definition
-- **Missing field does not mean delete**: Only means the field is not in this definition; deletion must be explicit (see `type: delete`)
+- **Missing field does not mean delete**: Only means the field is not in this definition; deletion should be performed via the SDK/CLI delete API, not via BKN files
 
 If needed, **merge-by-section** may be supported under control, with:
 
@@ -1007,7 +1115,7 @@ When the same `key` is declared by multiple files in one import batch:
 |----------|----------|
 | ID does not exist | Create new definition |
 | ID exists | Update definition (overwrite) |
-| Using `type: delete` | Delete specified definition |
+| Delete element | Performed via SDK/CLI delete API explicitly, not via BKN files |
 
 ### Import Examples
 
@@ -1064,22 +1172,6 @@ network: k8s-network
 Updated definition...
 ```
 
-**Scenario: Delete definition**
-
-```markdown
----
-type: delete
-network: k8s-network
-targets:
-  - object: deprecated_object
-  - relation: old_relation
----
-
-# Delete Deprecated Definitions
-
-Clean up unused definitions.
-```
-
 **Scenario: Batch import (fragment)**
 
 ```markdown
@@ -1130,63 +1222,26 @@ Add monitoring-related objects and actions.
 
 ---
 
-## Patch Specification (File Level)
+## No-Patch Update Model
 
-### Add Operation
+BKN uses a **no-patch update model**: definition files are for add and modify only; deletion is performed explicitly via the SDK/CLI API.
 
-```markdown
----
-type: patch
-id: 2026-01-31-add-metric
-target: k8s-topology.bkn
-operation: add
----
+### Definition File Import (add/modify)
 
-# Add CPU Metric
+- When importing a single `.bkn` or `.bknd` file, perform **upsert** (add or overwrite) by `(network, type, id)`
+- To modify: edit the corresponding definition file and re-import to overwrite
+- Missing fields do not mean delete: they only indicate the field is not in this definition
 
-Add after `### Logic Properties` in `## Object: pod`:
+### Deleting Elements
 
-#### cpu_usage
+- Deletion should be performed explicitly via the **SDK/CLI delete API**, not via BKN files
+- Delete operations require: explicit parameters, auditability, dry-run support, and batch delete
 
-- **Type**: metric
-- **Source**: cpu_metric
-```
+### Edit Workflow
 
-### Modify Operation
-
-```markdown
----
-type: patch
-id: 2026-01-31-update-condition
-target: k8s-topology.bkn
-operation: modify
----
-
-# Update Trigger Condition
-
-Modify the trigger condition of `## Action: restart_pod` to:
-
-```yaml
-field: pod_status
-operation: in
-value: [Unknown, Failed, CrashLoopBackOff]
-`` `
-```
-
-### Delete Operation
-
-```markdown
----
-type: patch
-id: 2026-01-31-remove-action
-target: k8s-topology.bkn
-operation: delete
----
-
-# Delete Deprecated Action
-
-Delete `## Action: deprecated_action`
-```
+1. **Add**: Create `.bkn` file and import
+2. **Modify**: Edit `.bkn` file and re-import
+3. **Delete**: Call the SDK/CLI delete API
 
 ---
 
@@ -1223,6 +1278,6 @@ Delete `## Action: deprecated_action`
 
 - [Architecture Design](./ARCHITECTURE.md)
 - Examples:
-  - [Single-file mode](./examples/k8s-topology.bkn) — All definitions in one file
-  - [Split by type](./examples/k8s-network/) — Objects, relations, actions in separate files
-  - [One definition per file](./examples/k8s-modular/) — Each definition in its own file (recommended for large-scale use)
+  - [Single-file mode](../examples/k8s-topology.bkn) — All definitions in one file
+  - [Split by type](../examples/k8s-network/) — Objects, relations, actions in separate files
+  - [One definition per file](../examples/k8s-modular/) — Each definition in its own file (recommended for large-scale use)

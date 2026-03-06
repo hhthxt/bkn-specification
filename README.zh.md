@@ -18,7 +18,13 @@
 | Object（对象） | 业务对象类型（如 Pod、Node、Service） |
 | Relation（关系） | 对象之间的连接 |
 | Action（行动） | 对对象的操作定义（可绑定 tool/MCP） |
+| Risk（风险） | 风险类，对执行风险进行结构化建模 |
 | data_view | 对象/关系映射的数据来源 |
+
+### 更新网络（无 patch 模型）
+
+- **新增/修改**：编辑 `.bkn` 文件并导入（按 `network`、`type`、`id` 执行 upsert）。
+- **删除**：通过 SDK/CLI 的 delete API 显式执行；删除不通过 BKN 文件表达。
 
 ### 文件结构
 
@@ -33,46 +39,6 @@
     ├── k8s-network/          # 按类型拆分（objects/relations/actions）
     └── k8s-modular/          # 每定义一文件
 ```
-
-## 演示工具
-
-本仓库内含 **BKN Editor**，用于编辑和可视化 BKN 文件的演示 Web 应用：
-
-- 文件树与 Monaco 编辑器
-- 对象-关系网络图（React Flow）
-- Object / Relation / Action 模板
-
-```bash
-cd bkn_editor
-npm install
-npm run dev
-```
-
-访问 [http://localhost:3000](http://localhost:3000)。演示会加载 `examples` 下的示例，数据保存在浏览器 localStorage。
-
-### AI 生成
-
-BKN Editor 支持通过 OpenAI 或 Anthropic 的 AI 辅助生成。配置方法：复制示例文件并编辑 `bkn_editor/.env.local`：
-
-```bash
-cd bkn_editor
-copy .env.local.example .env.local   # Windows
-# 或: cp .env.local.example .env.local
-```
-
-| 变量 | 说明 | 必填 |
-|------|------|------|
-| `AI_PROVIDER` | `openai` 或 `anthropic`（默认 `openai`） | 可选 |
-| `OPENAI_API_KEY` | [OpenAI API 密钥](https://platform.openai.com/api-keys) | 使用 OpenAI 时 |
-| `OPENAI_MODEL` | 模型名（默认 `gpt-4o-mini`） | 可选 |
-| `OPENAI_BASE_URL` | 自定义 OpenAI 兼容 API 地址 | 可选 |
-| `ANTHROPIC_API_KEY` | [Anthropic API 密钥](https://console.anthropic.com/) | 使用 Anthropic 时 |
-| `ANTHROPIC_MODEL` | 模型名 | 可选 |
-| `ANTHROPIC_BASE_URL` | 自定义 Anthropic API 地址 | 可选 |
-
-修改 `.env.local` 后需重启 `npm run dev`。
-
-> **说明**：BKN Editor 为**演示工具**，用于理解规范。生产工具需按规范独立实现。
 
 ## 许可证
 

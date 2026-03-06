@@ -608,7 +608,7 @@ func ParseDataTables(text string, fm *Frontmatter, sourcePath string) ([]DataTab
 
 var validBknTypes = map[string]bool{
 	"network": true, "object": true, "relation": true, "action": true,
-	"fragment": true, "data": true, "delete": true,
+	"fragment": true, "data": true, "risk": true,
 }
 
 // Parse parses a complete .bkn/.bknd/.md file into a BknDocument.
@@ -631,7 +631,7 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object, relation, action, fragment, data, or delete)")
 	}
 	if !validBknTypes[typeVal] {
-		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object, relation, action, fragment, data, delete", typeVal)
+		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object, relation, action, fragment, data, risk", typeVal)
 	}
 	if fm.Type == "data" {
 		tables, err := ParseDataTables(text, fm, sourcePath)

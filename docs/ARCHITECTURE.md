@@ -17,10 +17,11 @@ flowchart TB
     subgraph BKN_Language["BKN 业务知识网络建模语言"]
         direction TB
         
-        subgraph Types["三种类型"]
+        subgraph Types["四种类型"]
             Object["Object Type<br/>对象类"]
             Relation["Relation Type<br/>关系类"]
             Action["Action Type<br/>行动类"]
+            Risk["Risk Type<br/>风险类"]
         end
         
         subgraph Structure["文件结构"]
@@ -31,6 +32,7 @@ flowchart TB
         Object --> Frontmatter
         Relation --> Frontmatter
         Action --> Frontmatter
+        Risk --> Frontmatter
         Frontmatter --> Body
     end
     
@@ -65,7 +67,6 @@ flowchart LR
     
     subgraph Files["BKN文件"]
         BKNFile[".bkn 文件"]
-        Patch[".bkn Patch"]
     end
     
     subgraph Backend["后端服务"]
@@ -76,13 +77,12 @@ flowchart LR
     
     Human -->|编写/修改| BKNFile
     Agent -->|读取/生成| BKNFile
-    Patch -->|增量更新| BKNFile
     BKNFile -->|解析| Parser
     Parser -->|调用| API
     API -->|持久化| KN
 ```
 
-## 三种类型
+## 四种类型
 
 ### 对象类 (Object Type)
 
@@ -280,7 +280,7 @@ flowchart LR
 |------|------|
 | ID 不存在 | 新增定义 |
 | ID 已存在 | 更新定义（覆盖） |
-| 删除定义 | 使用 `type: delete` 标记 |
+| 删除定义 | 通过 SDK/CLI 的 delete API 显式执行，不通过 BKN 文件 |
 
 ### 支持的文件类型
 
@@ -290,16 +290,17 @@ flowchart LR
 | `object` | 单个对象定义 | 增量添加/更新对象 |
 | `relation` | 单个关系定义 | 增量添加/更新关系 |
 | `action` | 单个行动定义 | 增量添加/更新行动 |
+| `risk` | 单个风险定义 | 增量添加/更新风险 |
 | `fragment` | 混合片段 | 包含多个类型的部分定义 |
-| `delete` | 删除标记 | 删除指定的定义 |
+| `data` | 数据文件 | 承载 object/relation 的实例数据（建议 `.bknd`） |
 
 ### 典型工作流
 
 1. **初始化**: 导入 `network` 类型的完整定义
-2. **扩展**: 导入单个 `object`/`relation`/`action` 文件
+2. **扩展**: 导入单个 `object`/`relation`/`action`/`risk` 文件
 3. **批量扩展**: 导入 `fragment` 类型的混合片段
 4. **修改**: 导入同 ID 的文件，自动覆盖
-5. **删除**: 导入 `type: delete` 标记的文件
+5. **删除**: 调用 SDK/CLI 的 delete API
 
 ## 与 知识网络管理 API 的映射
 
@@ -316,6 +317,6 @@ flowchart LR
 - [BKN 语言规范](./SPECIFICATION.md)
 - [BKN vs RESTful API 对比](./BKN_vs_REST_API.md)
 - 样例：
-  - [单文件模式](./examples/k8s-topology.bkn) - 所有定义在一个文件
-  - [按类型拆分](./examples/k8s-network/) - 对象/关系/行动分文件
-  - [每定义一文件](./examples/k8s-modular/) - 每个定义独立文件（推荐大规模场景）
+  - [单文件模式](../examples/k8s-topology.bkn) - 所有定义在一个文件
+  - [按类型拆分](../examples/k8s-network/) - 对象/关系/行动分文件
+  - [每定义一文件](../examples/k8s-modular/) - 每个定义独立文件（推荐大规模场景）

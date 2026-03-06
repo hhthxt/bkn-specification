@@ -235,6 +235,11 @@ print(result.risk_level) # 5
 - **RiskResult**: `decision` ("allow" | "not_allow" | "unknown"), `risk_level` (int | None, 0–5 recommended), `reason` (str).
 - **Custom evaluator**: Pass `evaluator=my_func` to fully replace the built-in logic; the evaluator must return `RiskResult`.
 
+### Update model (no-patch)
+
+- **Add/modify**: Import `.bkn` files; each definition is upserted by `(network, type, id)`.
+- **Delete**: Use the SDK delete API (see plan for `delete` API); deletion is not expressed in BKN files.
+
 ## Modules
 
 | Module | Description |
@@ -243,6 +248,8 @@ print(result.risk_level) # 5
 | `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
 | `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
+| `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
+| `bkn.checksum` | Checksum: generate_checksum_file(), verify_checksum_file() |
 | `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
 | `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |
 
