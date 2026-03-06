@@ -492,6 +492,10 @@ _DEFINITION_RE = re.compile(
     re.MULTILINE,
 )
 
+_VALID_BKN_TYPES = frozenset(
+    {"network", "object", "relation", "action", "fragment", "data", "delete"}
+)
+
 
 def parse_frontmatter(text: str) -> Frontmatter:
     """Parse the YAML frontmatter of a .bkn file."""
@@ -624,8 +628,34 @@ def parse_data_tables(
 
 
 def parse(text: str, source_path: str = "") -> BknDocument:
-    """Parse a complete .bkn file into a BknDocument."""
+    """Parse a complete .bkn/.bknd/.md file into a BknDocument.
+
+    Content must have YAML frontmatter with a valid `type` field.
+    Raises ValueError if frontmatter or type is missing/invalid.
+    """
     frontmatter = parse_frontmatter(text)
+    fm_str, _ = _split_frontmatter(text)
+
+    if not fm_str.strip():
+        hint = ""
+        if source_path and source_path.lower().endswith(".md"):
+            hint = " .md files used as BKN must start with YAML frontmatter (--- ... ---)."
+        raise ValueError(
+            f"BKN file must have YAML frontmatter with a valid type.{hint}"
+        )
+
+    type_val = (frontmatter.type or "").strip()
+    if not type_val:
+        raise ValueError(
+            "BKN frontmatter must include a valid 'type' field "
+            "(network, object, relation, action, fragment, data, or delete)."
+        )
+    if type_val not in _VALID_BKN_TYPES:
+        raise ValueError(
+            f"Invalid BKN type: {type_val!r}. "
+            f"Valid types: {', '.join(sorted(_VALID_BKN_TYPES))}"
+        )
+
     objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []

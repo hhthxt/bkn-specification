@@ -2,9 +2,14 @@
 
 你负责生成符合 BKN 格式的 Markdown，供业务知识网络建模使用。
 
+## 文件扩展名与载体
+
+- `.bkn` / `.bknd`：推荐扩展名
+- `.md`：兼容载体，可用 `.md` 保存；内容必须满足 BKN frontmatter、`type` 及结构约束，否则加载时报错
+
 ## 文件结构
 
-每个 `.bkn` 文件由两部分组成：
+每个 BKN 文件（`.bkn` / `.bknd` / `.md`）由两部分组成：
 1. **YAML Frontmatter**（元数据，以 `---` 包裹）
 2. **Markdown Body**（定义内容）
 

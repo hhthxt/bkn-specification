@@ -2,9 +2,14 @@
 
 你负责生成符合 BKN 格式的 Markdown，供业务知识网络建模使用。
 
+## 文件扩展名与载体
+
+- `.bkn` / `.bknd`：推荐扩展名
+- `.md`：兼容载体，可用 `.md` 保存；内容必须满足 BKN frontmatter、`type` 及结构约束，否则加载时报错
+
 ## 文件结构
 
-每个 `.bkn` 文件由两部分组成：
+每个 BKN 文件（`.bkn` / `.bknd` / `.md`）由两部分组成：
 1. **YAML Frontmatter**（元数据，以 `---` 包裹）
 2. **Markdown Body**（定义内容）
 
@@ -96,8 +101,23 @@ id: {action_id}
 name: {显示名称}
 network: {network_id}
 action_type: add | modify | delete
+# 治理字段（可选）
+enabled: false          # 是否启用，默认 false；导入不等于启用
+risk_level: low | medium | high
+requires_approval: true  # 是否需要审批才能启用/执行
 ---
 ```
+
+**治理字段复用策略**（不改 BKN 元素类型，仅消费 Action 现有字段）：
+
+| 字段 | 执行时含义 |
+|------|------------|
+| `enabled != true` | 默认不可执行，返回「需先启用」 |
+| `risk_level == high` | 强制二次确认，建议先 dry-run |
+| `requires_approval == true` | 进入审批路径，不直接执行 |
+| 字段缺失 | 按保守策略处理（视为高风险待确认） |
+
+运行时属性 `risk`（`allow` | `not_allow` | `unknown`）为计算属性，由风险评估函数根据场景与带 `__risk__` tag 的数据计算，**不写入 BKN 文件**。
 
 正文：
 - `## Action: {action_id}`

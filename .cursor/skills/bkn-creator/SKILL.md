@@ -5,7 +5,51 @@ description: Generate BKN (Business Knowledge Network) files for modeling object
 
 # BKN Creator
 
-Generate `.bkn` files conforming to the BKN specification, and optionally import them to kweaver.
+Generate `.bkn` files conforming to the BKN specification, and optionally import them to kweaver. BKN files are the single source of truth for domain knowledge; this Skill orchestrates loading, validation, and execution.
+
+**File extensions** — Supported at runtime: `.bkn`, `.bknd`, `.md`. Content must satisfy BKN frontmatter/type/structure regardless of extension. Recommended: schema `.bkn`, data `.bknd`; use `.md` when coexisting with generic Markdown tooling.
+
+## BKN-Driven Execution Protocol
+
+**Request classification** — Route user intent into one of:
+
+| 类型 | 识别特征 | 行为 |
+|------|----------|------|
+| `create/update model` | 创建/修改/定义 对象/关系/行动/网络 | 生成或改写 `.bkn/.bknd/.md`，走生成模式 |
+| `validate/transform/import` | 校验/转换/导入 | 直接进入脚本链路 |
+| `operate action` | 执行某操作、调用某工具、对某对象做某事 | 从 Action 定义解析工具与参数，走执行模式 |
+
+**Load flow** — For `operate action` or when context needs domain knowledge:
+
+1. Load `index.bkn` (or root `.bkn`/`.md`) to get network overview and `includes`
+2. Load relevant includes (objects/relations/actions) by task
+3. Do not load entire network if only a subset is needed
+
+**Action selection** — When multiple Actions match user intent:
+
+- Use `Bound Object` + `Trigger Condition` to narrow candidates
+- Prefer `risk_level: low` and `enabled: true`
+- If ambiguous or high-risk, ask user to confirm before executing
+
+**Guard rules** (before executing any Action):
+
+| 条件 | 行为 |
+|------|------|
+| `enabled != true` | 拒绝执行，返回「需先启用该行动」 |
+| `requires_approval == true` | 进入审批等待，不直接执行 |
+| `risk_level == high` | 强制二次确认，建议先 `import --dry-run` |
+| 字段缺失 | 按保守策略处理（视为高风险待确认） |
+
+**Parameter resolution** — From `Parameter Binding`:
+
+- `property`: resolve from target object instance
+- `input`: collect from user if missing
+- `const`: use as-is
+
+**Output modes**:
+
+- **生成模式**：仅输出 BKN Markdown，无多余说明
+- **执行模式**：返回操作结果、风险/审批状态、以及审计提示（如 dry-run 建议）
 
 ## Workflow
 
@@ -15,11 +59,23 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 2. **读规范**：加载 [references/specification.md](references/specification.md)，按格式规则生成
 3. **选模板**：从 [assets/](assets/) 选取对应类型（object、relation、action、network、data）
 4. **生成 `.bkn` 文件**：按下方 Output Rules 输出
-5. **（可选）校验/导入**：运行 `scripts/` 中的 validate、transform 或 import_to_kweaver
+5. **（可选）校验/导入**：按 Script Chain 顺序运行脚本
 
 ## Scripts
 
 Scripts live in [scripts/](scripts/). Run from repo root. Install first: `pip install -e sdk/python` or `pip install -e "sdk/python[api]"` for import.
+
+**Script chain** — Recommended order for model changes and imports:
+
+1. **validate** — After any BKN edit, run first to ensure load succeeds
+2. **transform** or **import --dry-run** — Before real import, verify transform
+3. **import** — Only after dry-run passes
+
+| 触发条件 | 执行 |
+|----------|------|
+| 用户修改/新增了 `.bkn` / `.bknd` / `.md` | `validate.py <path>` |
+| 用户要导入到 kweaver | `validate` → `import --dry-run` → `import` |
+| 用户仅要导出 JSON | `validate` → `transform.py` |
 
 **validate.py** — Check BKN loads:
 ```bash
@@ -46,6 +102,14 @@ python .cursor/skills/bkn-creator/scripts/import_to_kweaver.py <path> --dry-run 
 ```
 
 When the user asks to validate, convert, or import, run the corresponding script directly.
+
+**Validation scenarios** — Use these to verify BKN-Skill integration:
+
+| 场景 | Action 配置 | 预期行为 |
+|------|-------------|----------|
+| 低风险直接执行 | `risk_level: low`, `enabled: true`, `requires_approval: false` | 可直接执行，无需审批 |
+| 高风险拦截 | `risk_level: high` 或 `requires_approval: true` | 强制二次确认，建议 dry-run，不直接执行 |
+| 未启用不可执行 | `enabled: false` | 拒绝执行，返回「需先启用该行动」 |
 
 ## File Organization
 
@@ -93,6 +157,8 @@ Fill in `{placeholders}`, remove unused optional sections, and remove template c
 
 ## Output Rules
 
+**Generate mode** (create/update model):
+
 1. Output **only** valid BKN Markdown (frontmatter + body). No extra explanation around the file content.
 2. Do **not** wrap the entire output in a code fence.
 3. Use existing object/relation IDs when referencing other definitions in the same network.
@@ -102,6 +168,10 @@ Fill in `{placeholders}`, remove unused optional sections, and remove template c
    - Object: must have Data Source + at least one Primary Key and one Display Key.
    - Relation: must have Endpoints + Mapping Rules.
    - Action: must have Bound Object + Trigger Condition.
+
+**Execute mode** (operate action):
+
+- Return operation result, risk/approval status, and audit hints (e.g. suggest dry-run for high-risk).
 
 ## Kweaver Import
 
@@ -161,8 +231,8 @@ For full API details, read `sdk/python/src/bkn/transformers/kweaver/client.py`.
 ## 使用流程（最小验证）
 
 1. **读规范**：`references/specification.md`
-2. **套模板**：从 `assets/` 选对应模板，替换 `{placeholders}`
-3. **可选脚本**：`scripts/validate.py` 校验、`scripts/transform.py` 导出、`scripts/import_to_kweaver.py` 导入
+2. **套模板**：从 `assets/` 选对应模板，替换 `{placeholders}`，注意 Action 治理字段（enabled/risk_level/requires_approval）
+3. **脚本链**：修改后 `validate` → 导入前 `import --dry-run` → 通过后 `import`
 
 ## 目录树（维护基线）
 

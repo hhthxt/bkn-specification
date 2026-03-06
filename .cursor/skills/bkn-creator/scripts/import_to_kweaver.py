@@ -16,7 +16,7 @@ except ImportError:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="Import BKN network to kweaver API")
-    p.add_argument("path", help="Path to .bkn file or network index")
+    p.add_argument("path", help="Path to .bkn/.bknd/.md file or network index (must satisfy BKN structure)")
     p.add_argument("--external", action="store_true", help="External API (Bearer token); default is internal (account headers)")
     p.add_argument("--base-url", help="Base URL (or set KWEAVER_BASE_URL)")
     p.add_argument("--token", help="Bearer token for external mode (or set KWEAVER_TOKEN)")

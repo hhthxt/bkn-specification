@@ -14,7 +14,7 @@ except ImportError:
 def main() -> int:
     if len(sys.argv) < 2:
         print("Usage: python validate.py <path>", file=sys.stderr)
-        print("  path: .bkn file or network index (e.g. examples/k8s-modular/index.bkn)", file=sys.stderr)
+        print("  path: .bkn/.bknd/.md file or network index (must satisfy BKN frontmatter/type/structure)", file=sys.stderr)
         return 1
     path = Path(sys.argv[1])
     if not path.exists():

@@ -101,8 +101,11 @@ Section 标题和表格列名的规范形式，建议使用英文。解析器应
 
 ### 文件扩展名
 
-- `.bkn` - BKN 定义文件（schema）
-- `.bknd` - BKN 数据文件（instance data）
+- `.bkn` - BKN 定义文件（schema），推荐
+- `.bknd` - BKN 数据文件（instance data），推荐
+- `.md` - 兼容载体，运行时支持；内容必须满足 BKN frontmatter/type/结构约束
+
+**`.md` 兼容模式**：可用 `.md` 保存 BKN 内容，便于跨平台文档化与协作。运行时加载时，`.md` 与 `.bkn/.bknd` 走同一解析与校验路径；若缺少 frontmatter、`type` 或结构不符合要求，将直接报错。推荐实践：schema 优先 `.bkn`，data 优先 `.bknd`，`.md` 用于需与通用 Markdown 工具共存的场景。
 
 ### 文件编码
 

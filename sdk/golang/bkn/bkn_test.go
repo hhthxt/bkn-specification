@@ -3,6 +3,7 @@ package bkn
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -285,5 +286,102 @@ func TestValidateNetworkData(t *testing.T) {
 				t.Errorf("unexpected no_schema for %s", e.Table)
 			}
 		}
+	}
+}
+
+// --- .md carrier compatibility tests ---
+
+func TestLoadMdCompatNetwork(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "md-compat", "index.md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("examples/md-compat not found")
+		return
+	}
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Fatalf("load network: %v", err)
+	}
+	if net.Root.Frontmatter.Type != "network" {
+		t.Errorf("expected type network, got %q", net.Root.Frontmatter.Type)
+	}
+	if net.Root.Frontmatter.ID != "md-compat-demo" {
+		t.Errorf("expected id md-compat-demo, got %q", net.Root.Frontmatter.ID)
+	}
+	objects := net.AllObjects()
+	if len(objects) < 1 {
+		t.Errorf("expected at least 1 object from includes, got %d", len(objects))
+	}
+}
+
+func TestLoadMdCompatObjects(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "md-compat", "objects.md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("examples/md-compat not found")
+		return
+	}
+	doc, err := Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if doc.Frontmatter.Type != "fragment" {
+		t.Errorf("expected type fragment, got %q", doc.Frontmatter.Type)
+	}
+	if len(doc.Objects) < 1 {
+		t.Errorf("expected at least 1 object, got %d", len(doc.Objects))
+	}
+	if doc.Objects[0].ID != "demo_item" {
+		t.Errorf("expected object demo_item, got %q", doc.Objects[0].ID)
+	}
+}
+
+func TestParse_NoFrontmatter(t *testing.T) {
+	_, err := Parse("# Plain doc\n\nNo frontmatter here.", "")
+	if err == nil {
+		t.Fatal("expected error for missing frontmatter")
+	}
+	if !strings.Contains(err.Error(), "YAML frontmatter") {
+		t.Errorf("expected frontmatter error, got %q", err.Error())
+	}
+}
+
+func TestParse_NoType(t *testing.T) {
+	text := "---\nid: x\nname: 测试\n---\n## Object: x"
+	_, err := Parse(text, "")
+	if err == nil {
+		t.Fatal("expected error for missing type")
+	}
+	if !strings.Contains(err.Error(), "valid 'type' field") {
+		t.Errorf("expected type field error, got %q", err.Error())
+	}
+}
+
+func TestParse_InvalidType(t *testing.T) {
+	text := "---\ntype: foo\nid: x\n---\n"
+	_, err := Parse(text, "")
+	if err == nil {
+		t.Fatal("expected error for invalid type")
+	}
+	if !strings.Contains(err.Error(), "invalid BKN type") {
+		t.Errorf("expected invalid type error, got %q", err.Error())
+	}
+}
+
+func TestLoad_UnsupportedExtension(t *testing.T) {
+	f, err := os.CreateTemp("", "bkn-*.txt")
+	if err != nil {
+		t.Fatalf("create temp: %v", err)
+	}
+	defer os.Remove(f.Name())
+	f.WriteString("---\ntype: network\nid: x\n---\n")
+	f.Close()
+
+	_, err = Load(f.Name())
+	if err == nil {
+		t.Fatal("expected error for unsupported extension")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "unsupported file extension") {
+		t.Errorf("expected extension error, got %q", err.Error())
 	}
 }

@@ -4,10 +4,30 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-// Load loads and parses a single .bkn/.bknd file.
+// Supported file extensions for BKN content. .md is allowed as a carrier;
+// content must still satisfy BKN frontmatter/type/structure requirements.
+var supportedExtensions = map[string]bool{
+	".bkn": true, ".bknd": true, ".md": true,
+}
+
+func checkExtension(path string) error {
+	ext := strings.ToLower(filepath.Ext(path))
+	if !supportedExtensions[ext] {
+		return fmt.Errorf("unsupported file extension: %q; BKN supports: .bkn, .bknd, .md", ext)
+	}
+	return nil
+}
+
+// Load loads and parses a single .bkn/.bknd/.md file.
+// Supported extensions: .bkn, .bknd, .md. Content must satisfy BKN
+// frontmatter, type, and structure requirements regardless of extension.
 func Load(path string) (*BknDocument, error) {
+	if err := checkExtension(path); err != nil {
+		return nil, err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -19,7 +39,8 @@ func Load(path string) (*BknDocument, error) {
 	return Parse(string(data), abs)
 }
 
-// LoadNetwork loads a network .bkn file and recursively resolves its includes.
+// LoadNetwork loads a network file and recursively resolves its includes.
+// Supported extensions: .bkn, .bknd, .md. Root file should be type: network.
 // Only files listed in frontmatter includes are loaded.
 func LoadNetwork(rootPath string) (*BknNetwork, error) {
 	absRoot, err := filepath.Abs(rootPath)

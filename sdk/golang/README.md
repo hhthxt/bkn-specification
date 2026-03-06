@@ -10,7 +10,7 @@ Go SDK for parsing, validating, and transforming BKN files. Provides feature par
 
 Implemented. The Go SDK supports:
 
-- Parse `.bkn` and `.bknd` files (YAML frontmatter + Markdown body)
+- Parse `.bkn`, `.bknd`, and `.md` files (YAML frontmatter + Markdown body). `.md` is a compatible carrier; content must satisfy BKN frontmatter/type/structure. Recommended: schema `.bkn`, data `.bknd`.
 - Structured models for BknObject, Relation, Action, DataTable
 - Network loading with `includes` resolution (cycle detection)
 - Data validation against object schema (not_null, regex, in, range, type checks, PK uniqueness)
@@ -26,7 +26,7 @@ golang/
 ├── go.mod
 ├── bkn/
 │   ├── models.go      # Data structures
-│   ├── parser.go      # Parse .bkn/.bknd
+│   ├── parser.go      # Parse .bkn/.bknd/.md
 │   ├── loader.go      # Load, LoadNetwork
 │   ├── validator.go   # ValidateDataTable, ValidateNetworkData
 │   ├── serializer.go  # ToBknd, ToBkndFromTable
@@ -122,12 +122,12 @@ func main() {
 
 | Function | Description |
 |----------|-------------|
-| `Parse(text, sourcePath)` | Parse .bkn/.bknd content into BknDocument |
+| `Parse(text, sourcePath)` | Parse .bkn/.bknd/.md content into BknDocument |
 | `ParseFrontmatter(text)` | Parse YAML frontmatter only |
 | `ParseBody(text)` | Parse Markdown body into Object/Relation/Action lists |
 | `ParseDataTables(text, fm, sourcePath)` | Parse .bknd data tables |
-| `Load(path)` | Load single file from disk |
-| `LoadNetwork(rootPath)` | Load network with includes resolution |
+| `Load(path)` | Load single file from disk (.bkn/.bknd/.md) |
+| `LoadNetwork(rootPath)` | Load network with includes resolution (.bkn/.bknd/.md) |
 | `ValidateDataTable(table, schema, network)` | Validate DataTable against object schema |
 | `ValidateNetworkData(network)` | Validate all DataTables in network |
 | `ToBknd(opts)` | Serialize rows to .bknd format |

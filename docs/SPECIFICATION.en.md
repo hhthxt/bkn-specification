@@ -99,8 +99,11 @@ Table column names (canonical): Type, ID, Name, Property, Display Name, Constrai
 
 ### File Extension
 
-- `.bkn` — BKN schema/definition file
-- `.bknd` — BKN data file (instance data)
+- `.bkn` — BKN schema/definition file (recommended)
+- `.bknd` — BKN data file (instance data, recommended)
+- `.md` — Compatible carrier; runtime supports it; content must satisfy BKN frontmatter/type/structure constraints
+
+**`.md` compatibility mode**: BKN content may be saved as `.md` for cross-platform documentation and collaboration. At runtime, `.md` files follow the same parse and validation path as `.bkn`/`.bknd`; missing frontmatter, `type`, or invalid structure will fail immediately. Recommended: use `.bkn` for schema, `.bknd` for data; use `.md` when coexisting with generic Markdown tooling.
 
 ### File Encoding
 

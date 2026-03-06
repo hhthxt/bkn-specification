@@ -15,7 +15,7 @@ except ImportError:
 
 def main() -> int:
     p = argparse.ArgumentParser(description="Transform BKN to kweaver JSON files")
-    p.add_argument("path", help="Path to .bkn file or network index (e.g. examples/k8s-modular/index.bkn)")
+    p.add_argument("path", help="Path to .bkn/.bknd/.md file or network index (must satisfy BKN structure)")
     p.add_argument("-o", "--output", default="output", help="Output directory (default: output)")
     p.add_argument("--id-prefix", default="", help="ID prefix for object/relation IDs")
     args = p.parse_args()

@@ -1,4 +1,4 @@
-"""Load .bkn/.bknd files from disk, resolving network includes."""
+"""Load .bkn/.bknd/.md files from disk, resolving network includes."""
 
 from __future__ import annotations
 
@@ -7,35 +7,58 @@ from pathlib import Path
 from bkn.models import BknDocument, BknNetwork
 from bkn.parser import parse
 
+# Supported file extensions for BKN content. .md is allowed as a carrier;
+# content must still satisfy BKN frontmatter/type/structure requirements.
+BKN_SUPPORTED_EXTENSIONS = frozenset({".bkn", ".bknd", ".md"})
+
+
+def _check_extension(path: Path) -> None:
+    """Raise ValueError if path extension is not supported."""
+    ext = path.suffix.lower()
+    if ext not in BKN_SUPPORTED_EXTENSIONS:
+        raise ValueError(
+            f"Unsupported file extension: {ext!r}. "
+            f"BKN supports: {', '.join(sorted(BKN_SUPPORTED_EXTENSIONS))}"
+        )
+
 
 def load(path: str | Path) -> BknDocument:
-    """Load and parse a single .bkn/.bknd file.
+    """Load and parse a single .bkn/.bknd/.md file.
+
+    Supported extensions: .bkn, .bknd, .md. Content must satisfy BKN
+    frontmatter, type, and structure requirements regardless of extension.
 
     Args:
-        path: Path to the .bkn or .bknd file.
+        path: Path to the .bkn, .bknd, or .md file.
 
     Returns:
         Parsed BknDocument.
+
+    Raises:
+        ValueError: If extension is unsupported or content is not valid BKN.
     """
-    path = Path(path)
+    path = Path(path).resolve()
+    _check_extension(path)
     text = path.read_text(encoding="utf-8")
     return parse(text, source_path=str(path))
 
 
 def load_network(root_path: str | Path) -> BknNetwork:
-    """Load a network .bkn file and recursively resolve its includes.
+    """Load a network file and recursively resolve its includes.
 
-    Only files listed in frontmatter `includes` are loaded. .bknd files may be
-    loaded by explicitly including them (e.g. includes: [data/scenario.bknd]).
+    Supported extensions: .bkn, .bknd, .md. Root file should be type: network.
+    Only files listed in frontmatter `includes` are loaded. .bknd/.md data
+    files may be loaded by explicitly including them.
 
     Args:
-        root_path: Path to the root .bkn file (type: network).
+        root_path: Path to the root file (e.g. index.bkn or index.md).
 
     Returns:
         BknNetwork containing the root document and all included documents.
 
     Raises:
-        ValueError: If a circular include is detected.
+        ValueError: If extension is unsupported, content is not valid BKN,
+            or a circular include is detected.
     """
     root_path = Path(root_path).resolve()
     root_doc = load(root_path)

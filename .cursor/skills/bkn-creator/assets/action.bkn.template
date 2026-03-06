@@ -8,11 +8,17 @@ network: {network_id}
 namespace: {namespace}
 owner: {owner}
 action_type: add | modify | delete
+# 治理字段：enabled=false 默认不可执行；risk_level=high 或 requires_approval=true 需审批/dry-run
 enabled: false
 risk_level: low | medium | high
 requires_approval: true
 tags: [{标签1}, {标签2}]
 ---
+
+<!-- 治理字段填写指引（生成时删除）：
+  enabled: 查询/只读可 true；修改/删除/高危建议 false
+  risk_level: low=只读, medium=有副作用, high=删除/生产变更
+  requires_approval: high 或生产操作建议 true -->
 
 ## Action: {action_id}
 

@@ -89,3 +89,14 @@ class TestLoadNetworks:
         assert len(net.all_data_tables) == 2
         ids = {t.object_or_relation for t in net.all_data_tables}
         assert ids == {"risk_scenario", "risk_rule"}
+
+    def test_md_compat_network(self):
+        """index.md + includes objects.md loads (BKN .md carrier compatibility)."""
+        from bkn import load_network
+        path = EXAMPLES_DIR / "md-compat" / "index.md"
+        if not path.exists():
+            pytest.skip("examples/md-compat not found")
+        net = load_network(path)
+        assert net.root.frontmatter.type == "network"
+        assert net.root.frontmatter.id == "md-compat-demo"
+        assert len(net.all_objects) >= 1
