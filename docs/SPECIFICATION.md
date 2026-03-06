@@ -987,6 +987,7 @@ includes:
 ```
 {business_dir}/
 ├── SKILL.md                     # agentskills.io 标准入口，含网络拓扑、索引、使用指南
+├── checksum.txt                 # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
 ├── objects/
 │   ├── material.bkn             # type: object
 │   └── inventory.bkn           # type: object
@@ -1006,6 +1007,7 @@ includes:
 ```
 {business_dir}/
 ├── index.bkn                    # type: network 或 fragment，作为网络入口
+├── checksum.txt                 # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
 ├── objects/
 │   ├── pod.bkn                  # type: object
 │   ├── node.bkn                 # type: object

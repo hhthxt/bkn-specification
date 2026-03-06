@@ -984,6 +984,7 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 ```
 {business_dir}/
 ├── SKILL.md                     # agentskills.io standard entry; network topology, index, usage guide
+├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
 ├── objects/
 │   ├── material.bkn             # type: object
 │   └── inventory.bkn           # type: object
@@ -1003,6 +1004,7 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 ```
 {business_dir}/
 ├── index.bkn                    # type: network or fragment, network entry
+├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
 ├── objects/
 │   ├── pod.bkn                  # type: object
 │   ├── node.bkn                 # type: object
