@@ -11,6 +11,8 @@ from bkn.models import (
     Action,
     BknDocument,
     BknObject,
+    Connection,
+    ConnectionConfig,
     DataTable,
     DataProperty,
     DataSource,
@@ -72,10 +74,14 @@ _COLUMN_ALIASES: dict[str, str] = {
     # Scope of Impact
     "对象": "Object",
     "影响说明": "Impact Description",
+    # Connection
+    "端点": "Endpoint",
+    "凭据引用": "Secret Ref",
 }
 
 # Section name aliases
 _SECTION_ALIASES: dict[str, str] = {
+    "连接定义": "Connection",
     "数据来源": "Data Source",
     "数据属性": "Data Properties",
     "属性覆盖": "Property Override",
@@ -424,6 +430,30 @@ def _parse_relation_block(block_id: str, block_text: str) -> Relation:
     return relation
 
 
+def _parse_connection_config(section_text: str) -> ConnectionConfig | None:
+    """Parse ### Connection section table."""
+    rows = _parse_table(section_text.splitlines())
+    if not rows:
+        return None
+    row = rows[0]
+    return ConnectionConfig(
+        conn_type=row.get("Type", ""),
+        endpoint=row.get("Endpoint", ""),
+        secret_ref=row.get("Secret Ref", ""),
+    )
+
+
+def _parse_connection_block(block_id: str, block_text: str) -> Connection:
+    """Parse a ## Connection: {id} block into a Connection model."""
+    name, desc = _parse_display_name(block_text)
+    sections = _extract_sections(block_text)
+
+    conn = Connection(id=block_id, name=name, description=desc)
+    if "Connection" in sections:
+        conn.config = _parse_connection_config(sections["Connection"])
+    return conn
+
+
 def _parse_action_block(block_id: str, block_text: str) -> Action:
     """Parse a ## Action: {id} block into an Action model."""
     name, desc = _parse_display_name(block_text)
@@ -488,12 +518,12 @@ def _parse_action_block(block_id: str, block_text: str) -> Action:
 # ---------------------------------------------------------------------------
 
 _DEFINITION_RE = re.compile(
-    r"^##\s+(Object|Relation|Action):\s*(\S+)",
+    r"^##\s+(Object|Relation|Action|Connection):\s*(\S+)",
     re.MULTILINE,
 )
 
 _VALID_BKN_TYPES = frozenset(
-    {"network", "object", "relation", "action", "fragment", "data", "risk"}
+    {"network", "object", "relation", "action", "fragment", "data", "risk", "connection"}
 )
 
 
@@ -541,7 +571,7 @@ def parse_frontmatter(text: str) -> Frontmatter:
     return fm
 
 
-def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]]:
+def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action], list[Connection]]:
     """Parse the Markdown body of a .bkn file into lists of definitions."""
     _, body = _split_frontmatter(text)
 
@@ -549,6 +579,7 @@ def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]
     objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
+    connections: list[Connection] = []
 
     for i, m in enumerate(matches):
         def_type = m.group(1)
@@ -566,8 +597,10 @@ def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]
             relations.append(_parse_relation_block(def_id, block_text))
         elif def_type == "Action":
             actions.append(_parse_action_block(def_id, block_text))
+        elif def_type == "Connection":
+            connections.append(_parse_connection_block(def_id, block_text))
 
-    return objects, relations, actions
+    return objects, relations, actions, connections
 
 
 def parse_data_tables(
@@ -659,16 +692,18 @@ def parse(text: str, source_path: str = "") -> BknDocument:
     objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
+    connections: list[Connection] = []
     data_tables: list[DataTable] = []
     if frontmatter.type == "data":
         data_tables = parse_data_tables(text, frontmatter=frontmatter, source_path=source_path)
     else:
-        objects, relations, actions = parse_body(text)
+        objects, relations, actions, connections = parse_body(text)
     return BknDocument(
         frontmatter=frontmatter,
         objects=objects,
         relations=relations,
         actions=actions,
+        connections=connections,
         data_tables=data_tables,
         source_path=source_path,
     )

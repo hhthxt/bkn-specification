@@ -38,6 +38,23 @@ class DataSource:
 
 
 @dataclass
+class ConnectionConfig:
+    """### Connection table row (type: connection)."""
+    conn_type: str = ""
+    endpoint: str = ""
+    secret_ref: str = ""
+
+
+@dataclass
+class Connection:
+    """## Connection: {id} block (optional capability)."""
+    id: str = ""
+    name: str = ""
+    description: str = ""
+    config: Optional[ConnectionConfig] = None
+
+
+@dataclass
 class DataProperty:
     """### Data Properties table row."""
     property: str = ""
@@ -193,6 +210,7 @@ class BknDocument:
     objects: list[BknObject] = field(default_factory=list)
     relations: list[Relation] = field(default_factory=list)
     actions: list[Action] = field(default_factory=list)
+    connections: list[Connection] = field(default_factory=list)
     data_tables: list[DataTable] = field(default_factory=list)
     source_path: str = ""
 
@@ -230,3 +248,17 @@ class BknNetwork:
         for doc in self.includes:
             result.extend(doc.data_tables)
         return result
+
+    @property
+    def all_connections(self) -> list[Connection]:
+        result = list(self.root.connections)
+        for doc in self.includes:
+            result.extend(doc.connections)
+        return result
+
+    def get_connection(self, connection_id: str) -> Connection | None:
+        """Return connection by id, or None if not found."""
+        for c in self.all_connections:
+            if c.id == connection_id:
+                return c
+        return None

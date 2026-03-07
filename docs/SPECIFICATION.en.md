@@ -27,6 +27,7 @@ This document defines the complete syntax specification for BKN.
 | Term | Meaning |
 |------|---------|
 | data_view | Data view; the data source an object or relation maps to |
+| connection | Reusable data-source connection definition; multiple objects may reference the same connection |
 | data_properties | Object property definition table; declares field types, primary key, display key, etc. |
 | property_override | Property override; special configuration for inherited properties (index, constraint) |
 | logic_properties | Logic properties; derived fields from external sources (metric / operator) |
@@ -55,6 +56,7 @@ This document defines the complete syntax specification for BKN.
 | network | File type `type: network`; top-level container for a complete knowledge network |
 | fragment | File type `type: fragment`; mixed snippet containing multiple object/relation/action definitions |
 | data | File type `type: data`; instance data file (recommended `.bknd` extension) |
+| connection | File type `type: connection`; reusable data-source connection definition (optional capability) |
 | namespace | Namespace; used for large-scale organization and avoiding ID conflicts |
 | spec_version | Specification version; identifies which BKN spec version a file conforms to |
 
@@ -72,7 +74,8 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | `##` | Relation | Individual relation definition | `## Relation: {id}` |
 | `##` | Action | Individual action definition | `## Action: {id}` |
 | `##` | Risk | Individual risk definition | `## Risk: {id}` |
-| `###` | Data Source | The data view this object maps from | `### Data Source` |
+| `###` | Data Source | The data view or connection this object maps from | `### Data Source` |
+| `###` | Connection | Connection endpoint and auth reference (for type: connection) | `### Connection` |
 | `###` | Data Properties | Explicit list of fields (name, type, PK, index) | `### Data Properties` |
 | `###` | Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
 | `###` | Logic Properties | Derived fields: metric, operator | `### Logic Properties` |
@@ -170,6 +173,8 @@ To support scalable collaboration, approval, and audit, use the following fields
 | `fragment` | Mixed fragment | Contains multiple types of partial definitions |
 | `risk` | Single risk definition | Standalone risk file, directly importable |
 | `data` | Data file | Carries instance rows for object/relation definitions (recommended `.bknd`) |
+| `connection` | Connection definition | Reusable data-source connection (optional; multiple objects may reference the same connection) |
+| `connection` | Connection definition | Reusable data-source connection (optional; multiple objects may reference the same connection) |
 
 ### Network File (type: network)
 
@@ -233,6 +238,19 @@ requires_approval: boolean       # Optional, whether approval required
 ```
 
 > **Dynamic risk property**: The Action runtime property `risk` (values `allow` | `not_allow` | `unknown`) is computed by the built-in or a user-provided risk evaluation function from the current scenario and knowledge tagged with `__risk__`; it is not declared in this frontmatter. When no rules match or evaluation fails, returns `unknown`; the execution layer handles per business policy.
+
+### Single Connection File (type: connection) (Optional)
+
+```yaml
+---
+type: connection                 # Reusable data-source connection definition
+id: string                       # Connection ID, unique identifier
+name: string                     # Connection display name
+network: string                 # Network ID
+---
+```
+
+Connection is an **optional capability** for multiple objects to share the same data-source connection. The file must include a `### Connection` section declaring endpoint and auth reference. **Do not store plaintext credentials in BKN files**; use only `secret_ref` or environment variable references.
 
 ### Mixed Fragment (type: fragment)
 
@@ -308,10 +326,11 @@ An object's Data Source determines whether its data may be written to `.bknd`:
 | Data Source Type | Data Source | `.bknd` Allowed |
 |------------------|-------------|-----------------|
 | `data_view` | External system (ERP, DB, API) | **No**; data is maintained by the external system, `.bknd` does not apply |
+| `connection` | External system via connection definition | **No**; data is provided by the external system, `.bknd` does not apply |
 | `bknd` | BKN-native data | **Yes**; `.bknd` is the data source, readable and writable |
 | No Data Source | Platform default | Platform-dependent |
 
-- When an Object's Data Source is `data_view`, do not create `.bknd` files for that object; data is provided by the external system.
+- When an Object's Data Source is `data_view` or `connection`, do not create `.bknd` files for that object; data is provided by the external system.
 - When an Object's Data Source is `bknd`, data is stored in `.bknd` files and is editable and versionable.
 
 ---
@@ -333,9 +352,11 @@ An object's Data Source determines whether its data may be written to `.bknd`:
 | Type | ID | Name |
 |------|-----|------|
 | data_view | {view_id} | {view_name} |
+| connection | {connection_id} | {display_name} |
 | bknd | {object_id} | {display_name} |
 
 - `data_view`: Data from external system; do not maintain via `.bknd`
+- `connection`: Connect via reusable connection definition; multiple objects may reference the same connection_id
 - `bknd`: BKN-native data; carried by `.bknd` files, editable
 
 ### Data Properties
@@ -521,6 +542,46 @@ Declare all properties explicitly (with types, constraints, indexes):
 | service_name | Name | VARCHAR | not_null | Service name | | YES | YES |
 | service_type | Service Type | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service type | | | |
 ```
+
+---
+
+## Connection Definition (Optional)
+
+Connection is an **optional capability** for multiple objects to share the same data-source connection. When multiple Objects or Relations point to the same external system (e.g., same database or API), define a `type: connection` file and reference it in Data Source via `connection | {connection_id}`.
+
+### Syntax
+
+```markdown
+## Connection: {connection_id}
+
+**{display_name}** - {brief_description}
+
+### Connection
+
+| Type | Endpoint | Secret Ref |
+|------|----------|------------|
+| {conn_type} | {endpoint_url} | {secret_ref} |
+```
+
+- `Type`: Connection type (e.g., `postgres`, `mysql`, `rest`, `grpc`), resolved by platform or runtime
+- `Endpoint`: Connection endpoint (URL, host:port, etc.) without credentials
+- `Secret Ref`: Credential reference; **do not store plaintext passwords in BKN files**; use environment variable names (e.g., `DB_PASSWORD`) or platform Secret IDs (e.g., `secret:db_creds`)
+
+### Reference
+
+In Object or Relation `### Data Source` table:
+
+| Type | ID | Name |
+|------|-----|------|
+| connection | {connection_id} | {display_name} |
+
+Multiple objects may reference the same `connection_id` to share the connection definition. If a referenced `connection_id` does not exist, import or load should fail with an error.
+
+### Compatibility
+
+- Connection is an **optional capability**; no `type: connection` files are required when not used
+- Existing networks (using only `data_view` or `bknd`) parse and run unchanged
+- No migration required; `connection` is an additive extension
 
 ---
 
@@ -985,6 +1046,8 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 {business_dir}/
 ├── SKILL.md                     # agentskills.io standard entry; network topology, index, usage guide
 ├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
+├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
+│   └── erp_db.bkn               # type: connection
 ├── objects/
 │   ├── material.bkn             # type: object
 │   └── inventory.bkn           # type: object
@@ -1005,6 +1068,8 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 {business_dir}/
 ├── index.bkn                    # type: network or fragment, network entry
 ├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
+├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
+│   └── k8s_api.bkn              # type: connection
 ├── objects/
 │   ├── pod.bkn                  # type: object
 │   ├── node.bkn                 # type: object
@@ -1020,7 +1085,7 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 └── data/                        # optional, .bknd instance data
 ```
 
-Directory names (`objects/`, `relations/`, `actions/`, `risks/`, `data/`) are conventions; the file `type` field is the authoritative definition type.
+Directory names (`objects/`, `relations/`, `actions/`, `risks/`, `connections/`, `data/`) are conventions; the file `type` field is the authoritative definition type.
 
 **Single object file example** (`pod.bkn`):
 

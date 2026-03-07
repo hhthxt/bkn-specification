@@ -1,0 +1,25 @@
+---
+type: object
+id: inventory
+name: Inventory
+network: connection-demo
+---
+
+## Object: inventory
+
+**Inventory** - 库存数据，与 material 共享同一 connection（erp_db）。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| connection | erp_db | ERP Database |
+
+### Data Properties
+
+| Property | Display Name | Type | Primary Key | Display Key |
+|----------|--------------|------|:-----------:|:-----------:|
+| id | ID | int64 | YES | |
+| material_id | Material ID | int64 | | |
+| qty | Quantity | int64 | | YES |
+| warehouse | Warehouse | VARCHAR | | |

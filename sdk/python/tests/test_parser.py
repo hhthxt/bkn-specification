@@ -202,7 +202,7 @@ id: test
 | id | ID | int64 | | Primary key | YES | | YES |
 | name | Name | VARCHAR | not_null | Object name | | YES | YES |
 """
-        objects, relations, actions = parse_body(text)
+        objects, relations, actions, connections = parse_body(text)
         assert len(objects) == 1
         e = objects[0]
         assert e.id == "my_object"
@@ -239,7 +239,7 @@ id: test
 |-----------------|-----------------|
 | a_id | b_ref_id |
 """
-        _, relations, _ = parse_body(text)
+        _, relations, _, _ = parse_body(text)
         assert len(relations) == 1
         r = relations[0]
         assert r.id == "a_to_b"

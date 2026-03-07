@@ -3,6 +3,8 @@
 from bkn.models import (
     BknDocument,
     BknNetwork,
+    Connection,
+    ConnectionConfig,
     DataTable,
     DataProperty,
     DataSource,
@@ -37,6 +39,8 @@ __version__ = "0.1.0"
 __all__ = [
     "BknDocument",
     "BknNetwork",
+    "Connection",
+    "ConnectionConfig",
     "DataTable",
     "DataProperty",
     "DataSource",

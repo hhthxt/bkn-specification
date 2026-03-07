@@ -22,6 +22,7 @@ var columnAliases = map[string]string{
 	"对象": "Object", "检查": "Check", "条件": "Condition", "消息": "Message",
 	"表达式": "Expression", "索引配置": "Index Config",
 	"影响说明": "Impact Description",
+	"端点": "Endpoint", "凭据引用": "Secret Ref",
 }
 
 // Section name aliases
@@ -33,9 +34,10 @@ var sectionAliases = map[string]string{
 	"绑定对象": "Bound Object", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
 	"工具配置": "Tool Configuration", "参数绑定": "Parameter Binding",
 	"调度配置": "Schedule", "影响范围": "Scope of Impact", "执行说明": "Execution Description",
+	"连接定义": "Connection",
 }
 
-var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action):\s*(\S+)`)
+var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Connection):\s*(\S+)`)
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
 var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
@@ -382,6 +384,33 @@ func parseRelationBlock(blockID, blockText string) Relation {
 	return rel
 }
 
+func parseConnectionConfig(sectionText string) *ConnectionConfig {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return nil
+	}
+	row := rows[0]
+	return &ConnectionConfig{
+		ConnType:  row["Type"],
+		Endpoint:  row["Endpoint"],
+		SecretRef: row["Secret Ref"],
+	}
+}
+
+func parseConnectionBlock(blockID, blockText string) Connection {
+	name, desc := parseDisplayName(blockText)
+	sections := extractSections(blockText, "###")
+	conn := Connection{
+		ID:          blockID,
+		Name:        name,
+		Description: desc,
+	}
+	if s, ok := sections["Connection"]; ok {
+		conn.Config = parseConnectionConfig(s)
+	}
+	return conn
+}
+
 func parseActionBlock(blockID, blockText string) Action {
 	name, desc := parseDisplayName(blockText)
 	sections := extractSections(blockText, "###")
@@ -526,12 +555,13 @@ func strVal(m map[string]any, key string) string {
 }
 
 // ParseBody parses the Markdown body of a .bkn file into lists of definitions.
-func ParseBody(text string) ([]BknObject, []Relation, []Action) {
+func ParseBody(text string) ([]BknObject, []Relation, []Action, []Connection) {
 	_, body := splitFrontmatter(text)
 	matches := definitionRE.FindAllStringSubmatchIndex(body, -1)
 	var objects []BknObject
 	var relations []Relation
 	var actions []Action
+	var connections []Connection
 
 	for i, m := range matches {
 		defType := body[m[2]:m[3]]
@@ -552,9 +582,11 @@ func ParseBody(text string) ([]BknObject, []Relation, []Action) {
 			relations = append(relations, parseRelationBlock(defID, blockText))
 		case "Action":
 			actions = append(actions, parseActionBlock(defID, blockText))
+		case "Connection":
+			connections = append(connections, parseConnectionBlock(defID, blockText))
 		}
 	}
-	return objects, relations, actions
+	return objects, relations, actions, connections
 }
 
 // ParseDataTables parses .bknd body into DataTable list.
@@ -608,7 +640,7 @@ func ParseDataTables(text string, fm *Frontmatter, sourcePath string) ([]DataTab
 
 var validBknTypes = map[string]bool{
 	"network": true, "object": true, "relation": true, "action": true,
-	"fragment": true, "data": true, "risk": true,
+	"fragment": true, "data": true, "risk": true, "connection": true,
 }
 
 // Parse parses a complete .bkn/.bknd/.md file into a BknDocument.
@@ -631,7 +663,7 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object, relation, action, fragment, data, or delete)")
 	}
 	if !validBknTypes[typeVal] {
-		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object, relation, action, fragment, data, risk", typeVal)
+		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object, relation, action, fragment, data, risk, connection", typeVal)
 	}
 	if fm.Type == "data" {
 		tables, err := ParseDataTables(text, fm, sourcePath)
@@ -644,12 +676,13 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 			SourcePath:  sourcePath,
 		}, nil
 	}
-	objects, relations, actions := ParseBody(text)
+	objects, relations, actions, connections := ParseBody(text)
 	return &BknDocument{
 		Frontmatter: *fm,
 		Objects:     objects,
 		Relations:   relations,
 		Actions:     actions,
+		Connections: connections,
 		SourcePath:  sourcePath,
 	}, nil
 }

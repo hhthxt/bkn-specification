@@ -29,6 +29,21 @@ type DataSource struct {
 	Name string
 }
 
+// ConnectionConfig is a ### Connection table row (type: connection).
+type ConnectionConfig struct {
+	ConnType  string
+	Endpoint  string
+	SecretRef string
+}
+
+// Connection is a ## Connection: {id} block (optional capability).
+type Connection struct {
+	ID          string
+	Name        string
+	Description string
+	Config      *ConnectionConfig
+}
+
 // DataProperty is a ### Data Properties table row.
 type DataProperty struct {
 	Property    string
@@ -164,6 +179,7 @@ type BknDocument struct {
 	Objects     []BknObject
 	Relations   []Relation
 	Actions     []Action
+	Connections []Connection
 	DataTables  []DataTable
 	SourcePath  string
 }
@@ -212,4 +228,24 @@ func (n *BknNetwork) AllDataTables() []DataTable {
 		out = append(out, doc.DataTables...)
 	}
 	return out
+}
+
+// AllConnections returns all connections from root and included documents.
+func (n *BknNetwork) AllConnections() []Connection {
+	var out []Connection
+	out = append(out, n.Root.Connections...)
+	for _, doc := range n.Includes {
+		out = append(out, doc.Connections...)
+	}
+	return out
+}
+
+// GetConnection returns connection by id, or nil if not found.
+func (n *BknNetwork) GetConnection(connectionID string) *Connection {
+	for _, c := range n.AllConnections() {
+		if c.ID == connectionID {
+			return &c
+		}
+	}
+	return nil
 }

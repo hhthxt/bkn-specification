@@ -314,6 +314,82 @@ func TestLoadMdCompatNetwork(t *testing.T) {
 	}
 }
 
+func TestParseConnection(t *testing.T) {
+	text := `---
+type: connection
+id: erp_db
+name: ERP Database
+network: demo
+---
+
+## Connection: erp_db
+
+**ERP Database** - Shared ERP connection.
+
+### Connection
+
+| Type | Endpoint | Secret Ref |
+|------|----------|------------|
+| postgres | postgresql://erp.example.com:5432/erp | DB_PASSWORD |
+`
+	doc, err := Parse(text, "")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if doc.Frontmatter.Type != "connection" {
+		t.Errorf("expected type connection, got %q", doc.Frontmatter.Type)
+	}
+	if len(doc.Connections) != 1 {
+		t.Errorf("expected 1 connection, got %d", len(doc.Connections))
+	}
+	conn := doc.Connections[0]
+	if conn.ID != "erp_db" {
+		t.Errorf("expected id erp_db, got %q", conn.ID)
+	}
+	if conn.Config == nil {
+		t.Fatal("expected config")
+	}
+	if conn.Config.ConnType != "postgres" || conn.Config.Endpoint != "postgresql://erp.example.com:5432/erp" || conn.Config.SecretRef != "DB_PASSWORD" {
+		t.Errorf("unexpected config: %+v", conn.Config)
+	}
+}
+
+func TestLoadConnectionDemo(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "connection-demo", "index.bkn")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skip("examples/connection-demo not found")
+		return
+	}
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Fatalf("load network: %v", err)
+	}
+	if len(net.AllConnections()) < 1 {
+		t.Errorf("expected at least 1 connection, got %d", len(net.AllConnections()))
+	}
+	if net.GetConnection("erp_db") == nil {
+		t.Error("expected erp_db connection")
+	}
+	material := findObject(net.AllObjects(), "material")
+	if material == nil || material.DataSource == nil || material.DataSource.Type != "connection" || material.DataSource.ID != "erp_db" {
+		t.Errorf("material should reference connection erp_db, got %+v", material)
+	}
+	legacy := findObject(net.AllObjects(), "legacy_view")
+	if legacy == nil || legacy.DataSource == nil || legacy.DataSource.Type != "data_view" {
+		t.Errorf("legacy_view should use data_view, got %+v", legacy)
+	}
+}
+
+func findObject(objs []BknObject, id string) *BknObject {
+	for i := range objs {
+		if objs[i].ID == id {
+			return &objs[i]
+		}
+	}
+	return nil
+}
+
 func TestLoadMdCompatObjects(t *testing.T) {
 	root := repoRoot(t)
 	path := filepath.Join(root, "examples", "md-compat", "objects.md")

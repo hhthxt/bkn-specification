@@ -1,0 +1,25 @@
+---
+type: object
+id: material
+name: Material
+network: connection-demo
+---
+
+## Object: material
+
+**Material** - 物料主数据，通过 connection 连接 ERP 数据库。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| connection | erp_db | ERP Database |
+
+### Data Properties
+
+| Property | Display Name | Type | Primary Key | Display Key |
+|----------|--------------|------|:-----------:|:-----------:|
+| id | ID | int64 | YES | |
+| material_code | Material Code | VARCHAR | | YES |
+| material_name | Material Name | VARCHAR | | YES |
+| unit | Unit | VARCHAR | | |

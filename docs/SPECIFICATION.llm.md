@@ -24,6 +24,7 @@
 | network | 含多个定义的网络文件 |
 | fragment | 混合片段 |
 | data | 数据文件，承载 object/relation 的实例数据行（建议 `.bknd`） |
+| connection | 可复用的数据源连接定义（可选；多对象共享同一数据源时使用） |
 
 ## 对象 (Object)
 
@@ -40,7 +41,7 @@ network: {network_id}
 - `## Object: {object_id}`
 - `**{显示名称}**` + 简短描述
 - （可选）定义级元数据：`- **Tags**: tag1, tag2`、`- **Owner**: owner`
-- `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name} 或 bknd | {object_id} | {display_name}。仅当 Data Source 为 `bknd` 时可为该对象创建 `.bknd` 数据文件；`data_view` 时不可用 `.bknd`
+- `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name}、connection | {connection_id} | {display_name} 或 bknd | {object_id} | {display_name}。仅当 Data Source 为 `bknd` 时可为该对象创建 `.bknd` 数据文件；`data_view` 或 `connection` 时不可用 `.bknd`
 - `### Data Properties`（必须）：表格，列 Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index
   - 至少标记一个 `Primary Key: YES`（主键）和一个 `Display Key: YES`（展示键）
   - 最简形式可只含 Property | Primary Key | Display Key 三列
@@ -102,9 +103,13 @@ action_type: add | modify | delete
 
 风险定义独立于 action。正文结构：`## Risk: {risk_id}`、`### 管控范围`、`### 管控策略`、`### 前置检查`（可选）、`### 回滚方案`（可选）、`### 审计要求`（可选）。
 
+## 连接定义 (type: connection)（可选）
+
+当多个对象共享同一数据源连接时，可定义 `type: connection` 文件。正文结构：`## Connection: {connection_id}`、`### Connection` 表格（列 Type | Endpoint | Secret Ref）。**不得**在 BKN 中写入明文凭据，仅使用 `secret_ref` 或环境变量引用。Object 的 Data Source 可写 `connection | {connection_id}` 引用该连接。
+
 ## 数据文件 (type: data / .bknd)
 
-仅当 Object 的 Data Source 为 `bknd` 时，可为该对象创建 `.bknd` 数据文件。Data Source 为 `data_view` 的对象数据来自外部系统，**不要**为其生成 `.bknd`。Frontmatter 示例：`type: data`、`network`、`object` 或 `relation`（二选一）。正文为标题 + 一个表格，列名与目标 object 的 Data Properties 一致。
+仅当 Object 的 Data Source 为 `bknd` 时，可为该对象创建 `.bknd` 数据文件。Data Source 为 `data_view` 或 `connection` 的对象数据来自外部系统，**不要**为其生成 `.bknd`。Frontmatter 示例：`type: data`、`network`、`object` 或 `relation`（二选一）。正文为标题 + 一个表格，列名与目标 object 的 Data Properties 一致。
 
 ## 更新与删除（无 patch 模型）
 

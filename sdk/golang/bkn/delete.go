@@ -102,6 +102,7 @@ func copyDocumentExcluding(doc *BknDocument, targetSet map[string]bool) *BknDocu
 			out.Actions = append(out.Actions, a)
 		}
 	}
+	out.Connections = append(out.Connections, doc.Connections...)
 	out.DataTables = append(out.DataTables, doc.DataTables...)
 	return out
 }

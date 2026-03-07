@@ -129,7 +129,7 @@ func main() {
 |----------|-------------|
 | `Parse(text, sourcePath)` | Parse .bkn/.bknd/.md content into BknDocument |
 | `ParseFrontmatter(text)` | Parse YAML frontmatter only |
-| `ParseBody(text)` | Parse Markdown body into Object/Relation/Action lists |
+| `ParseBody(text)` | Parse Markdown body into Object/Relation/Action/Connection lists |
 | `ParseDataTables(text, fm, sourcePath)` | Parse .bknd data tables |
 | `Load(path)` | Load single file from disk (.bkn/.bknd/.md) |
 | `LoadNetwork(rootPath)` | Load network with includes resolution (.bkn/.bknd/.md) |
