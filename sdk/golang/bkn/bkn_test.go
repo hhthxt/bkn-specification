@@ -169,6 +169,39 @@ func TestValidateDataTable_NotNullFails(t *testing.T) {
 	}
 }
 
+func TestValidateDataTable_ReadOnlyDataSourceFails(t *testing.T) {
+	schema := &BknObject{
+		ID: "test_object",
+		DataSource: &DataSource{
+			Type: "connection",
+			ID:   "erp_db",
+			Name: "ERP DB",
+		},
+		DataProperties: []DataProperty{
+			{Property: "id", PrimaryKey: true},
+		},
+	}
+	table := &DataTable{
+		ObjectOrRelation: "test_object",
+		Columns:          []string{"id"},
+		Rows:             []map[string]string{{"id": "1"}},
+	}
+	result := ValidateDataTable(table, schema, nil)
+	if result.OK() {
+		t.Fatal("expected validation error for readonly data source")
+	}
+	var found bool
+	for _, e := range result.Errors {
+		if e.Code == "readonly_data_source" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected readonly_data_source error, got %v", result.Errors)
+	}
+}
+
 func TestToBkndRoundTrip(t *testing.T) {
 	table := &DataTable{
 		ObjectOrRelation: "test_object",
@@ -354,6 +387,75 @@ network: demo
 	}
 }
 
+func TestParseRisk(t *testing.T) {
+	text := `---
+type: risk
+id: pod_restart_risk
+name: Pod Restart Risk
+network: demo
+---
+
+## Risk: pod_restart_risk
+
+**Pod Restart Risk** - Controls pod restart actions.
+
+### Control Scope
+
+| Controlled Object | Controlled Action | Risk Level |
+|-------------------|-------------------|------------|
+| pod | restart_pod | high |
+
+### Control Strategy
+
+| Condition | Strategy |
+|-----------|----------|
+| production | require approval |
+
+### Pre-checks
+
+| Check Item | Type | Description |
+|------------|------|-------------|
+| can_i_restart | permission | Verify restart permission |
+
+### Rollback Plan
+
+Scale workload back to original replicas.
+
+### Audit Requirements
+
+Record operator and scenario.
+`
+	doc, err := Parse(text, "")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if doc.Frontmatter.Type != "risk" {
+		t.Fatalf("expected type risk, got %q", doc.Frontmatter.Type)
+	}
+	if len(doc.Risks) != 1 {
+		t.Fatalf("expected 1 risk, got %d", len(doc.Risks))
+	}
+	risk := doc.Risks[0]
+	if risk.ID != "pod_restart_risk" {
+		t.Errorf("expected id pod_restart_risk, got %q", risk.ID)
+	}
+	if len(risk.ControlScope) != 1 || risk.ControlScope[0].ControlledObject != "pod" || risk.ControlScope[0].ControlledAction != "restart_pod" || risk.ControlScope[0].RiskLevel != "high" {
+		t.Errorf("unexpected control scope: %+v", risk.ControlScope)
+	}
+	if len(risk.ControlStrategies) != 1 || risk.ControlStrategies[0].Strategy != "require approval" {
+		t.Errorf("unexpected control strategies: %+v", risk.ControlStrategies)
+	}
+	if len(risk.PreChecks) != 1 || risk.PreChecks[0].CheckItem != "can_i_restart" {
+		t.Errorf("unexpected pre-checks: %+v", risk.PreChecks)
+	}
+	if !strings.Contains(risk.RollbackPlan, "original replicas") {
+		t.Errorf("unexpected rollback plan: %q", risk.RollbackPlan)
+	}
+	if !strings.Contains(risk.AuditRequirements, "operator") {
+		t.Errorf("unexpected audit requirements: %q", risk.AuditRequirements)
+	}
+}
+
 func TestLoadConnectionDemo(t *testing.T) {
 	root := repoRoot(t)
 	path := filepath.Join(root, "examples", "connection-demo", "index.bkn")
@@ -378,6 +480,54 @@ func TestLoadConnectionDemo(t *testing.T) {
 	legacy := findObject(net.AllObjects(), "legacy_view")
 	if legacy == nil || legacy.DataSource == nil || legacy.DataSource.Type != "data_view" {
 		t.Errorf("legacy_view should use data_view, got %+v", legacy)
+	}
+}
+
+func TestLoadNetwork_MissingConnectionFails(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "index.bkn")
+	obj := filepath.Join(dir, "material.bkn")
+	if err := os.WriteFile(root, []byte(`---
+type: network
+id: demo
+name: Demo
+includes:
+  - material.bkn
+---
+`), 0644); err != nil {
+		t.Fatalf("write root: %v", err)
+	}
+	if err := os.WriteFile(obj, []byte(`---
+type: object
+id: material
+name: Material
+network: demo
+---
+
+## Object: material
+
+**Material**
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| connection | missing_conn | Missing Connection |
+
+### Data Properties
+
+| Property | Primary Key |
+|----------|:-----------:|
+| id | YES |
+`), 0644); err != nil {
+		t.Fatalf("write object: %v", err)
+	}
+	_, err := LoadNetwork(root)
+	if err == nil {
+		t.Fatal("expected missing connection error")
+	}
+	if !strings.Contains(err.Error(), "missing connection") {
+		t.Errorf("expected missing connection error, got %q", err.Error())
 	}
 }
 

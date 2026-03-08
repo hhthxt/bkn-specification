@@ -163,6 +163,38 @@ type Action struct {
 	Risk                 string // Runtime/computed; not read from BKN
 }
 
+// RiskScope is a ### Control Scope table row.
+type RiskScope struct {
+	ControlledObject string
+	ControlledAction string
+	RiskLevel        string
+}
+
+// RiskStrategy is a ### Control Strategy table row.
+type RiskStrategy struct {
+	Condition string
+	Strategy  string
+}
+
+// RiskPreCheck is a ### Pre-checks table row.
+type RiskPreCheck struct {
+	CheckItem   string
+	Type        string
+	Description string
+}
+
+// Risk is a ## Risk: {id} block.
+type Risk struct {
+	ID                string
+	Name              string
+	Description       string
+	ControlScope      []RiskScope
+	ControlStrategies []RiskStrategy
+	PreChecks         []RiskPreCheck
+	RollbackPlan      string
+	AuditRequirements string
+}
+
 // DataTable is a data table parsed from a .bknd (type: data) document.
 type DataTable struct {
 	ObjectOrRelation string
@@ -179,6 +211,7 @@ type BknDocument struct {
 	Objects     []BknObject
 	Relations   []Relation
 	Actions     []Action
+	Risks       []Risk
 	Connections []Connection
 	DataTables  []DataTable
 	SourcePath  string
@@ -216,6 +249,16 @@ func (n *BknNetwork) AllActions() []Action {
 	out = append(out, n.Root.Actions...)
 	for _, doc := range n.Includes {
 		out = append(out, doc.Actions...)
+	}
+	return out
+}
+
+// AllRisks returns all risks from root and included documents.
+func (n *BknNetwork) AllRisks() []Risk {
+	var out []Risk
+	out = append(out, n.Root.Risks...)
+	for _, doc := range n.Includes {
+		out = append(out, doc.Risks...)
 	}
 	return out
 }

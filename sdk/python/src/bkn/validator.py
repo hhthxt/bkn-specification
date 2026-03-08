@@ -256,6 +256,15 @@ def validate_data_table(
             message=f"no Object schema found for '{table.object_or_relation}'",
         ))
         return result
+    if schema.data_source is not None:
+        source_type = schema.data_source.type.strip().lower()
+        if source_type in {"data_view", "connection"}:
+            result.errors.append(ValidationError(
+                table=table_name, row=None, column="",
+                code="readonly_data_source",
+                message=f"object data source type '{schema.data_source.type}' cannot be materialized in .bknd",
+            ))
+            return result
 
     schema_props = {dp.property: dp for dp in schema.data_properties}
     schema_prop_names = set(schema_props.keys())

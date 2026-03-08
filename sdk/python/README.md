@@ -238,15 +238,15 @@ print(result.risk_level) # 5
 ### Update model (no-patch)
 
 - **Add/modify**: Import `.bkn` files; each definition is upserted by `(network, type, id)`.
-- **Delete**: Use the SDK delete API (see plan for `delete` API); deletion is not expressed in BKN files.
+- **Delete**: Use `plan_delete()` / `network_without()` for planning and in-memory simulation; deletion is not expressed in BKN files, and persistence is handled by the consumer.
 
 ## Modules
 
 | Module | Description |
 |--------|-------------|
-| `bkn.models` | Dataclass models: BknDocument, BknObject, Relation, Action, DataProperty, PropertyOverride, etc. |
-| `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers |
-| `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes |
+| `bkn.models` | Dataclass models: BknDocument, BknObject, Relation, Action, Risk, Connection, DataProperty, PropertyOverride, etc. |
+| `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers and `## Risk:` blocks |
+| `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes and validates shared `connection` references |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
 | `bkn.checksum` | Checksum: generate_checksum_file(), verify_checksum_file() |

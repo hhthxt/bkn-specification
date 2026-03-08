@@ -57,10 +57,14 @@ func LoadNetwork(rootPath string) (*BknNetwork, error) {
 	if err := resolveIncludes(rootDoc, baseDir, loadedPaths, &includes); err != nil {
 		return nil, err
 	}
-	return &BknNetwork{
+	network := &BknNetwork{
 		Root:     *rootDoc,
 		Includes: includes,
-	}, nil
+	}
+	if err := validateNetworkReferences(network); err != nil {
+		return nil, err
+	}
+	return network, nil
 }
 
 func resolveIncludes(doc *BknDocument, baseDir string, loadedPaths map[string]bool, result *[]BknDocument) error {
@@ -84,6 +88,22 @@ func resolveIncludes(doc *BknDocument, baseDir string, loadedPaths map[string]bo
 		*result = append(*result, *incDoc)
 		if err := resolveIncludes(incDoc, filepath.Dir(absPath), loadedPaths, result); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func validateNetworkReferences(network *BknNetwork) error {
+	for _, obj := range network.AllObjects() {
+		if obj.DataSource == nil {
+			continue
+		}
+		if strings.ToLower(strings.TrimSpace(obj.DataSource.Type)) != "connection" {
+			continue
+		}
+		connectionID := strings.TrimSpace(obj.DataSource.ID)
+		if connectionID == "" || network.GetConnection(connectionID) == nil {
+			return fmt.Errorf("object %q references missing connection %q", obj.ID, connectionID)
 		}
 	}
 	return nil

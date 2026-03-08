@@ -24,6 +24,10 @@ from bkn.models import (
     PreCondition,
     PropertyOverride,
     Relation,
+    Risk,
+    RiskPreCheck,
+    RiskScope,
+    RiskStrategy,
     Schedule,
     ToolConfig,
 )
@@ -77,6 +81,12 @@ _COLUMN_ALIASES: dict[str, str] = {
     # Connection
     "端点": "Endpoint",
     "凭据引用": "Secret Ref",
+    # Risk
+    "管控对象": "Controlled Object",
+    "管控行动": "Controlled Action",
+    "风险等级": "Risk Level",
+    "策略": "Strategy",
+    "检查项": "Check Item",
 }
 
 # Section name aliases
@@ -100,6 +110,11 @@ _SECTION_ALIASES: dict[str, str] = {
     "调度配置": "Schedule",
     "影响范围": "Scope of Impact",
     "执行说明": "Execution Description",
+    "管控范围": "Control Scope",
+    "管控策略": "Control Strategy",
+    "前置检查": "Pre-checks",
+    "回滚方案": "Rollback Plan",
+    "审计要求": "Audit Requirements",
 }
 
 
@@ -513,12 +528,54 @@ def _parse_action_block(block_id: str, block_text: str) -> Action:
     return action
 
 
+def _parse_risk_block(block_id: str, block_text: str) -> Risk:
+    """Parse a ## Risk: {id} block into a Risk model."""
+    name, desc = _parse_display_name(block_text)
+    sections = _extract_sections(block_text)
+
+    risk = Risk(id=block_id, name=name, description=desc)
+    if "Control Scope" in sections:
+        rows = _parse_table(sections["Control Scope"].splitlines())
+        risk.control_scope = [
+            RiskScope(
+                controlled_object=row.get("Controlled Object", ""),
+                controlled_action=row.get("Controlled Action", ""),
+                risk_level=row.get("Risk Level", ""),
+            )
+            for row in rows
+        ]
+    if "Control Strategy" in sections:
+        rows = _parse_table(sections["Control Strategy"].splitlines())
+        risk.control_strategies = [
+            RiskStrategy(
+                condition=row.get("Condition", ""),
+                strategy=row.get("Strategy", ""),
+            )
+            for row in rows
+        ]
+    if "Pre-checks" in sections:
+        rows = _parse_table(sections["Pre-checks"].splitlines())
+        risk.pre_checks = [
+            RiskPreCheck(
+                check_item=row.get("Check Item", ""),
+                type=row.get("Type", ""),
+                description=row.get("Description", ""),
+            )
+            for row in rows
+        ]
+    if "Rollback Plan" in sections:
+        risk.rollback_plan = sections["Rollback Plan"]
+    if "Audit Requirements" in sections:
+        risk.audit_requirements = sections["Audit Requirements"]
+    return risk
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
 _DEFINITION_RE = re.compile(
-    r"^##\s+(Object|Relation|Action|Connection):\s*(\S+)",
+    r"^##\s+(Object|Relation|Action|Risk|Connection):\s*(\S+)",
     re.MULTILINE,
 )
 
@@ -571,7 +628,7 @@ def parse_frontmatter(text: str) -> Frontmatter:
     return fm
 
 
-def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action], list[Connection]]:
+def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action], list[Risk], list[Connection]]:
     """Parse the Markdown body of a .bkn file into lists of definitions."""
     _, body = _split_frontmatter(text)
 
@@ -579,6 +636,7 @@ def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]
     objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
+    risks: list[Risk] = []
     connections: list[Connection] = []
 
     for i, m in enumerate(matches):
@@ -597,10 +655,12 @@ def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]
             relations.append(_parse_relation_block(def_id, block_text))
         elif def_type == "Action":
             actions.append(_parse_action_block(def_id, block_text))
+        elif def_type == "Risk":
+            risks.append(_parse_risk_block(def_id, block_text))
         elif def_type == "Connection":
             connections.append(_parse_connection_block(def_id, block_text))
 
-    return objects, relations, actions, connections
+    return objects, relations, actions, risks, connections
 
 
 def parse_data_tables(
@@ -681,7 +741,7 @@ def parse(text: str, source_path: str = "") -> BknDocument:
     if not type_val:
         raise ValueError(
             "BKN frontmatter must include a valid 'type' field "
-            "(network, object, relation, action, fragment, data, or risk)."
+            "(network, object, relation, action, fragment, data, risk, connection)."
         )
     if type_val not in _VALID_BKN_TYPES:
         raise ValueError(
@@ -692,17 +752,19 @@ def parse(text: str, source_path: str = "") -> BknDocument:
     objects: list[BknObject] = []
     relations: list[Relation] = []
     actions: list[Action] = []
+    risks: list[Risk] = []
     connections: list[Connection] = []
     data_tables: list[DataTable] = []
     if frontmatter.type == "data":
         data_tables = parse_data_tables(text, frontmatter=frontmatter, source_path=source_path)
     else:
-        objects, relations, actions, connections = parse_body(text)
+        objects, relations, actions, risks, connections = parse_body(text)
     return BknDocument(
         frontmatter=frontmatter,
         objects=objects,
         relations=relations,
         actions=actions,
+        risks=risks,
         connections=connections,
         data_tables=data_tables,
         source_path=source_path,

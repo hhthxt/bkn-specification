@@ -10,8 +10,8 @@ type DeleteTarget struct {
 
 // DeletePlan is the result of planning a delete operation.
 type DeletePlan struct {
-	Targets   []DeleteTarget // Validated targets that exist in the network
-	NotFound  []DeleteTarget // Targets not found in the network
+	Targets  []DeleteTarget // Validated targets that exist in the network
+	NotFound []DeleteTarget // Targets not found in the network
 }
 
 // OK returns true if all targets exist in the network.
@@ -102,8 +102,8 @@ func copyDocumentExcluding(doc *BknDocument, targetSet map[string]bool) *BknDocu
 			out.Actions = append(out.Actions, a)
 		}
 	}
+	out.Risks = append(out.Risks, doc.Risks...)
 	out.Connections = append(out.Connections, doc.Connections...)
 	out.DataTables = append(out.DataTables, doc.DataTables...)
 	return out
 }
-

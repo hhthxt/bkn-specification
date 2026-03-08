@@ -99,3 +99,49 @@ def test_load_connection_demo_network():
     # Legacy object uses data_view
     legacy = next((o for o in net.all_objects if o.id == "legacy_view"), None)
     assert legacy is not None and legacy.data_source and legacy.data_source.type == "data_view"
+
+
+def test_load_network_missing_connection_fails(tmp_path):
+    root = tmp_path / "index.bkn"
+    obj = tmp_path / "material.bkn"
+
+    root.write_text(
+        """---
+type: network
+id: demo
+name: Demo
+includes:
+  - material.bkn
+---
+""",
+        encoding="utf-8",
+    )
+    obj.write_text(
+        """---
+type: object
+id: material
+name: Material
+network: demo
+---
+
+## Object: material
+
+**Material**
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| connection | missing_conn | Missing Connection |
+
+### Data Properties
+
+| Property | Primary Key |
+|----------|:-----------:|
+| id | YES |
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="missing connection"):
+        load_network(root)

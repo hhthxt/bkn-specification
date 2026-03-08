@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bkn.models import DataProperty, DataTable, BknObject
+from bkn.models import BknObject, BknNetwork, DataProperty, DataSource, DataTable
 from bkn.validator import validate_data_table, validate_network_data
 
 
@@ -261,6 +261,32 @@ class TestPrimaryKey:
         result = validate_data_table(table, schema=schema)
         codes = [e.code for e in result.errors]
         assert "pk_duplicate" in codes
+
+
+class TestReadOnlyDataSource:
+    def test_data_view_object_rejects_bknd(self):
+        schema = BknObject(
+            id="test_object",
+            data_source=DataSource(type="data_view", id="erp_view", name="ERP View"),
+            data_properties=[DataProperty(property="id", primary_key=True)],
+        )
+        table = _table(["id"], [{"id": "1"}])
+        result = validate_data_table(table, schema=schema)
+        codes = [e.code for e in result.errors]
+        assert "readonly_data_source" in codes
+
+    def test_connection_object_rejects_bknd_via_network_lookup(self):
+        schema = BknObject(
+            id="test_object",
+            data_source=DataSource(type="connection", id="erp_db", name="ERP DB"),
+            data_properties=[DataProperty(property="id", primary_key=True)],
+        )
+        table = _table(["id"], [{"id": "1"}])
+        network = BknNetwork()
+        network.root.objects.append(schema)
+        result = validate_data_table(table, network=network)
+        codes = [e.code for e in result.errors]
+        assert "readonly_data_source" in codes
 
 
 # ---------------------------------------------------------------------------

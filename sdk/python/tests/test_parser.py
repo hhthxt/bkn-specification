@@ -202,8 +202,9 @@ id: test
 | id | ID | int64 | | Primary key | YES | | YES |
 | name | Name | VARCHAR | not_null | Object name | | YES | YES |
 """
-        objects, relations, actions, connections = parse_body(text)
+        objects, relations, actions, risks, connections = parse_body(text)
         assert len(objects) == 1
+        assert len(risks) == 0
         e = objects[0]
         assert e.id == "my_object"
         assert e.name == "My Object"
@@ -239,7 +240,7 @@ id: test
 |-----------------|-----------------|
 | a_id | b_ref_id |
 """
-        _, relations, _, _ = parse_body(text)
+        _, relations, _, _, _ = parse_body(text)
         assert len(relations) == 1
         r = relations[0]
         assert r.id == "a_to_b"
@@ -349,6 +350,57 @@ Some text, no table.
 """
         with pytest.raises(ValueError, match="valid GFM table"):
             parse_data_tables(text)
+
+    def test_parse_risk_block(self):
+        text = """---
+type: risk
+id: pod_restart_risk
+name: Pod Restart Risk
+network: demo
+---
+
+## Risk: pod_restart_risk
+
+**Pod Restart Risk** - Controls pod restart actions.
+
+### Control Scope
+
+| Controlled Object | Controlled Action | Risk Level |
+|-------------------|-------------------|------------|
+| pod | restart_pod | high |
+
+### Control Strategy
+
+| Condition | Strategy |
+|-----------|----------|
+| production | require approval |
+
+### Pre-checks
+
+| Check Item | Type | Description |
+|------------|------|-------------|
+| can_i_restart | permission | Verify restart permission |
+
+### Rollback Plan
+
+Scale workload back to original replicas.
+
+### Audit Requirements
+
+Record operator and scenario.
+"""
+        doc = parse(text)
+        assert doc.frontmatter.type == "risk"
+        assert len(doc.risks) == 1
+        risk = doc.risks[0]
+        assert risk.id == "pod_restart_risk"
+        assert risk.control_scope[0].controlled_object == "pod"
+        assert risk.control_scope[0].controlled_action == "restart_pod"
+        assert risk.control_scope[0].risk_level == "high"
+        assert risk.control_strategies[0].strategy == "require approval"
+        assert risk.pre_checks[0].check_item == "can_i_restart"
+        assert "original replicas" in risk.rollback_plan
+        assert "operator" in risk.audit_requirements
 
 
 if __name__ == "__main__":

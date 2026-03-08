@@ -203,17 +203,17 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 
 - **标签**：在 BKN 中为参与内置风险评估的定义增加 `- **Tags**: __risk__`（保留 tag，用户不得使用）；可自定义其他 tag 的风险类及自己的评估函数。
 - **Action.risk**：`Action` 数据类有 `risk` 字段（默认空）；需要计算值时调用 `evaluate_risk()` 并赋给该字段。
-- **完整评估**：SDK 无实例数据时 `evaluate_risk` 默认返回 `"allow"`；可传入 `risk_rules`（含 `scenario_id`、`action_id`、`allowed` 的字典列表）以根据数据源得到 allow/not_allow。
+- **完整评估**：SDK 无实例数据或无匹配规则时 `evaluate_risk` 返回 `"unknown"`；可传入 `risk_rules`（含 `scenario_id`、`action_id`、`allowed` 的字典列表）以根据数据源得到 allow/not_allow。
 - **自定义评估函数**：实现 `RiskEvaluator` 协议（与 `evaluate_risk` 同签名），可替换或与默认实现组合使用；保留 tag `__risk__` 与 `evaluate_risk` 仅为一种可选实现。
 
 ## 模块说明
 
 | 模块 | 说明 |
 |------|------|
-| `bkn.models` | 数据模型：BknDocument、BknObject、Relation、Action、DataProperty、PropertyOverride 等 |
-| `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头 |
-| `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes |
-| `bkn.risk` | 风险评估：evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" |
+| `bkn.models` | 数据模型：BknDocument、BknObject、Relation、Action、Risk、Connection、DataProperty、PropertyOverride 等 |
+| `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头和 `## Risk:` 定义 |
+| `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes 并校验共享 `connection` 引用 |
+| `bkn.risk` | 风险评估：evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" \| "unknown" |
 | `bkn.transformers.base` | 抽象基类 `Transformer`，定义 `to_json()` 和 `to_files()` 接口 |
 | `bkn.transformers.kweaver` | KweaverTransformer、KweaverClient；输出 kweaver 导入 JSON |
 

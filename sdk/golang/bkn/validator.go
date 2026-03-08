@@ -205,6 +205,16 @@ func ValidateDataTable(table *DataTable, schema *BknObject, network *BknNetwork)
 		})
 		return result
 	}
+	if schema.DataSource != nil {
+		sourceType := strings.ToLower(strings.TrimSpace(schema.DataSource.Type))
+		if sourceType == "data_view" || sourceType == "connection" {
+			result.Errors = append(result.Errors, ValidationError{
+				Table: tableName, Column: "", Code: "readonly_data_source",
+				Message: "object data source type '" + schema.DataSource.Type + "' cannot be materialized in .bknd",
+			})
+			return result
+		}
+	}
 
 	schemaProps := make(map[string]DataProperty)
 	for _, dp := range schema.DataProperties {

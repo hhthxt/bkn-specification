@@ -11,9 +11,11 @@ Go SDK for parsing, validating, and transforming BKN files. Provides feature par
 Implemented. The Go SDK supports:
 
 - Parse `.bkn`, `.bknd`, and `.md` files (YAML frontmatter + Markdown body). `.md` is a compatible carrier; content must satisfy BKN frontmatter/type/structure. Recommended: schema `.bkn`, data `.bknd`.
-- Structured models for BknObject, Relation, Action, DataTable
+- Structured models for `BknObject`, `Relation`, `Action`, `Risk`, `Connection`, and `DataTable`
 - Network loading with `includes` resolution (cycle detection)
+- Network reference validation for shared `connection` data sources
 - Data validation against object schema (not_null, regex, in, range, type checks, PK uniqueness)
+- `.bknd` writability guard for object schemas backed by `data_view` or `connection`
 - Serialization to `.bknd` format
 - Risk evaluation (`EvaluateRisk`)
 
@@ -121,7 +123,7 @@ func main() {
 ### Update model (no-patch)
 
 - **Add/modify**: Import `.bkn` files; each definition is upserted by `(network, type, id)`.
-- **Delete**: Use the SDK delete API (to be implemented); deletion is not expressed in BKN files.
+- **Delete**: Use `PlanDelete(...)` / `NetworkWithout(...)` for planning and in-memory simulation; deletion is not expressed in BKN files, and persistence is handled by the consumer.
 
 ## API
 
@@ -129,7 +131,7 @@ func main() {
 |----------|-------------|
 | `Parse(text, sourcePath)` | Parse .bkn/.bknd/.md content into BknDocument |
 | `ParseFrontmatter(text)` | Parse YAML frontmatter only |
-| `ParseBody(text)` | Parse Markdown body into Object/Relation/Action/Connection lists |
+| `ParseBody(text)` | Parse Markdown body into Object/Relation/Action/Risk/Connection lists |
 | `ParseDataTables(text, fm, sourcePath)` | Parse .bknd data tables |
 | `Load(path)` | Load single file from disk (.bkn/.bknd/.md) |
 | `LoadNetwork(rootPath)` | Load network with includes resolution (.bkn/.bknd/.md) |

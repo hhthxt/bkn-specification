@@ -187,6 +187,42 @@ class Action:
 
 
 @dataclass
+class RiskScope:
+    """### Control Scope table row."""
+    controlled_object: str = ""
+    controlled_action: str = ""
+    risk_level: str = ""
+
+
+@dataclass
+class RiskStrategy:
+    """### Control Strategy table row."""
+    condition: str = ""
+    strategy: str = ""
+
+
+@dataclass
+class RiskPreCheck:
+    """### Pre-checks table row."""
+    check_item: str = ""
+    type: str = ""
+    description: str = ""
+
+
+@dataclass
+class Risk:
+    """## Risk: {id} block."""
+    id: str = ""
+    name: str = ""
+    description: str = ""
+    control_scope: list[RiskScope] = field(default_factory=list)
+    control_strategies: list[RiskStrategy] = field(default_factory=list)
+    pre_checks: list[RiskPreCheck] = field(default_factory=list)
+    rollback_plan: str = ""
+    audit_requirements: str = ""
+
+
+@dataclass
 class DataTable:
     """A data table parsed from a .bknd (type: data) document."""
 
@@ -210,6 +246,7 @@ class BknDocument:
     objects: list[BknObject] = field(default_factory=list)
     relations: list[Relation] = field(default_factory=list)
     actions: list[Action] = field(default_factory=list)
+    risks: list[Risk] = field(default_factory=list)
     connections: list[Connection] = field(default_factory=list)
     data_tables: list[DataTable] = field(default_factory=list)
     source_path: str = ""
@@ -240,6 +277,13 @@ class BknNetwork:
         result = list(self.root.actions)
         for doc in self.includes:
             result.extend(doc.actions)
+        return result
+
+    @property
+    def all_risks(self) -> list[Risk]:
+        result = list(self.root.risks)
+        for doc in self.includes:
+            result.extend(doc.risks)
         return result
 
     @property

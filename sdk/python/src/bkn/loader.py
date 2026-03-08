@@ -68,7 +68,9 @@ def load_network(root_path: str | Path) -> BknNetwork:
 
     _resolve_includes(root_doc, root_path.parent, loaded_paths, includes)
 
-    return BknNetwork(root=root_doc, includes=includes)
+    network = BknNetwork(root=root_doc, includes=includes)
+    _validate_network_references(network)
+    return network
 
 
 def _resolve_includes(
@@ -99,3 +101,16 @@ def _resolve_includes(
         result.append(inc_doc)
 
         _resolve_includes(inc_doc, include_path.parent, loaded_paths, result)
+
+
+def _validate_network_references(network: BknNetwork) -> None:
+    for obj in network.all_objects:
+        if obj.data_source is None:
+            continue
+        if obj.data_source.type.strip().lower() != "connection":
+            continue
+        connection_id = obj.data_source.id.strip()
+        if not connection_id or network.get_connection(connection_id) is None:
+            raise ValueError(
+                f"object {obj.id!r} references missing connection {connection_id!r}"
+            )

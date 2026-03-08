@@ -22,7 +22,9 @@ var columnAliases = map[string]string{
 	"对象": "Object", "检查": "Check", "条件": "Condition", "消息": "Message",
 	"表达式": "Expression", "索引配置": "Index Config",
 	"影响说明": "Impact Description",
-	"端点": "Endpoint", "凭据引用": "Secret Ref",
+	"端点":   "Endpoint", "凭据引用": "Secret Ref",
+	"管控对象": "Controlled Object", "管控行动": "Controlled Action", "风险等级": "Risk Level",
+	"策略": "Strategy", "检查项": "Check Item",
 }
 
 // Section name aliases
@@ -34,10 +36,11 @@ var sectionAliases = map[string]string{
 	"绑定对象": "Bound Object", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
 	"工具配置": "Tool Configuration", "参数绑定": "Parameter Binding",
 	"调度配置": "Schedule", "影响范围": "Scope of Impact", "执行说明": "Execution Description",
-	"连接定义": "Connection",
+	"连接定义": "Connection", "管控范围": "Control Scope", "管控策略": "Control Strategy",
+	"前置检查": "Pre-checks", "回滚方案": "Rollback Plan", "审计要求": "Audit Requirements",
 }
 
-var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Connection):\s*(\S+)`)
+var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Risk|Connection):\s*(\S+)`)
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
 var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
@@ -411,6 +414,52 @@ func parseConnectionBlock(blockID, blockText string) Connection {
 	return conn
 }
 
+func parseRiskBlock(blockID, blockText string) Risk {
+	name, desc := parseDisplayName(blockText)
+	sections := extractSections(blockText, "###")
+	risk := Risk{
+		ID:          blockID,
+		Name:        name,
+		Description: desc,
+	}
+	if s, ok := sections["Control Scope"]; ok {
+		rows := parseTable(strings.Split(s, "\n"))
+		for _, row := range rows {
+			risk.ControlScope = append(risk.ControlScope, RiskScope{
+				ControlledObject: row["Controlled Object"],
+				ControlledAction: row["Controlled Action"],
+				RiskLevel:        row["Risk Level"],
+			})
+		}
+	}
+	if s, ok := sections["Control Strategy"]; ok {
+		rows := parseTable(strings.Split(s, "\n"))
+		for _, row := range rows {
+			risk.ControlStrategies = append(risk.ControlStrategies, RiskStrategy{
+				Condition: row["Condition"],
+				Strategy:  row["Strategy"],
+			})
+		}
+	}
+	if s, ok := sections["Pre-checks"]; ok {
+		rows := parseTable(strings.Split(s, "\n"))
+		for _, row := range rows {
+			risk.PreChecks = append(risk.PreChecks, RiskPreCheck{
+				CheckItem:   row["Check Item"],
+				Type:        row["Type"],
+				Description: row["Description"],
+			})
+		}
+	}
+	if s, ok := sections["Rollback Plan"]; ok {
+		risk.RollbackPlan = s
+	}
+	if s, ok := sections["Audit Requirements"]; ok {
+		risk.AuditRequirements = s
+	}
+	return risk
+}
+
 func parseActionBlock(blockID, blockText string) Action {
 	name, desc := parseDisplayName(blockText)
 	sections := extractSections(blockText, "###")
@@ -555,12 +604,13 @@ func strVal(m map[string]any, key string) string {
 }
 
 // ParseBody parses the Markdown body of a .bkn file into lists of definitions.
-func ParseBody(text string) ([]BknObject, []Relation, []Action, []Connection) {
+func ParseBody(text string) ([]BknObject, []Relation, []Action, []Risk, []Connection) {
 	_, body := splitFrontmatter(text)
 	matches := definitionRE.FindAllStringSubmatchIndex(body, -1)
 	var objects []BknObject
 	var relations []Relation
 	var actions []Action
+	var risks []Risk
 	var connections []Connection
 
 	for i, m := range matches {
@@ -582,11 +632,13 @@ func ParseBody(text string) ([]BknObject, []Relation, []Action, []Connection) {
 			relations = append(relations, parseRelationBlock(defID, blockText))
 		case "Action":
 			actions = append(actions, parseActionBlock(defID, blockText))
+		case "Risk":
+			risks = append(risks, parseRiskBlock(defID, blockText))
 		case "Connection":
 			connections = append(connections, parseConnectionBlock(defID, blockText))
 		}
 	}
-	return objects, relations, actions, connections
+	return objects, relations, actions, risks, connections
 }
 
 // ParseDataTables parses .bknd body into DataTable list.
@@ -660,7 +712,7 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 	}
 	typeVal := strings.TrimSpace(fm.Type)
 	if typeVal == "" {
-		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object, relation, action, fragment, data, or delete)")
+		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object, relation, action, fragment, data, risk, connection)")
 	}
 	if !validBknTypes[typeVal] {
 		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object, relation, action, fragment, data, risk, connection", typeVal)
@@ -676,12 +728,13 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 			SourcePath:  sourcePath,
 		}, nil
 	}
-	objects, relations, actions, connections := ParseBody(text)
+	objects, relations, actions, risks, connections := ParseBody(text)
 	return &BknDocument{
 		Frontmatter: *fm,
 		Objects:     objects,
 		Relations:   relations,
 		Actions:     actions,
+		Risks:       risks,
 		Connections: connections,
 		SourcePath:  sourcePath,
 	}, nil
