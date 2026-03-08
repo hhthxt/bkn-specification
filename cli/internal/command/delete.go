@@ -25,6 +25,7 @@ func newDeleteCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Plan or simulate definition deletion",
+		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(newDeletePlanCommand(opts), newDeleteSimulateCommand(opts))
 	return cmd
@@ -36,6 +37,9 @@ func newDeletePlanCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "Plan deletion targets",
+		Example: "  bkn delete plan --network examples/k8s-modular/index.bkn --target object:pod\n" +
+			"  bkn delete plan --network index.bkn --target object:pod --target action:restart_pod --format json",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(networkPath) == "" {
 				return fmt.Errorf("--network is required")
@@ -80,6 +84,9 @@ func newDeleteSimulateCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "simulate",
 		Short: "Simulate deletion in memory",
+		Example: "  bkn delete simulate --network examples/k8s-modular/index.bkn --target object:pod\n" +
+			"  bkn delete simulate --network index.bkn --target relation:pod_on_node --format json",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(networkPath) == "" {
 				return fmt.Errorf("--network is required")

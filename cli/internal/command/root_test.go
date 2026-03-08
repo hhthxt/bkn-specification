@@ -56,6 +56,44 @@ func TestInspectNetwork(t *testing.T) {
 	}
 }
 
+func TestInspectNetworkVerbose(t *testing.T) {
+	root := repoRoot(t)
+	out, err := executeCommand(
+		t,
+		"inspect", "network",
+		filepath.Join(root, "examples", "risk", "index.bkn"),
+		"--verbose",
+	)
+	if err != nil {
+		t.Fatalf("inspect network verbose: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, "Description: 本网络聚合风险相关定义") {
+		t.Fatalf("expected network description in output, got %q", out)
+	}
+	if !strings.Contains(out, "Objects:") || !strings.Contains(out, "risk_scenario") {
+		t.Fatalf("expected detailed object list in output, got %q", out)
+	}
+}
+
+func TestInspectFileVerbose(t *testing.T) {
+	root := repoRoot(t)
+	out, err := executeCommand(
+		t,
+		"inspect", "file",
+		filepath.Join(root, "examples", "risk", "actions.bkn"),
+		"--verbose",
+	)
+	if err != nil {
+		t.Fatalf("inspect file verbose: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, "Description: 本片段定义与风险规则关联的动作") {
+		t.Fatalf("expected file description in output, got %q", out)
+	}
+	if !strings.Contains(out, "Actions:") || !strings.Contains(out, "restart_erp") {
+		t.Fatalf("expected detailed action list in output, got %q", out)
+	}
+}
+
 func TestValidateNetwork(t *testing.T) {
 	root := repoRoot(t)
 	out, err := executeCommand(t, "validate", "network", filepath.Join(root, "examples", "risk", "index.bkn"))

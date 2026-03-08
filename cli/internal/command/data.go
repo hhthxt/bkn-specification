@@ -21,6 +21,7 @@ func newDataCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "data",
 		Short: "Work with BKN data files",
+		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(newToBkndCommand(opts))
 	return cmd
@@ -39,6 +40,9 @@ func newToBkndCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "to-bknd",
 		Short: "Serialize JSON rows to .bknd",
+		Example: "  bkn data to-bknd --object risk_scenario --network recoverable-network --in rows.json\n" +
+			"  bkn data to-bknd --relation pod_on_node --network k8s --in rows.json --out pod_on_node.bknd",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(inPath) == "" {
 				return fmt.Errorf("--in is required")

@@ -15,14 +15,21 @@ CHECKSUM_EXTENSIONS = {".bkn", ".bknd"}
 CHECKSUM_FILES = {"SKILL.md"}
 
 
-def _normalize_lf(text: str) -> str:
-    """Normalize line endings to LF."""
-    return text.replace("\r\n", "\n").replace("\r", "\n")
+def _normalize_for_checksum(text: str) -> str:
+    """
+    Normalize text before hashing so that blank lines, CRLF/LF differences,
+    trailing whitespace, and table-cell padding do not affect the checksum.
+    Semantic content changes still change the checksum.
+    """
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = text.split("\n")
+    out = [line.rstrip() for line in lines if line.rstrip()]
+    return "\n".join(out)
 
 
 def _body_checksum(body: str) -> str:
     """Compute sha256 of normalized body. Format: sha256:{64 hex}."""
-    normalized = _normalize_lf(body.strip())
+    normalized = _normalize_for_checksum(body)
     h = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
     return f"sha256:{h}"
 
@@ -43,7 +50,7 @@ def compute_file_checksum(path: Path, root: Path) -> str | None:
 
     if name == "SKILL.md":
         text = path.read_text(encoding="utf-8")
-        normalized = _normalize_lf(text.strip())
+        normalized = _normalize_for_checksum(text)
         h = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
         return f"sha256:{h}  {rel}"
 
@@ -90,7 +97,7 @@ def compute_file_checksum(path: Path, root: Path) -> str | None:
             canonical = "\n".join(out_lines)
         else:
             canonical = body.strip()
-        h = hashlib.sha256(_normalize_lf(canonical).encode("utf-8")).hexdigest()
+        h = hashlib.sha256(_normalize_for_checksum(canonical).encode("utf-8")).hexdigest()
         return f"sha256:{h}  {rel}"
 
     return None

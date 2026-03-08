@@ -169,7 +169,7 @@ func computeSkillChecksum(path, rel string) string {
 	if err != nil {
 		return ""
 	}
-	norm := normalizeLF(strings.TrimSpace(string(data)))
+	norm := normalizeForChecksum(string(data))
 	h := sha256.Sum256([]byte(norm))
 	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
 }
@@ -180,7 +180,7 @@ func computeBknChecksum(path, rel string) string {
 		return ""
 	}
 	_, body := splitFrontmatter(string(data))
-	norm := normalizeLF(strings.TrimSpace(body))
+	norm := normalizeForChecksum(body)
 	h := sha256.Sum256([]byte(norm))
 	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
 }
@@ -193,14 +193,25 @@ func computeBkndChecksum(path, rel string) string {
 	_, body := splitFrontmatter(string(data))
 	// Parse table, sort rows, re-serialize for order-insensitive hash
 	canonical := canonicalizeBkndTable(strings.TrimSpace(body))
-	h := sha256.Sum256([]byte(normalizeLF(canonical)))
+	h := sha256.Sum256([]byte(normalizeForChecksum(canonical)))
 	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
 }
 
-func normalizeLF(s string) string {
+// normalizeForChecksum normalizes text before hashing so that blank lines,
+// CRLF/LF differences, trailing whitespace, and table-cell padding do not
+// affect the checksum. Semantic content changes still change the checksum.
+func normalizeForChecksum(s string) string {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
-	return s
+	lines := strings.Split(s, "\n")
+	var out []string
+	for _, line := range lines {
+		trimmed := strings.TrimRight(line, " \t")
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return strings.Join(out, "\n")
 }
 
 func canonicalizeBkndTable(body string) string {
@@ -254,9 +265,9 @@ func canonicalizeBkndTable(body string) string {
 		return false
 	})
 	var out []string
-	// Use sorted header order for output
+	// Use sorted header order and canonical separator for output
 	headerLine := "| " + strings.Join(sortedHeaders, " | ") + " |"
-	sepLine := tableLines[1]
+	sepLine := "|" + strings.Repeat("|---|", len(sortedHeaders))
 	out = append(out, headerLine, sepLine)
 	for _, row := range rows {
 		out = append(out, "| "+strings.Join(row, " | ")+" |")

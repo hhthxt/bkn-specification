@@ -684,3 +684,157 @@ func TestGenerateAndVerifyChecksum(t *testing.T) {
 		t.Errorf("verify failed: %v", errs)
 	}
 }
+
+func TestChecksumNormalization_BlankLinesAndWhitespace(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-checksum-norm-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	baseBkn := "---\ntype: object\nid: x\n---\n\n## Object: x\n**X**\n"
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(baseBkn), 0644)
+
+	content, err := GenerateChecksumFile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Extract the checksum line for test.bkn
+	var baseHash string
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "test.bkn") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				baseHash = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+	if baseHash == "" {
+		t.Fatal("could not find test.bkn checksum in generated content")
+	}
+
+	// Same semantic content with extra blank lines - checksum should match
+	withBlankLines := "---\ntype: object\nid: x\n---\n\n\n## Object: x\n\n**X**\n\n"
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(withBlankLines), 0644)
+	content2, _ := GenerateChecksumFile(dir)
+	var hash2 string
+	for _, line := range strings.Split(content2, "\n") {
+		if strings.Contains(line, "test.bkn") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				hash2 = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+	if baseHash != hash2 {
+		t.Errorf("checksum changed with blank lines only: %q vs %q", baseHash, hash2)
+	}
+
+	// Same semantic content with CRLF and trailing spaces - checksum should match
+	withCRLF := "---\r\ntype: object\r\nid: x\r\n---\r\n\r\n## Object: x\r\n**X**   \r\n"
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(withCRLF), 0644)
+	content3, _ := GenerateChecksumFile(dir)
+	var hash3 string
+	for _, line := range strings.Split(content3, "\n") {
+		if strings.Contains(line, "test.bkn") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				hash3 = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+	if baseHash != hash3 {
+		t.Errorf("checksum changed with CRLF/trailing space only: %q vs %q", baseHash, hash3)
+	}
+
+	// Restore original and verify still passes
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(baseBkn), 0644)
+	GenerateChecksumFile(dir)
+	ok, errs := VerifyChecksumFile(dir)
+	if !ok {
+		t.Errorf("verify failed after round-trip: %v", errs)
+	}
+}
+
+func TestChecksumNormalization_SemanticChangeAltersChecksum(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-checksum-semantic-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	baseBkn := "---\ntype: object\nid: x\n---\n\n## Object: x\n**X**\n"
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(baseBkn), 0644)
+	content, _ := GenerateChecksumFile(dir)
+	var baseHash string
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "test.bkn") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				baseHash = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+
+	// Semantic change: different object name
+	modifiedBkn := "---\ntype: object\nid: x\n---\n\n## Object: x\n**Y**\n"
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(modifiedBkn), 0644)
+	content2, _ := GenerateChecksumFile(dir)
+	var hash2 string
+	for _, line := range strings.Split(content2, "\n") {
+		if strings.Contains(line, "test.bkn") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				hash2 = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+	if baseHash == hash2 {
+		t.Error("checksum should change when semantic content changes")
+	}
+}
+
+func TestChecksumNormalization_BkndWhitespace(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-checksum-bknd-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	baseBknd := "---\ntype: data\nobject: x\n---\n\n## Data\n\n| a | b |\n|---|---|\n| 1 | 2 |\n"
+	os.WriteFile(filepath.Join(dir, "data.bknd"), []byte(baseBknd), 0644)
+	content, _ := GenerateChecksumFile(dir)
+	var baseHash string
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "data.bknd") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				baseHash = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+
+	// Same table with extra blank lines and padding
+	withWhitespace := "---\ntype: data\nobject: x\n---\n\n## Data\n\n\n|  a  |  b  |\n|-----|-----|\n|  1  |  2  |\n\n"
+	os.WriteFile(filepath.Join(dir, "data.bknd"), []byte(withWhitespace), 0644)
+	content2, _ := GenerateChecksumFile(dir)
+	var hash2 string
+	for _, line := range strings.Split(content2, "\n") {
+		if strings.Contains(line, "data.bknd") {
+			parts := strings.SplitN(line, "  ", 2)
+			if len(parts) == 2 {
+				hash2 = strings.TrimSpace(parts[0])
+				break
+			}
+		}
+	}
+	if baseHash != hash2 {
+		t.Errorf("checksum changed with bknd whitespace only: %q vs %q", baseHash, hash2)
+	}
+}

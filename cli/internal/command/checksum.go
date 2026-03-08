@@ -23,6 +23,7 @@ func newChecksumCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checksum",
 		Short: "Generate or verify checksum.txt",
+		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(newChecksumGenerateCommand(opts), newChecksumVerifyCommand(opts))
 	return cmd
@@ -32,7 +33,9 @@ func newChecksumGenerateCommand(opts *Options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "generate <dir>",
 		Short: "Generate checksum.txt for a business directory",
-		Args:  cobra.ExactArgs(1),
+		Example: "  bkn checksum generate examples/connection-demo\n" +
+			"  bkn checksum generate .",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			content, err := bkn.GenerateChecksumFile(args[0])
 			if err != nil {
@@ -49,7 +52,9 @@ func newChecksumVerifyCommand(opts *Options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "verify <dir>",
 		Short: "Verify checksum.txt for a business directory",
-		Args:  cobra.ExactArgs(1),
+		Example: "  bkn checksum verify examples/connection-demo\n" +
+			"  bkn checksum verify . --format json",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ok, errors := bkn.VerifyChecksumFile(args[0])
 			payload := checksumVerifyResult{Root: args[0], OK: ok, Errors: errors}

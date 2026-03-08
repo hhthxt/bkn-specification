@@ -19,6 +19,7 @@ func newRiskCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "risk",
 		Short: "Run risk-related operations",
+		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(newRiskEvalCommand(opts))
 	return cmd
@@ -34,6 +35,9 @@ func newRiskEvalCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "eval",
 		Short: "Evaluate action risk using external rule data",
+		Example: "  bkn risk eval --network examples/risk/index.bkn --action restart_erp --context scenario_id=sec_t_01 --rules rules.json\n" +
+			"  bkn risk eval --network examples/risk/index.bkn --action grant_root_admin --rules rules.json --format json",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(networkPath) == "" {
 				return fmt.Errorf("--network is required")

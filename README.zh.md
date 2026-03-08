@@ -11,6 +11,12 @@
 - **[SPECIFICATION.md](docs/SPECIFICATION.md)** — 完整规范（中文）
 - **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — 英文版
 
+## CLI
+
+仓库同时提供了一个基于 Go 的 CLI，用于查看、校验和转换 BKN 文件：
+
+- **[cli/README.md](cli/README.md)** — 使用方法、命令示例与 smoke test 命令
+
 ### 核心概念
 
 | 概念 | 说明 |

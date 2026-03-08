@@ -11,6 +11,12 @@ The core documentation is the **BKN Language Specification**:
 - **[SPECIFICATION.md](docs/SPECIFICATION.md)** — Full specification (Chinese)
 - **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — English edition
 
+## CLI
+
+The repository also includes a Go-based CLI for inspecting, validating, and transforming BKN files:
+
+- **[cli/README.md](cli/README.md)** — Usage, examples, and smoke-test commands
+
 ### Key Concepts
 
 | Concept | Description |

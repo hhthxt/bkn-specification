@@ -17,6 +17,7 @@ func newValidateCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate BKN data against schema",
+		Args:  cobra.NoArgs,
 	}
 	cmd.AddCommand(newValidateNetworkCommand(opts), newValidateTableCommand(opts))
 	return cmd
@@ -26,7 +27,9 @@ func newValidateNetworkCommand(opts *Options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "network <path>",
 		Short: "Validate all data tables in a network",
-		Args:  cobra.ExactArgs(1),
+		Example: "  bkn validate network examples/risk/index.bkn\n" +
+			"  bkn validate network examples/connection-demo/index.bkn --format json",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network, err := bkn.LoadNetwork(args[0])
 			if err != nil {
@@ -54,7 +57,9 @@ func newValidateTableCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "table <data-file>",
 		Short: "Validate a single data file using a network schema",
-		Args:  cobra.ExactArgs(1),
+		Example: "  bkn validate table examples/risk/data/risk_scenario.bknd --network examples/risk/index.bkn\n" +
+			"  bkn validate table data/object.bknd --network index.bkn --format json",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(networkPath) == "" {
 				return fmt.Errorf("--network is required")
