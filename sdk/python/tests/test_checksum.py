@@ -117,6 +117,29 @@ def test_checksum_normalization_bknd_whitespace():
         assert base_hash == hash2, f"checksum changed with bknd whitespace: {base_hash} vs {hash2}"
 
 
+def test_checksum_normalization_bknd_column_order():
+    """Reordered bknd columns with matching values should produce the same checksum."""
+    from bkn import generate_checksum_file
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        base_bknd = "---\ntype: data\nobject: x\n---\n\n## Data\n\n| a | b |\n|---|---|\n| 1 | 2 |\n"
+        (root / "data.bknd").write_text(base_bknd, encoding="utf-8")
+        content = generate_checksum_file(root)
+        base_hash = _extract_hash(content, "data.bknd")
+
+        reordered_bknd = (
+            "---\ntype: data\nobject: x\n---\n\n## Data\n\n| b | a |\n|---|---|\n| 2 | 1 |\n"
+        )
+        (root / "data.bknd").write_text(reordered_bknd, encoding="utf-8")
+        content2 = generate_checksum_file(root)
+        hash2 = _extract_hash(content2, "data.bknd")
+
+        assert base_hash == hash2, (
+            f"checksum changed with bknd column reordering: {base_hash} vs {hash2}"
+        )
+
+
 def test_generate_checksum_fails_when_network_validation_fails():
     from bkn import generate_checksum_file
 

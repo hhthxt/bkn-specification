@@ -84,16 +84,20 @@ def compute_file_checksum(path: Path, root: Path) -> str | None:
                     r = r[:-1]
                 return [c.strip() for c in r.split("|")]
             headers = split_row(table_lines[0])
+            sorted_headers = sorted(headers)
             sep = table_lines[1]
             data_start = 2 if re.match(r"^\|?[\s:*-]+(\|[\s:*-]+)*\|?$", sep.strip()) else 1
             rows = []
             for line in table_lines[data_start:]:
                 cells = split_row(line)
                 row_dict = {h: cells[i] if i < len(cells) else "" for i, h in enumerate(headers)}
-                rows.append(tuple(row_dict.get(h, "") for h in sorted(headers)))
+                rows.append(tuple(row_dict.get(h, "") for h in sorted_headers))
             rows.sort()
-            # Serialize back
-            out_lines = ["| " + " | ".join(headers) + " |", "|" + "|".join(["---"] * len(headers)) + "|"]
+            # Serialize back using sorted header order so cells stay aligned.
+            out_lines = [
+                "| " + " | ".join(sorted_headers) + " |",
+                "|" + "|".join(["---"] * len(sorted_headers)) + "|",
+            ]
             for r in rows:
                 out_lines.append("| " + " | ".join(str(v) for v in r) + " |")
             canonical = "\n".join(out_lines)

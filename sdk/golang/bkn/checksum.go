@@ -13,8 +13,9 @@ import (
 
 const checksumFilename = "checksum.txt"
 
-// GenerateChecksumFile generates checksum.txt in the given business directory.
-// Covers .bkn, .bknd, and SKILL.md. Returns the content written.
+// GenerateChecksumFile validates BKN inputs, then generates checksum.txt in
+// the given business directory. Covers .bkn, .bknd, and SKILL.md. Returns the
+// content written.
 func GenerateChecksumFile(root string) (string, error) {
 	abs, err := filepath.Abs(root)
 	if err != nil {
@@ -26,6 +27,9 @@ func GenerateChecksumFile(root string) (string, error) {
 	}
 	if !info.IsDir() {
 		return "", fmt.Errorf("not a directory: %s", abs)
+	}
+	if err := validateChecksumInputs(abs); err != nil {
+		return "", err
 	}
 
 	var entries []string
@@ -81,6 +85,54 @@ func GenerateChecksumFile(root string) (string, error) {
 		return "", err
 	}
 	return content, nil
+}
+
+func validateChecksumInputs(root string) error {
+	var networkPaths []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext != ".bkn" && ext != ".bknd" && ext != ".md" {
+			return nil
+		}
+
+		doc, loadErr := Load(path)
+		if loadErr != nil {
+			rel, _ := filepath.Rel(root, path)
+			return fmt.Errorf("checksum validation failed for %s: %w", filepath.ToSlash(rel), loadErr)
+		}
+		if strings.EqualFold(strings.TrimSpace(doc.Frontmatter.Type), "network") {
+			networkPaths = append(networkPaths, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, networkPath := range networkPaths {
+		network, loadErr := LoadNetwork(networkPath)
+		if loadErr != nil {
+			rel, _ := filepath.Rel(root, networkPath)
+			return fmt.Errorf("checksum validation failed for network %s: %w", filepath.ToSlash(rel), loadErr)
+		}
+		result := ValidateNetworkData(network)
+		if result.OK() {
+			continue
+		}
+		rel, _ := filepath.Rel(root, networkPath)
+		return fmt.Errorf(
+			"checksum validation failed for network %s: %s",
+			filepath.ToSlash(rel),
+			result.Errors[0].String(),
+		)
+	}
+	return nil
 }
 
 // VerifyChecksumFile verifies checksum.txt against actual files.
@@ -267,7 +319,7 @@ func canonicalizeBkndTable(body string) string {
 	var out []string
 	// Use sorted header order and canonical separator for output
 	headerLine := "| " + strings.Join(sortedHeaders, " | ") + " |"
-	sepLine := "|" + strings.Repeat("|---|", len(sortedHeaders))
+	sepLine := strings.Repeat("|---", len(sortedHeaders)) + "|"
 	out = append(out, headerLine, sepLine)
 	for _, row := range rows {
 		out = append(out, "| "+strings.Join(row, " | ")+" |")
@@ -277,12 +329,8 @@ func canonicalizeBkndTable(body string) string {
 
 func splitTableRow(row string) []string {
 	row = strings.TrimSpace(row)
-	if strings.HasPrefix(row, "|") {
-		row = row[1:]
-	}
-	if strings.HasSuffix(row, "|") {
-		row = row[:len(row)-1]
-	}
+	row = strings.TrimPrefix(row, "|")
+	row = strings.TrimSuffix(row, "|")
 	parts := strings.Split(row, "|")
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])

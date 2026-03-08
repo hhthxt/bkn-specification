@@ -7,6 +7,20 @@ import (
 	"testing"
 )
 
+func TestCanonicalizeBkndTable_UsesValidSeparatorLine(t *testing.T) {
+	canonical := canonicalizeBkndTable(`| b | a |
+|---|---|
+| 2 | 1 |`)
+
+	lines := strings.Split(canonical, "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected canonical table output, got %q", canonical)
+	}
+	if lines[1] != "|---|---|" {
+		t.Fatalf("expected valid separator line, got %q", lines[1])
+	}
+}
+
 func TestGenerateChecksumFile_ValidationFails(t *testing.T) {
 	root := t.TempDir()
 	if err := os.Mkdir(filepath.Join(root, "objects"), 0755); err != nil {
