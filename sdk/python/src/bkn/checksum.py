@@ -7,7 +7,9 @@ import re
 from pathlib import Path
 from datetime import datetime, timezone
 
+from bkn.loader import load, load_network
 from bkn.parser import _split_frontmatter
+from bkn.validator import validate_network_data
 
 
 CHECKSUM_FILENAME = "checksum.txt"
@@ -122,7 +124,7 @@ def collect_checksum_files(root: Path) -> list[Path]:
 
 def generate_checksum_file(root: str | Path) -> str:
     """
-    Generate checksum.txt in the given business directory.
+    Validate BKN inputs, then generate checksum.txt in the given business directory.
 
     Covers .bkn, .bknd, and SKILL.md. Writes checksum.txt at root.
     Returns the content written.
@@ -130,6 +132,7 @@ def generate_checksum_file(root: str | Path) -> str:
     root = Path(root).resolve()
     if not root.is_dir():
         raise ValueError(f"Not a directory: {root}")
+    _validate_checksum_inputs(root)
 
     entries: list[str] = []
     for p in collect_checksum_files(root):
@@ -154,6 +157,34 @@ def generate_checksum_file(root: str | Path) -> str:
     out_path = root / CHECKSUM_FILENAME
     out_path.write_text(content, encoding="utf-8")
     return content
+
+
+def _validate_checksum_inputs(root: Path) -> None:
+    network_paths: list[Path] = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in {".bkn", ".bknd", ".md"}:
+            continue
+        try:
+            doc = load(path)
+        except Exception as exc:
+            rel = path.relative_to(root).as_posix()
+            raise ValueError(f"checksum validation failed for {rel}: {exc}") from exc
+        if doc.frontmatter.type.strip().lower() == "network":
+            network_paths.append(path)
+
+    for path in network_paths:
+        rel = path.relative_to(root).as_posix()
+        try:
+            network = load_network(path)
+        except Exception as exc:
+            raise ValueError(f"checksum validation failed for network {rel}: {exc}") from exc
+        result = validate_network_data(network)
+        if not result.ok:
+            raise ValueError(
+                f"checksum validation failed for network {rel}: {result.errors[0]}"
+            )
 
 
 def verify_checksum_file(root: str | Path) -> tuple[bool, list[str]]:

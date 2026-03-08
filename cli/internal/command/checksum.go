@@ -32,7 +32,7 @@ func newChecksumCommand(opts *Options) *cobra.Command {
 func newChecksumGenerateCommand(opts *Options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "generate <dir>",
-		Short: "Generate checksum.txt for a business directory",
+		Short: "Validate and generate checksum.txt for a business directory",
 		Example: "  bkn checksum generate examples/connection-demo\n" +
 			"  bkn checksum generate .",
 		Args: cobra.ExactArgs(1),

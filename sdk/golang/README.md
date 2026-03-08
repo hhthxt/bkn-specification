@@ -143,7 +143,7 @@ func main() {
 | `EvaluateRiskWith(evaluator, network, actionID, context, riskRules)` | Invoke custom evaluator, return RiskResult |
 | `PlanDelete(network, targets, dryRun)` | Validate delete targets, return DeletePlan |
 | `NetworkWithout(network, targets)` | Return new network with targets removed (in-memory) |
-| `GenerateChecksumFile(root)` | Generate checksum.txt in directory |
+| `GenerateChecksumFile(root)` | Validate BKN inputs, then generate checksum.txt in directory |
 | `VerifyChecksumFile(root)` | Verify checksum.txt, return (ok, errors) |
 
 ## Tests

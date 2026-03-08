@@ -117,6 +117,71 @@ def test_checksum_normalization_bknd_whitespace():
         assert base_hash == hash2, f"checksum changed with bknd whitespace: {base_hash} vs {hash2}"
 
 
+def test_generate_checksum_fails_when_network_validation_fails():
+    from bkn import generate_checksum_file
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "objects").mkdir()
+        (root / "connections").mkdir()
+        (root / "data").mkdir()
+        (root / "index.bkn").write_text(
+            "---\n"
+            "type: network\n"
+            "id: demo\n"
+            "name: Demo\n"
+            "includes:\n"
+            "  - connections/erp.bkn\n"
+            "  - objects/pod.bkn\n"
+            "  - data/pod.bknd\n"
+            "---\n\n"
+            "# Demo\n",
+            encoding="utf-8",
+        )
+        (root / "objects" / "pod.bkn").write_text(
+            "---\n"
+            "type: object\n"
+            "id: pod\n"
+            "network: demo\n"
+            "---\n\n"
+            "## Object: pod\n\n"
+            "### Data Source\n\n"
+            "| Type | ID | Name |\n"
+            "|------|----|------|\n"
+            "| connection | erp | ERP |\n\n"
+            "### Data Properties\n\n"
+            "| Property | Primary Key |\n"
+            "|----------|-------------|\n"
+            "| id | YES |\n",
+            encoding="utf-8",
+        )
+        (root / "connections" / "erp.bkn").write_text(
+            "---\n"
+            "type: connection\n"
+            "id: erp\n"
+            "network: demo\n"
+            "---\n\n"
+            "## Connection: erp\n\n"
+            "**ERP**\n",
+            encoding="utf-8",
+        )
+        (root / "data" / "pod.bknd").write_text(
+            "---\n"
+            "type: data\n"
+            "object: pod\n"
+            "---\n\n"
+            "## Data\n\n"
+            "| id |\n"
+            "|----|\n"
+            "| pod-1 |\n",
+            encoding="utf-8",
+        )
+
+        with pytest.raises(ValueError, match="checksum validation failed"):
+            generate_checksum_file(root)
+        assert not (root / "checksum.txt").exists()
+
+
 def _extract_hash(content: str, filename: str) -> str | None:
     for line in content.splitlines():
         if filename in line and "  " in line:

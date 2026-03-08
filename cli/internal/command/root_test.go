@@ -215,6 +215,91 @@ network: demo
 	}
 }
 
+func TestChecksumGenerateFailsOnInvalidNetwork(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "objects"), 0755); err != nil {
+		t.Fatalf("mkdir objects: %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "connections"), 0755); err != nil {
+		t.Fatalf("mkdir connections: %v", err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "data"), 0755); err != nil {
+		t.Fatalf("mkdir data: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "index.bkn"), []byte(`---
+type: network
+id: demo
+name: Demo
+includes:
+  - connections/erp.bkn
+  - objects/pod.bkn
+  - data/pod.bknd
+---
+
+# Demo
+`), 0644); err != nil {
+		t.Fatalf("write index: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "objects", "pod.bkn"), []byte(`---
+type: object
+id: pod
+network: demo
+---
+
+## Object: pod
+
+### Data Source
+
+| Type | ID | Name |
+|------|----|------|
+| connection | erp | ERP |
+
+### Data Properties
+
+| Property | Primary Key |
+|----------|-------------|
+| id | YES |
+`), 0644); err != nil {
+		t.Fatalf("write object: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "connections", "erp.bkn"), []byte(`---
+type: connection
+id: erp
+network: demo
+---
+
+## Connection: erp
+
+**ERP**
+`), 0644); err != nil {
+		t.Fatalf("write connection: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "data", "pod.bknd"), []byte(`---
+type: data
+object: pod
+---
+
+## Data
+
+| id |
+|----|
+| pod-1 |
+`), 0644); err != nil {
+		t.Fatalf("write data: %v", err)
+	}
+
+	out, err := executeCommand(t, "checksum", "generate", dir)
+	if err == nil {
+		t.Fatalf("expected checksum generate to fail, output=%q", out)
+	}
+	if !strings.Contains(err.Error(), "checksum validation failed") {
+		t.Fatalf("expected validation failure, got err=%q output=%q", err.Error(), out)
+	}
+	if _, statErr := os.Stat(filepath.Join(dir, "checksum.txt")); !os.IsNotExist(statErr) {
+		t.Fatalf("expected checksum.txt not to be written, got %v", statErr)
+	}
+}
+
 func TestDataToBkndJSON(t *testing.T) {
 	rowsPath := filepath.Join(t.TempDir(), "rows.json")
 	if err := os.WriteFile(rowsPath, []byte(`[{"id":"1","name":"pod-a"}]`), 0644); err != nil {

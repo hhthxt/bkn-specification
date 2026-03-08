@@ -174,7 +174,7 @@ Targets use `type:id` syntax. Supported types are:
 
 ### Checksum
 
-Generate `checksum.txt` for a business directory:
+Generate `checksum.txt` for a business directory. The command validates BKN inputs first and refuses to write `checksum.txt` if the directory is invalid:
 
 ```bash
 go run ./cmd/bkn checksum generate ../examples/risk
@@ -194,10 +194,11 @@ go run ./cmd/bkn checksum verify ../examples/risk --format json
 
 Typical test flow:
 
-1. Generate the checksum file.
-2. Verify it immediately.
-3. Modify a `.bkn` or `.bknd` file.
-4. Verify again to confirm mismatch detection.
+1. Fix any validation errors until `bkn validate network` passes.
+2. Generate the checksum file.
+3. Verify it immediately.
+4. Modify a `.bkn` or `.bknd` file.
+5. Verify again to confirm mismatch detection.
 
 ## Help
 

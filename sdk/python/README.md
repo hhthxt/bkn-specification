@@ -249,7 +249,7 @@ print(result.risk_level) # 5
 | `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes and validates shared `connection` references |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
-| `bkn.checksum` | Checksum: generate_checksum_file(), verify_checksum_file() |
+| `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes checksum.txt; verify_checksum_file() checks it |
 | `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
 | `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |
 
