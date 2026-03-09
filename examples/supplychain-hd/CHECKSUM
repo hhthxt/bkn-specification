@@ -1,0 +1,30 @@
+# BKN Directory Checksum
+# generated: 2026-03-09T11:43:17Z
+SKILL.md  sha256:8fb33ca3f05fcedca5114fd6b3b10c95
+network:supplychain  sha256:95aa424c43b10ee29301e784f53ba970
+object_type:bom  sha256:5620eef7229ccd474b494624ae3cdb74
+object_type:forecast  sha256:9e1b8744743ef3c3cd1bf963e642d5e9
+object_type:inventory  sha256:f8c06e91fc81823cc5a7c409aa7360d3
+object_type:material  sha256:5f2de5e359a317ac2ebf5014c0c6740c
+object_type:mps  sha256:4c4fa7560f3ccb9a885793b88d81fee1
+object_type:mrp  sha256:2b81e7d0a49445083572ccdb7973fe87
+object_type:po  sha256:e3049460e942f094281cb9518472d8bc
+object_type:pp  sha256:3e5d8e5b3a83b90e2ed15466dfa0faf5
+object_type:pr  sha256:550ba6d2ade114846e7f71e204d9834b
+object_type:product  sha256:550ba6d2ade114846e7f71e204d9834b
+object_type:salesorder  sha256:6417d2ffa65c2ac63508eaba3249266e
+object_type:supplier  sha256:79a604e08c0ed9c16ce592ca13780972
+relation_type:bom2material  sha256:220a7441e19e20948fe8ebc65512a3d9
+relation_type:demand2pp  sha256:a3a1480d83c1b81ac6f163593fa9dad0
+relation_type:material2inventory  sha256:cbb583b18a9a0e342843c3fc4fbe7de0
+relation_type:material2pr  sha256:4a7e7b262d58ed9117da4a40dea4f3e0
+relation_type:mrp2material  sha256:4a1728c3957b6cee90c02e8aabb76d0a
+relation_type:po2material  sha256:6dc66de80cf0ce004d5e3d9959c8383d
+relation_type:po2supplier  sha256:731f43cfe67bbf2e8055023bbb0f00e7
+relation_type:pp2mps  sha256:5fdbdcb34a69d7b41d6716255edf326f
+relation_type:pp2mrp  sha256:22cce6002267888bc5ccc4ffbe9a7a93
+relation_type:pp2product  sha256:0f2a56a0d346616d21432333b8faac28
+relation_type:pr2po  sha256:c6ad6de518131033109a31ba7fc859c0
+relation_type:product2bom  sha256:82ed3b51a9e5ec4203d2e033a3c822df
+relation_type:product2inventory  sha256:4864c4f9dcd516df558a6264342684d4
+relation_type:salesorder2product  sha256:9359d7e39652dce6defb8505786d0431

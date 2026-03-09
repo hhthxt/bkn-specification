@@ -16,16 +16,15 @@ import (
 // Supported file extensions for BKN content. .md is allowed as a carrier;
 // content must still satisfy BKN frontmatter/type/structure requirements.
 var supportedExtensions = map[string]bool{
-	".bkn": true, ".bknd": true, ".md": true,
+	".bkn": true, ".md": true,
 }
 
-// Root file discovery order: network.bkn > network.md > index.bkn > index.md
-var rootCandidateNames = []string{"network.bkn", "network.md", "index.bkn", "index.md"}
+// Root file discovery: network.bkn
+const rootCandidateName = "network.bkn"
 
 // LoadNetwork loads a network file and recursively resolves its includes.
-// Supported extensions: .bkn, .bknd, .md. Root file should be type: network.
-// When rootPath is a directory, the root file is discovered automatically
-// (network.bkn > network.md > index.bkn > index.md).
+// Supported extensions: .bkn, .md. Root file should be type: network.
+// When rootPath is a directory, the root file is discovered automatically (network.bkn).
 // If the root has no includes, same-directory BKN files are loaded implicitly.
 // Otherwise only files listed in frontmatter includes are loaded.
 func LoadNetwork(rootPath string) (*BknNetwork, error) {
@@ -114,14 +113,12 @@ func DiscoverRootFile(directory string) (string, error) {
 func DiscoverRootFileWithFS(fsys FileSystem, directory string) (string, error) {
 	abs := fsys.Abs(directory)
 
-	// 1. Check named candidates in order
-	for _, name := range rootCandidateNames {
-		candidate := fsys.Join(abs, name)
-		if _, err := fsys.Stat(candidate); err == nil {
-			ext := fsys.Ext(candidate)
-			if supportedExtensions[ext] {
-				return candidate, nil
-			}
+	// 1. Check named candidate
+	candidate := fsys.Join(abs, rootCandidateName)
+	if _, err := fsys.Stat(candidate); err == nil {
+		ext := fsys.Ext(candidate)
+		if supportedExtensions[ext] {
+			return candidate, nil
 		}
 	}
 
@@ -161,9 +158,9 @@ func DiscoverRootFileWithFS(fsys FileSystem, directory string) (string, error) {
 		for i, p := range networkFiles {
 			names[i] = fsys.Base(p)
 		}
-		return "", fmt.Errorf("multiple network roots in %s: %v; use network.bkn or index.bkn as the single root", abs, names)
+		return "", fmt.Errorf("multiple network roots in %s: %v; use %s as the single root", abs, names, rootCandidateName)
 	}
-	return "", fmt.Errorf("no root network file found in %s; expected one of: %s or a single type: network file", abs, strings.Join(rootCandidateNames, ", "))
+	return "", fmt.Errorf("no root network file found in %s; expected %s or a single type: network file", abs, rootCandidateName)
 }
 
 func collectSameDirBknFiles(directory, rootPath string) ([]string, error) {
@@ -177,11 +174,9 @@ func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) (
 	rootName := fsys.Base(absRoot)
 
 	excludeNames := map[string]bool{rootName: true}
-	for _, name := range rootCandidateNames {
-		candidate := fsys.Join(abs, name)
-		if _, err := fsys.Stat(candidate); err == nil {
-			excludeNames[name] = true
-		}
+	candidate := fsys.Join(abs, rootCandidateName)
+	if _, err := fsys.Stat(candidate); err == nil {
+		excludeNames[rootCandidateName] = true
 	}
 
 	var result []string
@@ -217,13 +212,13 @@ func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) (
 func checkExtension(path string) error {
 	ext := strings.ToLower(filepath.Ext(path))
 	if !supportedExtensions[ext] {
-		return fmt.Errorf("unsupported file extension: %q; BKN supports: .bkn, .bknd, .md", ext)
+		return fmt.Errorf("unsupported file extension: %q; BKN supports: .bkn, .md", ext)
 	}
 	return nil
 }
 
-// Load loads and parses a single .bkn/.bknd/.md file.
-// Supported extensions: .bkn, .bknd, .md. Content must satisfy BKN
+// Load loads and parses a single .bkn/.md file.
+// Supported extensions: .bkn, .md. Content must satisfy BKN
 // frontmatter, type, and structure requirements regardless of extension.
 func Load(path string) (*BknDocument, error) {
 	fsys := NewOSFileSystem()
@@ -281,18 +276,7 @@ func resolveIncludesWithFS(fsys FileSystem, doc *BknDocument, baseDir string, lo
 }
 
 func validateNetworkReferences(network *BknNetwork) error {
-	for _, obj := range network.AllObjects() {
-		if obj.DataSource == nil {
-			continue
-		}
-		if strings.ToLower(strings.TrimSpace(obj.DataSource.Type)) != "connection" {
-			continue
-		}
-		connectionID := strings.TrimSpace(obj.DataSource.ID)
-		if connectionID == "" || network.GetConnection(connectionID) == nil {
-			return fmt.Errorf("object %q references missing connection %q", obj.ID, connectionID)
-		}
-	}
+	// Connection validation removed as Connection type is no longer supported
 	return nil
 }
 

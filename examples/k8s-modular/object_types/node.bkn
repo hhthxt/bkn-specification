@@ -1,0 +1,50 @@
+---
+type: object_type
+id: node
+name: Node节点
+version: 1.0.0
+network: k8s-modular
+tags: [拓扑架构, 基础设施, Kubernetes]
+---
+
+## Object: node
+
+Kubernetes 集群中的工作节点，承载 Pod 运行。
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380disg | node_info_view |
+
+### Data Properties
+
+| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|-------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | 主键ID | YES | | YES |
+| node_name | 节点名称 | VARCHAR | 节点名称 | | YES | YES |
+| node_status | 节点状态 | VARCHAR | 节点状态 (Ready/NotReady) | | | YES |
+| node_cpu_capacity | CPU容量 | VARCHAR | CPU总容量（核心数） | | | |
+| node_memory_capacity | 内存容量 | VARCHAR | 内存总容量 | | | |
+| node_cpu_allocatable | 可分配CPU | VARCHAR | 可分配的CPU（核心数） | | | |
+| node_memory_allocatable | 可分配内存 | VARCHAR | 可分配的内存 | | | |
+| node_kubelet_version | Kubelet版本 | VARCHAR | Kubelet版本 | | | |
+| node_os_image | 操作系统 | VARCHAR | 操作系统镜像 | | | |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| node_status | 节点状态 | | in(Ready,NotReady,Unknown) | Ready/NotReady/Unknown |
+
+### Business Semantics
+
+Node 是集群的计算资源单元，可以是物理机或虚拟机。
+
+#### 常见状态
+
+| 状态 | 说明 |
+|------|------|
+| Ready | 节点健康，可调度 |
+| NotReady | 节点异常，不可调度 |
+| Unknown | 无法获取状态 |

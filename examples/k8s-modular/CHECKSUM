@@ -1,0 +1,11 @@
+# BKN Directory Checksum
+# generated: 2026-03-09T11:43:07Z
+SKILL.md  sha256:f69221b66887a8a14a36465d4515c79d
+action_type:cordon_node  sha256:5e006cf41809cab40308f713a0e469c9
+action_type:restart_pod  sha256:1c1c1ec4981de7c94f6b8ed90f856e47
+network:k8s-modular  sha256:c578f952d33decbbe63ee193da669326
+object_type:node  sha256:886fdc2602339828fef661ee9717a7bf
+object_type:pod  sha256:a7a3a2759591bff33d8ab15e3d4607be
+object_type:service  sha256:cfbc7814d64e713a1f6e5e60d45c3468
+relation_type:pod_belongs_node  sha256:e81bc239dc26199e2a47148cc070f525
+relation_type:service_routes_pod  sha256:cc16ef4790b2aaf55cdf24247dc2d065

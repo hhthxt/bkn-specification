@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-const checksumFilename = "checksum.txt"
+const checksumFilename = "CHECKSUM"
 
-// GenerateChecksumFile validates BKN inputs, then generates checksum.txt in
-// the given business directory. Covers .bkn, .bknd, and SKILL.md. Returns the
+// GenerateChecksumFile validates BKN inputs, then generates CHECKSUM in
+// the given business directory. Covers .bkn and SKILL.md. Returns the
 // content written.
 func GenerateChecksumFile(root string) (string, error) {
 	abs, err := filepath.Abs(root)
@@ -45,16 +45,14 @@ func GenerateChecksumFile(root string) (string, error) {
 		name := filepath.Base(path)
 		ext := strings.ToLower(filepath.Ext(path))
 
-		var line string
 		if name == "SKILL.md" {
-			line = computeSkillChecksum(path, rel)
+			line := computeSkillChecksum(path, rel)
+			if line != "" {
+				entries = append(entries, line)
+			}
 		} else if ext == ".bkn" {
-			line = computeBknChecksum(path, rel)
-		} else if ext == ".bknd" {
-			line = computeBkndChecksum(path, rel)
-		}
-		if line != "" {
-			entries = append(entries, line)
+			lines := computeBknChecksum(path)
+			entries = append(entries, lines...)
 		}
 		return nil
 	})
@@ -63,22 +61,13 @@ func GenerateChecksumFile(root string) (string, error) {
 	}
 	sort.Strings(entries)
 
-	concat := strings.Join(entries, "\n") + "\n"
-	if len(entries) == 0 {
-		concat = ""
-	}
-	aggHash := sha256.Sum256([]byte(concat))
-	aggLine := "sha256:" + hex.EncodeToString(aggHash[:]) + "  *"
-
 	now := time.Now().UTC().Format("2006-01-02T15:04:05Z07:00")
 	lines := []string{
 		"# BKN Directory Checksum",
 		"# generated: " + now,
-		aggLine,
-		"",
 	}
 	lines = append(lines, entries...)
-	content := strings.Join(lines, "\n")
+	content := strings.Join(lines, "\n") + "\n"
 
 	outPath := filepath.Join(abs, checksumFilename)
 	if err := os.WriteFile(outPath, []byte(content), 0644); err != nil {
@@ -96,8 +85,9 @@ func validateChecksumInputs(root string) error {
 		if info.IsDir() {
 			return nil
 		}
+		// Only validate .bkn files, not .md files (SKILL.md is not a BKN file)
 		ext := strings.ToLower(filepath.Ext(path))
-		if ext != ".bkn" && ext != ".bknd" && ext != ".md" {
+		if ext != ".bkn" {
 			return nil
 		}
 
@@ -139,23 +129,8 @@ func validateChecksumInputs(root string) error {
 		}
 	}
 
-	for _, rootPath := range unique {
-		rel, _ := filepath.Rel(root, rootPath)
-		rel = filepath.ToSlash(rel)
-		network, loadErr := LoadNetwork(rootPath)
-		if loadErr != nil {
-			return fmt.Errorf("checksum validation failed for network %s: %w", rel, loadErr)
-		}
-		result := ValidateNetworkData(network)
-		if result.OK() {
-			continue
-		}
-		return fmt.Errorf(
-			"checksum validation failed for network %s: %s",
-			rel,
-			result.Errors[0].String(),
-		)
-	}
+	// Network data validation removed - .bknd format no longer supported
+	_ = unique
 	return nil
 }
 
@@ -178,63 +153,52 @@ func VerifyChecksumFile(root string) (bool, []string) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
+		// Parse format: definition_type:id  sha256:hash
 		parts := strings.SplitN(line, "  ", 2)
 		if len(parts) == 2 {
-			declared[strings.TrimSpace(parts[1])] = strings.TrimSpace(parts[0])
+			declared[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
 		}
 	}
 
 	var errors []string
-	// Collect and verify each file
+	// Collect and verify each definition
 	var actualEntries []string
 	filepath.Walk(abs, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || filepath.Base(path) == checksumFilename {
 			return nil
 		}
-		rel, _ := filepath.Rel(abs, path)
-		rel = filepath.ToSlash(rel)
 		name := filepath.Base(path)
 		ext := strings.ToLower(filepath.Ext(path))
 
-		var line string
 		if name == "SKILL.md" {
-			line = computeSkillChecksum(path, rel)
+			// SKILL.md is not a definition, skip in verification
+			return nil
 		} else if ext == ".bkn" {
-			line = computeBknChecksum(path, rel)
-		} else if ext == ".bknd" {
-			line = computeBkndChecksum(path, rel)
-		}
-		if line != "" {
-			actualEntries = append(actualEntries, line)
-			actualHash := strings.Split(line, "  ")[0]
-			if decl, ok := declared[rel]; ok {
-				if decl != actualHash {
-					errors = append(errors, "Mismatch: "+rel)
+			lines := computeBknChecksum(path)
+			for _, line := range lines {
+				actualEntries = append(actualEntries, line)
+				parts := strings.SplitN(line, "  ", 2)
+				if len(parts) == 2 {
+					defKey := strings.TrimSpace(parts[0])
+					actualHash := strings.TrimSpace(parts[1])
+					if decl, ok := declared[defKey]; ok {
+						if decl != actualHash {
+							errors = append(errors, "Mismatch: "+defKey)
+						}
+						delete(declared, defKey)
+					} else {
+						errors = append(errors, "Unexpected definition: "+defKey)
+					}
 				}
-				delete(declared, rel)
-			} else {
-				errors = append(errors, "Unexpected file: "+rel)
 			}
 		}
 		return nil
 	})
 
-	for rel := range declared {
-		if rel != "*" {
-			errors = append(errors, "Missing file: "+rel)
+	for defKey := range declared {
+		if defKey != "*" {
+			errors = append(errors, "Missing definition: "+defKey)
 		}
-	}
-
-	// Verify aggregate
-	sort.Strings(actualEntries)
-	concat := strings.Join(actualEntries, "\n") + "\n"
-	if len(actualEntries) == 0 {
-		concat = ""
-	}
-	aggHash := sha256.Sum256([]byte(concat))
-	expectedAgg := "sha256:" + hex.EncodeToString(aggHash[:])
-	if decl, ok := declared["*"]; ok && decl != expectedAgg {
-		errors = append(errors, "Aggregate checksum mismatch")
 	}
 
 	return len(errors) == 0, errors
@@ -247,30 +211,108 @@ func computeSkillChecksum(path, rel string) string {
 	}
 	norm := normalizeForChecksum(string(data))
 	h := sha256.Sum256([]byte(norm))
-	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
+	return rel + "  sha256:" + hex.EncodeToString(h[:16])
 }
 
-func computeBknChecksum(path, rel string) string {
+// computeBknChecksum computes checksums for all definitions in a .bkn file.
+// Returns multiple lines for files with multiple definitions.
+// Format: definition_type:definition_id  sha256:hash
+func computeBknChecksum(path string) []string {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return ""
+		return nil
 	}
-	_, body := splitFrontmatter(string(data))
-	norm := normalizeForChecksum(body)
-	h := sha256.Sum256([]byte(norm))
-	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
+	content := string(data)
+	fm, err := ParseFrontmatter(content)
+	if err != nil {
+		return nil
+	}
+
+	var results []string
+	typeVal := strings.TrimSpace(fm.Type)
+
+	// For network type, use network:id format
+	if typeVal == "network" {
+		_, body := splitFrontmatter(content)
+		norm := normalizeForChecksum(body)
+		h := sha256.Sum256([]byte(norm))
+		id := fm.ID
+		if id == "" {
+			id = "network"
+		}
+		results = append(results, "network:"+id+"  sha256:"+hex.EncodeToString(h[:16]))
+		return results
+	}
+
+	// For definition types, parse body and compute per definition
+	objects, relations, actions := ParseBody(content)
+
+	for _, obj := range objects {
+		_, body := splitFrontmatter(content)
+		// Extract just this object's definition section
+		objSection := extractDefinitionSection(body, "Object", obj.ID)
+		norm := normalizeForChecksum(objSection)
+		h := sha256.Sum256([]byte(norm))
+		results = append(results, "object_type:"+obj.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+	}
+
+	for _, rel := range relations {
+		_, body := splitFrontmatter(content)
+		relSection := extractDefinitionSection(body, "Relation", rel.ID)
+		norm := normalizeForChecksum(relSection)
+		h := sha256.Sum256([]byte(norm))
+		results = append(results, "relation_type:"+rel.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+	}
+
+	for _, act := range actions {
+		_, body := splitFrontmatter(content)
+		actSection := extractDefinitionSection(body, "Action", act.ID)
+		norm := normalizeForChecksum(actSection)
+		h := sha256.Sum256([]byte(norm))
+		results = append(results, "action_type:"+act.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+	}
+
+	return results
 }
 
-func computeBkndChecksum(path, rel string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
+// extractDefinitionSection extracts a specific definition section from body
+func extractDefinitionSection(body, defType, id string) string {
+	lines := strings.Split(body, "\n")
+	var result []string
+	inSection := false
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		// Check for section start: ## Object: id or ## Relation: id, etc.
+		if strings.HasPrefix(trimmed, "## ") {
+			if inSection {
+				// We were in a section, now found next section
+				break
+			}
+			// Check if this is our target section
+			prefix := "## " + defType + ": " + id
+			if strings.HasPrefix(trimmed, prefix) {
+				inSection = true
+				result = append(result, line)
+				continue
+			}
+		}
+
+		if inSection {
+			// Check for subsection (### or deeper)
+			if strings.HasPrefix(trimmed, "###") {
+				result = append(result, line)
+			} else if strings.HasPrefix(trimmed, "## ") {
+				// Next definition at same level
+				break
+			} else {
+				result = append(result, line)
+			}
+		}
 	}
-	_, body := splitFrontmatter(string(data))
-	// Parse table, sort rows, re-serialize for order-insensitive hash
-	canonical := canonicalizeBkndTable(strings.TrimSpace(body))
-	h := sha256.Sum256([]byte(normalizeForChecksum(canonical)))
-	return "sha256:" + hex.EncodeToString(h[:]) + "  " + rel
+
+	return strings.Join(result, "\n")
 }
 
 // normalizeForChecksum normalizes text before hashing so that blank lines,
@@ -288,76 +330,4 @@ func normalizeForChecksum(s string) string {
 		}
 	}
 	return strings.Join(out, "\n")
-}
-
-func canonicalizeBkndTable(body string) string {
-	lines := strings.Split(body, "\n")
-	var tableLines []string
-	for _, line := range lines {
-		s := strings.TrimSpace(line)
-		if strings.HasPrefix(s, "|") {
-			tableLines = append(tableLines, s)
-		} else if len(tableLines) > 0 {
-			break
-		}
-	}
-	if len(tableLines) < 2 {
-		return body
-	}
-	headers := splitTableRow(tableLines[0])
-	sortedHeaders := make([]string, len(headers))
-	copy(sortedHeaders, headers)
-	sort.Strings(sortedHeaders)
-
-	sep := strings.TrimSpace(tableLines[1])
-	dataStart := 2
-	if len(sep) < 2 || !strings.Contains(sep, "-") {
-		dataStart = 1
-	}
-	var rows [][]string
-	for _, line := range tableLines[dataStart:] {
-		cells := splitTableRow(line)
-		cellMap := make(map[string]string)
-		for i, h := range headers {
-			if i < len(cells) {
-				cellMap[h] = cells[i]
-			} else {
-				cellMap[h] = ""
-			}
-		}
-		row := make([]string, len(sortedHeaders))
-		for i, h := range sortedHeaders {
-			row[i] = cellMap[h]
-		}
-		rows = append(rows, row)
-	}
-	// Sort rows by all columns (order-insensitive)
-	sort.Slice(rows, func(i, j int) bool {
-		for k := 0; k < len(sortedHeaders); k++ {
-			if rows[i][k] != rows[j][k] {
-				return rows[i][k] < rows[j][k]
-			}
-		}
-		return false
-	})
-	var out []string
-	// Use sorted header order and canonical separator for output
-	headerLine := "| " + strings.Join(sortedHeaders, " | ") + " |"
-	sepLine := strings.Repeat("|---", len(sortedHeaders)) + "|"
-	out = append(out, headerLine, sepLine)
-	for _, row := range rows {
-		out = append(out, "| "+strings.Join(row, " | ")+" |")
-	}
-	return strings.Join(out, "\n")
-}
-
-func splitTableRow(row string) []string {
-	row = strings.TrimSpace(row)
-	row = strings.TrimPrefix(row, "|")
-	row = strings.TrimSuffix(row, "|")
-	parts := strings.Split(row, "|")
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	return parts
 }

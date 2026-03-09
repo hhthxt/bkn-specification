@@ -1,6 +1,6 @@
 package bkn
 
-// Frontmatter is YAML frontmatter metadata for a .bkn/.bknd file.
+// Frontmatter is YAML frontmatter metadata for a .bkn file.
 type Frontmatter struct {
 	Type             string   `yaml:"type"`
 	ID               string   `yaml:"id"`
@@ -27,21 +27,6 @@ type DataSource struct {
 	Type string
 	ID   string
 	Name string
-}
-
-// ConnectionConfig is a ### Connection table row (type: connection).
-type ConnectionConfig struct {
-	ConnType  string
-	Endpoint  string
-	SecretRef string
-}
-
-// Connection is a ## Connection: {id} block (optional capability).
-type Connection struct {
-	ID          string
-	Name        string
-	Description string
-	Config      *ConnectionConfig
 }
 
 // DataProperty is a ### Data Properties table row.
@@ -160,60 +145,14 @@ type Action struct {
 	Schedule             *Schedule
 	ScopeOfImpact        []map[string]string
 	ExecutionDescription string
-	Risk                 string // Runtime/computed; not read from BKN
 }
 
-// RiskScope is a ### Control Scope table row.
-type RiskScope struct {
-	ControlledObject string
-	ControlledAction string
-	RiskLevel        string
-}
-
-// RiskStrategy is a ### Control Strategy table row.
-type RiskStrategy struct {
-	Condition string
-	Strategy  string
-}
-
-// RiskPreCheck is a ### Pre-checks table row.
-type RiskPreCheck struct {
-	CheckItem   string
-	Type        string
-	Description string
-}
-
-// Risk is a ## Risk: {id} block.
-type Risk struct {
-	ID                string
-	Name              string
-	Description       string
-	ControlScope      []RiskScope
-	ControlStrategies []RiskStrategy
-	PreChecks         []RiskPreCheck
-	RollbackPlan      string
-	AuditRequirements string
-}
-
-// DataTable is a data table parsed from a .bknd (type: data) document.
-type DataTable struct {
-	ObjectOrRelation string
-	IsRelation       bool
-	Columns          []string
-	Rows             []map[string]string
-	SourcePath       string
-	Network          string
-}
-
-// BknDocument is a parsed .bkn/.bknd file: frontmatter + body definitions/data tables.
+// BknDocument is a parsed .bkn file: frontmatter + body definitions.
 type BknDocument struct {
 	Frontmatter Frontmatter
 	Objects     []BknObject
 	Relations   []Relation
 	Actions     []Action
-	Risks       []Risk
-	Connections []Connection
-	DataTables  []DataTable
 	SourcePath  string
 }
 
@@ -251,44 +190,4 @@ func (n *BknNetwork) AllActions() []Action {
 		out = append(out, doc.Actions...)
 	}
 	return out
-}
-
-// AllRisks returns all risks from root and included documents.
-func (n *BknNetwork) AllRisks() []Risk {
-	var out []Risk
-	out = append(out, n.Root.Risks...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Risks...)
-	}
-	return out
-}
-
-// AllDataTables returns all data tables from root and included documents.
-func (n *BknNetwork) AllDataTables() []DataTable {
-	var out []DataTable
-	out = append(out, n.Root.DataTables...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.DataTables...)
-	}
-	return out
-}
-
-// AllConnections returns all connections from root and included documents.
-func (n *BknNetwork) AllConnections() []Connection {
-	var out []Connection
-	out = append(out, n.Root.Connections...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Connections...)
-	}
-	return out
-}
-
-// GetConnection returns connection by id, or nil if not found.
-func (n *BknNetwork) GetConnection(connectionID string) *Connection {
-	for _, c := range n.AllConnections() {
-		if c.ID == connectionID {
-			return &c
-		}
-	}
-	return nil
 }
