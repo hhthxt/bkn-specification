@@ -36,12 +36,13 @@ for e in doc.objects:
 
 ### 2. Load a network (with includes)
 
-The root file references sub-files via `includes`; `load_network` resolves them recursively:
+The root file references sub-files via `includes`; `load_network` resolves them recursively. You can pass a **file path** or **directory**; for a directory, the root file is auto-discovered (network.bkn > network.md > index.bkn > index.md). If the root has no `includes`, same-directory BKN files are loaded implicitly.
 
 ```python
 from bkn import load_network
 
 network = load_network("examples/supplychain-hd/supplychain.bkn")
+# Or: network = load_network("examples/k8s-network")  # directory → discovers index.bkn
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
 print(len(network.all_objects))       # 12
@@ -246,7 +247,7 @@ print(result.risk_level) # 5
 |--------|-------------|
 | `bkn.models` | Dataclass models: BknDocument, BknObject, Relation, Action, Risk, Connection, DataProperty, PropertyOverride, etc. |
 | `bkn.parser` | Parsing: parse(), parse_frontmatter(), parse_body(); supports EN/CN table headers and `## Risk:` blocks |
-| `bkn.loader` | Loading: load(path), load_network(root_path); auto-resolves includes and validates shared `connection` references |
+| `bkn.loader` | Loading: load(path), load_network(path_or_dir); root discovery (network.bkn > index.bkn); auto-resolves includes; implicit same-dir when no includes |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
 | `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes checksum.txt; verify_checksum_file() checks it |

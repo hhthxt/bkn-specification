@@ -35,7 +35,7 @@ func newRiskEvalCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "eval",
 		Short: "Evaluate action risk using external rule data",
-		Example: "  bkn risk eval --network examples/risk/index.bkn --action restart_erp --context scenario_id=sec_t_01 --rules rules.json\n" +
+		Example: "  bkn risk eval --network examples/risk --action restart_erp --context scenario_id=sec_t_01 --rules rules.json\n" +
 			"  bkn risk eval --network examples/risk/index.bkn --action grant_root_admin --rules rules.json --format json",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -76,7 +76,7 @@ func newRiskEvalCommand(opts *Options) *cobra.Command {
 			return emit(cmd, opts.Format, text, payload)
 		},
 	}
-	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file")
+	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file or directory")
 	cmd.Flags().StringVar(&actionID, "action", "", "Action ID to evaluate")
 	cmd.Flags().StringVar(&rulesPath, "rules", "", "Path to a JSON rules array ('-' for stdin)")
 	cmd.Flags().StringArrayVar(&contextRaw, "context", nil, "Context key=value pairs (repeatable)")

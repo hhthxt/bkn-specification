@@ -115,20 +115,44 @@ func validateChecksumInputs(root string) error {
 		return err
 	}
 
-	for _, networkPath := range networkPaths {
-		network, loadErr := LoadNetwork(networkPath)
+	// Use root discovery per directory to avoid validating both network.bkn and
+	// index.bkn when both exist (network.bkn takes priority).
+	dirsWithNetworks := make(map[string]bool)
+	for _, p := range networkPaths {
+		dirsWithNetworks[filepath.Dir(p)] = true
+	}
+	var rootsToValidate []string
+	for d := range dirsWithNetworks {
+		rootPath, discoverErr := DiscoverRootFile(d)
+		if discoverErr != nil {
+			return fmt.Errorf("checksum validation failed: %w", discoverErr)
+		}
+		rootsToValidate = append(rootsToValidate, rootPath)
+	}
+	// Deduplicate
+	seen := make(map[string]bool)
+	var unique []string
+	for _, r := range rootsToValidate {
+		if !seen[r] {
+			seen[r] = true
+			unique = append(unique, r)
+		}
+	}
+
+	for _, rootPath := range unique {
+		rel, _ := filepath.Rel(root, rootPath)
+		rel = filepath.ToSlash(rel)
+		network, loadErr := LoadNetwork(rootPath)
 		if loadErr != nil {
-			rel, _ := filepath.Rel(root, networkPath)
-			return fmt.Errorf("checksum validation failed for network %s: %w", filepath.ToSlash(rel), loadErr)
+			return fmt.Errorf("checksum validation failed for network %s: %w", rel, loadErr)
 		}
 		result := ValidateNetworkData(network)
 		if result.OK() {
 			continue
 		}
-		rel, _ := filepath.Rel(root, networkPath)
 		return fmt.Errorf(
 			"checksum validation failed for network %s: %s",
-			filepath.ToSlash(rel),
+			rel,
 			result.Errors[0].String(),
 		)
 	}

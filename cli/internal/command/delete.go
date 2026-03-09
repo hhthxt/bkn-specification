@@ -37,7 +37,7 @@ func newDeletePlanCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "Plan deletion targets",
-		Example: "  bkn delete plan --network examples/k8s-modular/index.bkn --target object:pod\n" +
+		Example: "  bkn delete plan --network examples/k8s-modular --target object:pod\n" +
 			"  bkn delete plan --network index.bkn --target object:pod --target action:restart_pod --format json",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,7 @@ func newDeletePlanCommand(opts *Options) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file")
+	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file or directory")
 	cmd.Flags().StringArrayVar(&targetRaw, "target", nil, "Delete target in type:id form (repeatable)")
 	return cmd
 }
@@ -84,7 +84,7 @@ func newDeleteSimulateCommand(opts *Options) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "simulate",
 		Short: "Simulate deletion in memory",
-		Example: "  bkn delete simulate --network examples/k8s-modular/index.bkn --target object:pod\n" +
+		Example: "  bkn delete simulate --network examples/k8s-modular --target object:pod\n" +
 			"  bkn delete simulate --network index.bkn --target relation:pod_on_node --format json",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -134,7 +134,7 @@ func newDeleteSimulateCommand(opts *Options) *cobra.Command {
 			return emit(cmd, opts.Format, text, payload)
 		},
 	}
-	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file")
+	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file or directory")
 	cmd.Flags().StringArrayVar(&targetRaw, "target", nil, "Delete target in type:id form (repeatable)")
 	return cmd
 }

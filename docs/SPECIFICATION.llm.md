@@ -7,6 +7,12 @@
 - `.bkn` / `.bknd`：推荐扩展名
 - `.md`：兼容载体，可用 `.md` 保存；内容必须满足 BKN frontmatter、`type` 及结构约束，否则加载时报错
 
+## 根文件与目录加载
+
+- **根文件命名**：推荐 `network.bkn` 作为网络入口；`index.bkn` 兼容，优先级低于 `network.bkn`
+- **目录输入**：`validate network <dir>`、`load_network(dir)` 等支持传入目录，自动发现根文件（顺序：network.bkn > network.md > index.bkn > index.md）
+- **无 includes**：当根文件为 `type: network` 且未声明 `includes` 时，同目录下所有 BKN 文件视为同一网络输入；有 `includes` 则按 `includes` 加载
+
 ## 文件结构
 
 每个 BKN 文件（`.bkn` / `.bknd` / `.md`）由两部分组成：

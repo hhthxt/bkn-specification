@@ -838,3 +838,85 @@ func TestChecksumNormalization_BkndWhitespace(t *testing.T) {
 		t.Errorf("checksum changed with bknd whitespace only: %q vs %q", baseHash, hash2)
 	}
 }
+
+// --- Loader dir discovery tests ---
+
+func TestLoadNetwork_DirDiscoversRoot(t *testing.T) {
+	root := repoRoot(t)
+	dir := filepath.Join(root, "examples", "k8s-network")
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Skip("examples/k8s-network not found")
+		return
+	}
+	net, err := LoadNetwork(dir)
+	if err != nil {
+		t.Fatalf("load network dir: %v", err)
+	}
+	if net.Root.Frontmatter.ID != "k8s-network" {
+		t.Errorf("expected id k8s-network, got %q", net.Root.Frontmatter.ID)
+	}
+	if len(net.AllObjects()) < 3 {
+		t.Errorf("expected at least 3 objects, got %d", len(net.AllObjects()))
+	}
+}
+
+func TestDiscoverRootFile_NetworkBknPriority(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-root-discovery-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: net-priority\n---\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "index.bkn"), []byte("---\ntype: network\nid: index-priority\n---\n"), 0644)
+
+	root, err := DiscoverRootFile(dir)
+	if err != nil {
+		t.Fatalf("discover root: %v", err)
+	}
+	if filepath.Base(root) != "network.bkn" {
+		t.Errorf("expected network.bkn, got %s", filepath.Base(root))
+	}
+}
+
+func TestLoadNetwork_ImplicitSameDir(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-implicit-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: implicit-demo\n---\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "objects.bkn"), []byte("---\ntype: fragment\nid: obj1\n---\n## Object: obj1\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "relations.bkn"), []byte("---\ntype: fragment\nid: rel1\n---\n## Relation: rel1\n"), 0644)
+
+	net, err := LoadNetwork(dir)
+	if err != nil {
+		t.Fatalf("load network: %v", err)
+	}
+	if len(net.AllObjects()) != 1 {
+		t.Errorf("expected 1 object, got %d", len(net.AllObjects()))
+	}
+	if len(net.AllRelations()) != 1 {
+		t.Errorf("expected 1 relation, got %d", len(net.AllRelations()))
+	}
+}
+
+func TestDiscoverRootFile_MultipleNetworksFails(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-multi-root-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "a.bkn"), []byte("---\ntype: network\nid: a\n---\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "b.bkn"), []byte("---\ntype: network\nid: b\n---\n"), 0644)
+
+	_, err = DiscoverRootFile(dir)
+	if err == nil {
+		t.Error("expected error for multiple network roots")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "multiple network roots") {
+		t.Errorf("expected 'multiple network roots' in error, got %q", err.Error())
+	}
+}

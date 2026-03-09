@@ -12,7 +12,7 @@ Implemented. The Go SDK supports:
 
 - Parse `.bkn`, `.bknd`, and `.md` files (YAML frontmatter + Markdown body). `.md` is a compatible carrier; content must satisfy BKN frontmatter/type/structure. Recommended: schema `.bkn`, data `.bknd`.
 - Structured models for `BknObject`, `Relation`, `Action`, `Risk`, `Connection`, and `DataTable`
-- Network loading with `includes` resolution (cycle detection)
+- Network loading: directory or file input; root discovery (network.bkn > network.md > index.bkn > index.md); `includes` resolution (cycle detection); implicit same-dir when no includes
 - Network reference validation for shared `connection` data sources
 - Data validation against object schema (not_null, regex, in, range, type checks, PK uniqueness)
 - `.bknd` writability guard for object schemas backed by `data_view` or `connection`
@@ -78,8 +78,9 @@ import (
 )
 
 func main() {
-    // Load a network (resolves includes). Path is relative to cwd or absolute.
+    // Load a network (resolves includes). Path can be a file or directory; for dir, root is auto-discovered.
     net, err := bkn.LoadNetwork("examples/risk/index.bkn")
+    // Or: net, err := bkn.LoadNetwork("examples/k8s-network")
     if err != nil {
         panic(err)
     }

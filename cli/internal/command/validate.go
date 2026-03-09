@@ -25,10 +25,11 @@ func newValidateCommand(opts *Options) *cobra.Command {
 
 func newValidateNetworkCommand(opts *Options) *cobra.Command {
 	return &cobra.Command{
-		Use:   "network <path>",
+		Use:   "network <path-or-dir>",
 		Short: "Validate all data tables in a network",
 		Example: "  bkn validate network examples/risk/index.bkn\n" +
-			"  bkn validate network examples/connection-demo/index.bkn --format json",
+			"  bkn validate network examples/k8s-network\n" +
+			"  bkn validate network examples/connection-demo --format json",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network, err := bkn.LoadNetwork(args[0])
@@ -58,7 +59,7 @@ func newValidateTableCommand(opts *Options) *cobra.Command {
 		Use:   "table <data-file>",
 		Short: "Validate a single data file using a network schema",
 		Example: "  bkn validate table examples/risk/data/risk_scenario.bknd --network examples/risk/index.bkn\n" +
-			"  bkn validate table data/object.bknd --network index.bkn --format json",
+			"  bkn validate table data/object.bknd --network examples/risk --format json",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if strings.TrimSpace(networkPath) == "" {
@@ -96,6 +97,6 @@ func newValidateTableCommand(opts *Options) *cobra.Command {
 			return newSilentError("validation failed")
 		},
 	}
-	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file")
+	cmd.Flags().StringVar(&networkPath, "network", "", "Path to the root network file or directory (network.bkn > index.bkn)")
 	return cmd
 }

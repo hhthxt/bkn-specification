@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from datetime import datetime, timezone
 
-from bkn.loader import load, load_network
+from bkn.loader import discover_root_file, load, load_network
 from bkn.parser import _split_frontmatter
 from bkn.validator import validate_network_data
 
@@ -164,6 +164,7 @@ def generate_checksum_file(root: str | Path) -> str:
 
 
 def _validate_checksum_inputs(root: Path) -> None:
+    """Validate BKN inputs using root discovery to avoid double validation."""
     network_paths: list[Path] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file():
@@ -178,12 +179,27 @@ def _validate_checksum_inputs(root: Path) -> None:
         if doc.frontmatter.type.strip().lower() == "network":
             network_paths.append(path)
 
-    for path in network_paths:
-        rel = path.relative_to(root).as_posix()
+    # Use root discovery per directory to avoid validating both network.bkn and
+    # index.bkn when both exist (network.bkn takes priority).
+    dirs_with_networks = {p.parent for p in network_paths}
+    roots_to_validate: list[Path] = []
+    for d in dirs_with_networks:
         try:
-            network = load_network(path)
+            root_path = discover_root_file(d)
+            roots_to_validate.append(root_path)
+        except ValueError as exc:
+            raise ValueError(
+                f"checksum validation failed: {exc}"
+            ) from exc
+
+    for root_path in roots_to_validate:
+        rel = root_path.relative_to(root).as_posix()
+        try:
+            network = load_network(root_path)
         except Exception as exc:
-            raise ValueError(f"checksum validation failed for network {rel}: {exc}") from exc
+            raise ValueError(
+                f"checksum validation failed for network {rel}: {exc}"
+            ) from exc
         result = validate_network_data(network)
         if not result.ok:
             raise ValueError(

@@ -37,10 +37,11 @@ Inspect a single file with metadata and definition details:
 go run ./cmd/bkn inspect file ../examples/risk/actions.bkn --verbose
 ```
 
-Inspect a network with includes resolved:
+Inspect a network with includes resolved (path can be a file or directory):
 
 ```bash
 go run ./cmd/bkn inspect network ../examples/risk/index.bkn
+go run ./cmd/bkn inspect network ../examples/k8s-network
 ```
 
 Inspect a network with metadata, description, includes, and definition lists:
@@ -57,16 +58,17 @@ go run ./cmd/bkn inspect network ../examples/risk/index.bkn --verbose --format j
 
 ### Validate
 
-Validate all data tables in a network:
+Validate all data tables in a network (path can be a file or directory):
 
 ```bash
 go run ./cmd/bkn validate network ../examples/risk/index.bkn
+go run ./cmd/bkn validate network ../examples/k8s-network
 ```
 
-Validate a single data file against a network schema:
+Validate a single data file against a network schema (`--network` can be file or directory):
 
 ```bash
-go run ./cmd/bkn validate table ../examples/risk/data/risk_scenario.bknd --network ../examples/risk/index.bkn
+go run ./cmd/bkn validate table ../examples/risk/data/risk_scenario.bknd --network ../examples/risk
 ```
 
 JSON output:

@@ -31,7 +31,7 @@ from bkn.parser import (
     parse_body,
     parse_data_tables,
 )
-from bkn.loader import load, load_network
+from bkn.loader import discover_root_file, load, load_network
 from bkn.risk import RiskResult, evaluate_risk
 from bkn.serializer import to_bknd, to_bknd_from_table
 from bkn.validator import validate_data_table, validate_network_data
@@ -68,6 +68,7 @@ __all__ = [
     "parse_frontmatter",
     "parse_body",
     "parse_data_tables",
+    "discover_root_file",
     "load",
     "load_network",
     "RiskResult",

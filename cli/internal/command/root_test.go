@@ -105,6 +105,55 @@ func TestValidateNetwork(t *testing.T) {
 	}
 }
 
+func TestValidateNetwork_DirInput(t *testing.T) {
+	root := repoRoot(t)
+	dir := filepath.Join(root, "examples", "k8s-network")
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Skip("examples/k8s-network not found")
+		return
+	}
+	out, err := executeCommand(t, "validate", "network", dir)
+	if err != nil {
+		t.Fatalf("validate network dir: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, "Validation OK") {
+		t.Fatalf("expected validation success for dir input, got %q", out)
+	}
+}
+
+func TestInspectNetwork_DirInput(t *testing.T) {
+	root := repoRoot(t)
+	dir := filepath.Join(root, "examples", "k8s-network")
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Skip("examples/k8s-network not found")
+		return
+	}
+	out, err := executeCommand(t, "inspect", "network", dir)
+	if err != nil {
+		t.Fatalf("inspect network dir: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, "Objects:") || !strings.Contains(out, "k8s-network") {
+		t.Fatalf("expected network inspection output, got %q", out)
+	}
+}
+
+func TestValidateTable_NetworkDir(t *testing.T) {
+	root := repoRoot(t)
+	dataFile := filepath.Join(root, "examples", "risk", "data", "risk_scenario.bknd")
+	networkDir := filepath.Join(root, "examples", "risk")
+	if _, err := os.Stat(dataFile); os.IsNotExist(err) {
+		t.Skip("examples/risk/data/risk_scenario.bknd not found")
+		return
+	}
+	out, err := executeCommand(t, "validate", "table", dataFile, "--network", networkDir)
+	if err != nil {
+		t.Fatalf("validate table --network dir: %v (%s)", err, out)
+	}
+	if !strings.Contains(out, "Validation OK") {
+		t.Fatalf("expected validation success, got %q", out)
+	}
+}
+
 func TestRiskEvalJSON(t *testing.T) {
 	root := repoRoot(t)
 	rulesPath := filepath.Join(t.TempDir(), "rules.json")

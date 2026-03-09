@@ -992,6 +992,19 @@ Heading levels are consistent across all file types:
 
 ## File Organization
 
+### Root File Discovery and Directory Loading
+
+When a **directory** is passed as the network entry (e.g. `validate network <dir>`, `load_network(dir)`), the SDK/CLI discovers the root file in this order:
+
+1. `network.bkn` (recommended)
+2. `network.md`
+3. `index.bkn` (compatible)
+4. `index.md`
+5. If none of the above exist and exactly one `type: network` file is in the directory, use that file
+6. Otherwise report "root file ambiguous or not found"
+
+**Default input when no includes**: When the root file is `type: network` and has no `includes` declared, all files in the same directory that parse as valid BKN (`.bkn`, `.bknd`, `.md`) are treated as the same network input; only the same directory is scanned, not subdirectories. If the root declares `includes`, loading follows `includes` exactly with no implicit directory discovery. This rule applies only to `type: network`, not `fragment`.
+
 ### Pattern 1: Single File (Small Networks)
 
 All definitions in one `.bkn` file:
@@ -1019,7 +1032,7 @@ id: my-network
 
 ### Pattern 2: Split by Type (Medium Networks)
 
-Use `index.bkn` to reference other files:
+Use `network.bkn` or `index.bkn` to reference other files (recommend `network.bkn`):
 
 ```markdown
 ---
@@ -1062,11 +1075,12 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
     └── scenario.bknd
 ```
 
-**Pattern B: index.bkn orchestration** (traditional index mode)
+**Pattern B: network.bkn / index.bkn orchestration** (recommend `network.bkn`; `index.bkn` compatible)
 
 ```
 {business_dir}/
-├── index.bkn                    # type: network or fragment, network entry
+├── network.bkn                  # recommended: type: network, network entry (priority over index.bkn)
+├── index.bkn                    # compatible: type: network or fragment, used when network.bkn absent
 ├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
 ├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
 │   └── k8s_api.bkn              # type: connection

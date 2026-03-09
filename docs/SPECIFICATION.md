@@ -994,6 +994,19 @@ graph LR
 
 ## 文件组织
 
+### 根文件发现与目录加载
+
+当传入**目录**作为网络入口时（如 `validate network <dir>`、`load_network(dir)`），SDK/CLI 按以下顺序自动发现根文件：
+
+1. `network.bkn`（推荐）
+2. `network.md`
+3. `index.bkn`（兼容）
+4. `index.md`
+5. 若以上均不存在，且目录中恰好只有一个 `type: network` 文件，则使用该文件
+6. 否则报错「根文件不唯一/无法确定」
+
+**无 includes 时的默认输入**：当根文件为 `type: network` 且未声明 `includes` 时，默认将同目录下所有可解析为合法 BKN 的文件（`.bkn`、`.bknd`、`.md`）视为同一网络输入；仅扫描同目录，不递归子目录。若根文件已声明 `includes`，则完全按 `includes` 加载，不做隐式目录发现。此规则仅对 `type: network` 生效，不对 `fragment` 生效。
+
 ### 模式一：单文件（小型网络）
 
 所有定义在一个 `.bkn` 文件中：
@@ -1021,7 +1034,7 @@ id: my-network
 
 ### 模式二：按类型拆分（中型网络）
 
-使用 `index.bkn` 引用其他文件：
+使用 `network.bkn` 或 `index.bkn` 引用其他文件（推荐 `network.bkn`）：
 
 ```markdown
 ---
@@ -1064,11 +1077,12 @@ includes:
     └── scenario.bknd
 ```
 
-**模式 B：index.bkn 编排**（传统 index 模式）
+**模式 B：network.bkn / index.bkn 编排**（推荐 `network.bkn`，`index.bkn` 兼容）
 
 ```
 {business_dir}/
-├── index.bkn                    # type: network 或 fragment，作为网络入口
+├── network.bkn                  # 推荐：type: network，作为网络入口（优先级高于 index.bkn）
+├── index.bkn                    # 兼容：type: network 或 fragment，当 network.bkn 不存在时使用
 ├── checksum.txt                 # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
 ├── connections/                 # 可选，type: connection 连接定义（多对象共享同一数据源时使用）
 │   └── k8s_api.bkn              # type: connection

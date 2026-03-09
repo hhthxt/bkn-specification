@@ -148,11 +148,11 @@ func newInspectFileCommand(opts *Options) *cobra.Command {
 func newInspectNetworkCommand(opts *Options) *cobra.Command {
 	var verbose bool
 	cmd := &cobra.Command{
-		Use:   "network <path>",
+		Use:   "network <path-or-dir>",
 		Short: "Inspect a BKN network with includes resolved",
 		Example: "  bkn inspect network examples/risk/index.bkn\n" +
-			"  bkn inspect network examples/risk/index.bkn --verbose\n" +
-			"  bkn inspect network examples/k8s-modular/index.bkn --format json",
+			"  bkn inspect network examples/k8s-network\n" +
+			"  bkn inspect network examples/k8s-modular --verbose --format json",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			network, err := bkn.LoadNetwork(args[0])
