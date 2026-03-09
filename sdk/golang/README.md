@@ -19,6 +19,8 @@ Implemented. The Go SDK supports:
 - Serialization to `.bknd` format
 - Risk evaluation (`EvaluateRisk`)
 
+- SKILL.md compatibility: `SKILL.md` is included in checksum computation; `LoadNetwork(dir)` ignores `SKILL.md` and auto-discovers the BKN root
+
 Transformers (e.g., kweaver) are not yet implemented.
 
 ## Structure

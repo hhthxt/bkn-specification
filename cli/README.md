@@ -214,6 +214,14 @@ go run ./cmd/bkn risk eval --help
 go run ./cmd/bkn delete simulate --help
 ```
 
+## SKILL.md Compatibility
+
+The CLI works seamlessly with [agentskills.io](https://agentskills.io) SKILL directories:
+
+- `bkn validate network <dir>` and `bkn inspect network <dir>` auto-discover the BKN root (`network.bkn` > `index.bkn`) in a Skill directory; `SKILL.md` does not interfere.
+- `bkn checksum generate <dir>` includes `SKILL.md` in its checksum computation, so Skill description changes are tracked alongside BKN schema changes.
+- All `--network` flags accept both file paths and directories.
+
 ## Recommended First Checks
 
 If you want to smoke test the CLI quickly from `cli/`, run:
@@ -221,6 +229,7 @@ If you want to smoke test the CLI quickly from `cli/`, run:
 ```bash
 go run ./cmd/bkn inspect network ../examples/risk/index.bkn --verbose
 go run ./cmd/bkn validate network ../examples/risk/index.bkn
+go run ./cmd/bkn validate network ../examples/k8s-network
 go run ./cmd/bkn checksum generate ../examples/risk
 go run ./cmd/bkn checksum verify ../examples/risk
 ```

@@ -250,7 +250,7 @@ print(result.risk_level) # 5
 | `bkn.loader` | Loading: load(path), load_network(path_or_dir); root discovery (network.bkn > index.bkn); auto-resolves includes; implicit same-dir when no includes |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
-| `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes checksum.txt; verify_checksum_file() checks it |
+| `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes checksum.txt; verify_checksum_file() checks it. `SKILL.md` is included in checksum computation |
 | `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
 | `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |
 
@@ -261,6 +261,14 @@ print(result.risk_level) # 5
 | `branch` | Branch name | `"main"` |
 | `base_version` | Base version string | `""` |
 | `id_prefix` | Object/relation ID prefix (e.g. `supplychain_` makes `po` -> `supplychain_po`) | `""` |
+
+## SKILL.md Compatibility
+
+The SDK is fully compatible with [agentskills.io](https://agentskills.io) SKILL directories:
+
+- `load_network(dir)` auto-discovers `network.bkn` (or `index.bkn`) in a Skill directory; `SKILL.md` does not interfere with network loading.
+- `generate_checksum_file()` includes `SKILL.md` in its checksum computation, ensuring Skill description changes are auditable alongside BKN schema changes.
+- The recommended layout places both `SKILL.md` and `network.bkn` in the same directory — `SKILL.md` manages Agent workflows while `network.bkn` declares the BKN network topology.
 
 ## Testing
 

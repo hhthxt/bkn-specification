@@ -36,12 +36,13 @@ for e in doc.objects:
 
 ### 2. 加载网络（含 includes）
 
-根文件通过 `includes` 引用子文件，`load_network` 会递归解析：
+根文件通过 `includes` 引用子文件，`load_network` 会递归解析。支持传入**文件路径**或**目录**；传入目录时自动发现根文件（network.bkn > network.md > index.bkn > index.md）。根文件无 `includes` 时，同目录下 BKN 文件自动纳入。
 
 ```python
 from bkn import load_network
 
 network = load_network("examples/supplychain-hd/supplychain.bkn")
+# 也可传入目录: network = load_network("examples/k8s-network")
 
 print(network.root.frontmatter.name)   # HD供应链业务知识网络_v2
 print(len(network.all_objects))       # 12
@@ -212,7 +213,7 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 |------|------|
 | `bkn.models` | 数据模型：BknDocument、BknObject、Relation、Action、Risk、Connection、DataProperty、PropertyOverride 等 |
 | `bkn.parser` | 解析：parse()、parse_frontmatter()、parse_body()，支持中英文表头和 `## Risk:` 定义 |
-| `bkn.loader` | 加载：load(path)、load_network(root_path)，自动解析 includes 并校验共享 `connection` 引用 |
+| `bkn.loader` | 加载：load(path)、load_network(path_or_dir)；根文件发现（network.bkn > index.bkn）；自动解析 includes；无 includes 时同目录隐式加载 |
 | `bkn.risk` | 风险评估：evaluate_risk(network, action_id, context, risk_rules?) -> "allow" \| "not_allow" \| "unknown" |
 | `bkn.transformers.base` | 抽象基类 `Transformer`，定义 `to_json()` 和 `to_files()` 接口 |
 | `bkn.transformers.kweaver` | KweaverTransformer、KweaverClient；输出 kweaver 导入 JSON |
@@ -224,6 +225,14 @@ result = evaluate_risk(network, "restore_from_backup", {"scenario_id": "prod_db"
 | `branch` | 分支名 | `"main"` |
 | `base_version` | 基础版本 | `""` |
 | `id_prefix` | 对象/关系 ID 前缀（如 `supplychain_` 使 `po` 变为 `supplychain_po`） | `""` |
+
+## SKILL.md 兼容性
+
+SDK 完全兼容 [agentskills.io](https://agentskills.io) SKILL 目录：
+
+- `load_network(dir)` 自动发现 Skill 目录下的 `network.bkn`（或 `index.bkn`），`SKILL.md` 不影响网络加载。
+- `generate_checksum_file()` 将 `SKILL.md` 纳入校验和计算，确保 Skill 描述变更与 BKN schema 变更一同被审计追踪。
+- 推荐在同一目录同时放置 `SKILL.md`（Agent 入口）和 `network.bkn`（SDK/CLI 入口），各司其职。
 
 ## 测试
 

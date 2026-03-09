@@ -1058,6 +1058,7 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 ```
 {business_dir}/
 ├── SKILL.md                     # agentskills.io standard entry; network topology, index, usage guide
+├── network.bkn                  # recommended root file (index.bkn also compatible)
 ├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
 ├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
 │   └── erp_db.bkn               # type: connection
@@ -1074,6 +1075,17 @@ Each object, relation, action, and risk in its own file. Two orchestration entry
 └── data/                        # optional, .bknd instance data
     └── scenario.bknd
 ```
+
+### SKILL.md and BKN Compatibility
+
+`SKILL.md` is the Agent Skill entry file defined by agentskills.io, used alongside BKN's directory organization:
+
+- **SKILL.md owns responsibility**: describes Skill capabilities, script entry points, workflows, templates, and output rules for AI Agents.
+- **network.bkn / index.bkn owns structure**: declares network topology and file orchestration via `type: network` frontmatter and `includes`.
+- **Not interchangeable**: SKILL.md is not a BKN root file. `load_network` and `validate network` read `network.bkn` (or `index.bkn`), not `SKILL.md`.
+- **Co-existence recommended**: Place both `SKILL.md` (Agent entry) and `network.bkn` (SDK/CLI entry) in the same directory; each serves its own purpose.
+- **Checksum inclusion**: `SKILL.md` is included in `checksum generate` (hashed after full-text normalization), ensuring Skill description changes are auditable.
+- **Directory validation compatible**: `validate network <dir>` and `load_network(dir)` work correctly in Skill directories — they auto-discover `network.bkn` (or fall back to `index.bkn`); `SKILL.md` does not interfere with network loading.
 
 **Pattern B: network.bkn / index.bkn orchestration** (recommend `network.bkn`; `index.bkn` compatible)
 

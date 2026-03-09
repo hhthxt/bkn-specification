@@ -21,7 +21,7 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 
 **Load flow** — For `operate action` or when context needs domain knowledge:
 
-1. Load `index.bkn` (or root `.bkn`/`.md`) to get network overview and `includes`
+1. Load `network.bkn` (preferred) or `index.bkn` (compatible) to get network overview and `includes`. Can also pass a directory — SDK auto-discovers the root.
 2. Load relevant includes (objects/relations/actions) by task
 3. Do not load entire network if only a subset is needed
 
@@ -77,10 +77,11 @@ Scripts live in [scripts/](scripts/). Run from repo root. Install first: `pip in
 | 用户要导入到 kweaver | `validate` → `import --dry-run` → `import` |
 | 用户仅要导出 JSON | `validate` → `transform.py` |
 
-**validate.py** — Check BKN loads:
+**validate.py** — Check BKN loads (accepts file or directory):
 ```bash
-python .cursor/skills/bkn-creator/scripts/validate.py <path>
+python .cursor/skills/bkn-creator/scripts/validate.py <path-or-dir>
 # e.g. python .cursor/skills/bkn-creator/scripts/validate.py examples/k8s-modular/index.bkn
+# e.g. python .cursor/skills/bkn-creator/scripts/validate.py examples/k8s-network
 ```
 
 **transform.py** — Export to kweaver JSON (no API):
@@ -116,12 +117,12 @@ When the user asks to validate, convert, or import, run the corresponding script
 Choose an organization style based on network size:
 
 **Modular** (recommended for large networks, team collaboration):
-Each object/relation/action in its own file, with an `index.bkn` root.
+Each object/relation/action in its own file, with a `network.bkn` (preferred) or `index.bkn` root.
 See `examples/k8s-modular/` for this pattern.
 
 ```
 my-network/
-├── index.bkn
+├── network.bkn                  # or index.bkn (compatible)
 ├── objects/
 │   ├── order.bkn
 │   └── customer.bkn
@@ -137,7 +138,7 @@ See `examples/k8s-network/` for this pattern.
 
 ```
 my-network/
-├── index.bkn
+├── network.bkn                  # or index.bkn (compatible)
 ├── objects.bkn
 ├── relations.bkn
 └── actions.bkn

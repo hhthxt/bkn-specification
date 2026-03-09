@@ -1060,6 +1060,7 @@ includes:
 ```
 {business_dir}/
 ├── SKILL.md                     # agentskills.io 标准入口，含网络拓扑、索引、使用指南
+├── network.bkn                  # 推荐根文件（也可用 index.bkn 兼容）
 ├── checksum.txt                 # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
 ├── connections/                 # 可选，type: connection 连接定义（多对象共享同一数据源时使用）
 │   └── erp_db.bkn               # type: connection
@@ -1076,6 +1077,17 @@ includes:
 └── data/                        # 可选，.bknd 实例数据
     └── scenario.bknd
 ```
+
+### SKILL.md 与 BKN 兼容性
+
+`SKILL.md` 是 agentskills.io 定义的 Agent Skill 入口文件，与 BKN 的目录组织互补使用：
+
+- **SKILL.md 管职责**：描述 Skill 的能力、脚本入口、工作流、模板和输出规则，供 AI Agent 解读。
+- **network.bkn / index.bkn 管结构**：通过 frontmatter `type: network` + `includes` 声明网络拓扑和文件编排。
+- **互不替代**：SKILL.md 不是 BKN 根文件，SDK/CLI 的 `load_network` 和 `validate network` 读取的是 `network.bkn`（或 `index.bkn`），而非 `SKILL.md`。
+- **共存推荐**：在模式 A 目录中同时放置 `SKILL.md`（Agent 入口）和 `network.bkn`（SDK/CLI 入口），两者各司其职。
+- **checksum 纳入**：`SKILL.md` 被 `checksum generate` 纳入校验和计算（按 `SKILL.md` 全文 normalize 后哈希），确保 Skill 描述变更可被审计追踪。
+- **目录校验兼容**：`validate network <dir>` 和 `load_network(dir)` 在 Skill 目录下正常工作——自动发现 `network.bkn`（或回退 `index.bkn`），SKILL.md 不影响网络加载。
 
 **模式 B：network.bkn / index.bkn 编排**（推荐 `network.bkn`，`index.bkn` 兼容）
 
