@@ -4,15 +4,12 @@ id: pod_belongs_node
 name: Pod属于节点
 tags: [拓扑架构]
 description: Pod 与其所在节点之间的归属关系。
+source_object_type: pod
+target_object_type: node
 ---
 
-### Endpoints
-
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| pod | node | direct | YES | 1 | 1 |
-
 ### Mapping Rules
+type: direct
 
 | Source Property | Target Property |
 |-----------------|-----------------|

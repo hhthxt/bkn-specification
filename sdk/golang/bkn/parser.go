@@ -185,38 +185,6 @@ func parseTableColumns(tableLines []string) []string {
 	return cols
 }
 
-func parseInlineMeta(text string) (tags []string, owner string) {
-	matches := inlineMetaRE.FindAllStringSubmatch(text, -1)
-	for _, m := range matches {
-		if len(m) >= 3 {
-			key := strings.TrimSpace(m[1])
-			val := strings.TrimSpace(m[2])
-			switch key {
-			case "Tags":
-				for _, t := range strings.Split(val, ",") {
-					if s := strings.TrimSpace(t); s != "" {
-						tags = append(tags, s)
-					}
-				}
-			case "Owner":
-				owner = val
-			}
-		}
-	}
-	return tags, owner
-}
-
-func parseDisplayName(text string) (name, desc string) {
-	m := displayNameRE.FindStringSubmatch(text)
-	if len(m) >= 2 {
-		name = strings.TrimSpace(m[1])
-		if len(m) >= 3 {
-			desc = strings.TrimSpace(m[2])
-		}
-	}
-	return name, desc
-}
-
 func parseDataSource(sectionText string) *ResourceInfo {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
@@ -244,103 +212,30 @@ func parseDataProperties(sectionText string) []*DataProperty {
 	return props
 }
 
-func parseObjectBlock(blockID, blockText string) (*BknObjectType, error) {
-	name, desc := parseDisplayName(blockText)
-	tags, _ := parseInlineMeta(blockText)
-	sections := extractSections(blockText, "###")
-
-	obj := &BknObjectType{
-		BknObjectTypeFrontmatter: BknObjectTypeFrontmatter{
-			Type:        "object_type",
-			ID:          blockID,
-			Name:        name,
-			Tags:        tags,
-			Description: desc,
-		},
+func parseLogicProperties(sectionText string) []*LogicProperty {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var props []*LogicProperty
+	for _, row := range rows {
+		props = append(props, &LogicProperty{
+			Name:        row["Name"],
+			DisplayName: row["Display Name"],
+			Type:        row["Type"],
+			Description: row["Description"],
+		})
 	}
-	if s, ok := sections["Data Source"]; ok {
-		obj.DataSource = parseDataSource(s)
-	}
-	if s, ok := sections["Data Properties"]; ok {
-		obj.DataProperties = parseDataProperties(s)
-	}
-
-	return obj, nil
+	return props
 }
 
-func parseRelationBlock(blockID, blockText string) (*BknRelationType, error) {
-	name, desc := parseDisplayName(blockText)
-	tags, _ := parseInlineMeta(blockText)
-
-	rel := &BknRelationType{
-		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-			Type:        "relation_type",
-			ID:          blockID,
-			Name:        name,
-			Tags:        tags,
-			Description: desc,
-		},
+func parseKeys(sectionText string) (pks []string, dk string, ik string) {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return nil, "", ""
 	}
-
-	return rel, nil
-}
-
-func parseActionBlock(blockID, blockText string) (*BknActionType, error) {
-	name, desc := parseDisplayName(blockText)
-	tags, _ := parseInlineMeta(blockText)
-
-	action := &BknActionType{
-		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-			Type:        "action_type",
-			ID:          blockID,
-			Name:        name,
-			Tags:        tags,
-			Description: desc,
-		},
-	}
-
-	return action, nil
-}
-
-func parseRiskBlock(blockID, blockText string) (*BknRiskType, error) {
-	name, desc := parseDisplayName(blockText)
-	tags, _ := parseInlineMeta(blockText)
-	sections := extractSections(blockText, "###")
-
-	risk := &BknRiskType{
-		BknRiskTypeFrontmatter: BknRiskTypeFrontmatter{
-			Type:        "risk_type",
-			ID:          blockID,
-			Name:        name,
-			Tags:        tags,
-			Description: desc,
-		},
-	}
-	if s, ok := sections["Control Scope"]; ok {
-		risk.ControlScope = s
-	}
-	if s, ok := sections["Control Policy"]; ok {
-		risk.ControlPolicy = s
-	}
-
-	return risk, nil
-}
-
-func parseConceptGroupBlock(blockID, blockText string) (*BknConceptGroup, error) {
-	name, desc := parseDisplayName(blockText)
-	tags, _ := parseInlineMeta(blockText)
-
-	grp := &BknConceptGroup{
-		BknConceptGroupFrontmatter: BknConceptGroupFrontmatter{
-			Type:        "concept_group",
-			ID:          blockID,
-			Name:        name,
-			Tags:        tags,
-			Description: desc,
-		},
-	}
-
-	return grp, nil
+	r := rows[0]
+	pks = strings.Split(r["Primary Keys"], ",")
+	dk = r["Display Key"]
+	ik = r["Incremental Key"]
+	return pks, dk, ik
 }
 
 // ParseFrontmatter parses the YAML frontmatter of a .bkn file.
@@ -361,41 +256,91 @@ func ParseFrontmatter(text string) (map[string]any, error) {
 }
 
 func strVal(m map[string]any, key string) string {
-	if v, ok := m[key]; ok {
+	if v, ok := m[key]; ok && v != nil {
 		return fmt.Sprint(v)
 	}
 	return ""
 }
 
+// strSliceVal safely extracts a string slice from a map value.
+// YAML unmarshals arrays as []interface{}, so we need to convert each element.
+func strSliceVal(m map[string]any, key string) []string {
+	if v, ok := m[key]; ok && v != nil {
+		switch val := v.(type) {
+		case []string:
+			return val
+		case []interface{}:
+			result := make([]string, 0, len(val))
+			for _, item := range val {
+				if item != nil {
+					result = append(result, fmt.Sprint(item))
+				}
+			}
+			return result
+		case string:
+			// Handle single string as single-element slice
+			return []string{val}
+		}
+	}
+	return nil
+}
+
 // ParseNetworkFile parses a network.bkn file (type: network).
 // Network files contain only frontmatter, no body definitions.
 func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
-	data, err := ParseFrontmatter(text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	return &BknNetwork{
+
+	network := &BknNetwork{
 		BknNetworkFrontmatter: BknNetworkFrontmatter{
-			Type:        data["type"].(string),
-			ID:          data["id"].(string),
-			Name:        data["name"].(string),
-			Tags:        data["tags"].([]string),
-			Description: data["description"].(string),
-			Version:     data["version"].(string),
-			Branch:      data["branch"].(string),
+			Type:           strVal(fmData, "type"),
+			ID:             strVal(fmData, "id"),
+			Name:           strVal(fmData, "name"),
+			Tags:           strSliceVal(fmData, "tags"),
+			Description:    strVal(fmData, "description"),
+			Version:        strVal(fmData, "version"),
+			Branch:         strVal(fmData, "branch"),
+			BusinessDomain: strVal(fmData, "business_domain"),
 		},
-	}, nil
+	}
+
+	return network, nil
 }
 
 // ParseObjectTypeFile parses an object_type definition file.
 func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error) {
-	data, err := ParseFrontmatter(text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	obj, err := parseObjectBlock(data["id"].(string), text)
-	if err != nil {
-		return nil, err
+
+	obj := &BknObjectType{
+		BknObjectTypeFrontmatter: BknObjectTypeFrontmatter{
+			Type:        "object_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: strVal(fmData, "description"),
+		},
+	}
+
+	sections := extractSections(text, "###")
+	if s, ok := sections["Data Source"]; ok {
+		obj.DataSource = parseDataSource(s)
+	}
+	if s, ok := sections["Data Properties"]; ok {
+		obj.DataProperties = parseDataProperties(s)
+	}
+	if s, ok := sections["Logic Properties"]; ok {
+		obj.LogicProperties = parseLogicProperties(s)
+	}
+	if s, ok := sections["Keys"]; ok {
+		pks, dk, ik := parseKeys(s)
+		obj.PrimaryKeys = pks
+		obj.DisplayKey = dk
+		obj.IncrementalKey = ik
 	}
 
 	return obj, nil
@@ -403,52 +348,88 @@ func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error)
 
 // ParseRelationTypeFile parses a relation_type definition file.
 func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, error) {
-	data, err := ParseFrontmatter(text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	rel, err := parseRelationBlock(data["id"].(string), text)
-	if err != nil {
-		return nil, err
+
+	rel := &BknRelationType{
+		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
+			Type:        "relation_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: strVal(fmData, "description"),
+		},
 	}
+
 	return rel, nil
 }
 
 // ParseActionTypeFile parses an action_type definition file.
 func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error) {
-	data, err := ParseFrontmatter(text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	act, err := parseActionBlock(data["id"].(string), text)
-	if err != nil {
-		return nil, err
+
+	act := &BknActionType{
+		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
+			Type:        "action_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: strVal(fmData, "description"),
+		},
 	}
+
 	return act, nil
 }
 
 // ParseRiskTypeFile parses a risk_type definition file.
 func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
-	data, err := ParseFrontmatter(text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	risk, err := parseRiskBlock(data["id"].(string), text)
-	if err != nil {
-		return nil, err
+
+	risk := &BknRiskType{
+		BknRiskTypeFrontmatter: BknRiskTypeFrontmatter{
+			Type:        "risk_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: strVal(fmData, "description"),
+		},
 	}
+
+	sections := extractSections(text, "###")
+
+	if s, ok := sections["Control Scope"]; ok {
+		risk.ControlScope = s
+	}
+	if s, ok := sections["Control Policy"]; ok {
+		risk.ControlPolicy = s
+	}
+
 	return risk, nil
 }
 
 func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, error) {
-	data, err := ParseFrontmatter(text)
-	if err != nil {
-		return nil, err
-	}
-	grp, err := parseConceptGroupBlock(data["id"].(string), text)
+	fmData, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
 
-	return grp, nil
+	cg := &BknConceptGroup{
+		BknConceptGroupFrontmatter: BknConceptGroupFrontmatter{
+			Type:        "concept_group",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: strVal(fmData, "description"),
+		},
+	}
+
+	return cg, nil
 }

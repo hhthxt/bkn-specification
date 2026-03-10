@@ -102,28 +102,34 @@ type BknRelationTypeFrontmatter struct {
 	Name        string   `yaml:"name"`
 	Tags        []string `yaml:"tags"`
 	Description string   `yaml:"description"`
+
+	SourceObjectTypeID string `yaml:"source_object_type"`
+	TargetObjectTypeID string `yaml:"target_object_type"`
 }
 
 // BknRelationType represents a relation type definition.
 type BknRelationType struct {
 	BknRelationTypeFrontmatter
 
-	// Endpoints
-	SourceObjectTypeID string
-	TargetObjectTypeID string
-	RelationType       string // direct, etc.
-	Required           bool
-	Min                int
-	Max                int
-
 	// Mapping Rules
-	MappingRules []*MappingRule
+	RelationType string // direct/data_view.
+	MappingRules any
 }
 
 // MappingRule represents a property mapping between source and target.
 type MappingRule struct {
 	SourceProperty string
 	TargetProperty string
+}
+
+// DirectMappingRule represents a direct mapping rule.
+type DirectMappingRule []MappingRule
+
+// InDirectMappingRule represents a non-direct mapping rule.
+type InDirectMappingRule struct {
+	BackingDataSource  *ResourceInfo
+	SourceMappingRules []MappingRule
+	TargetMappingRules []MappingRule
 }
 
 // BknActionTypeFrontmatter is YAML frontmatter metadata for a .bkn file.
