@@ -10,9 +10,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
+
+// WalkFunc is the callback for FileSystem.Walk.
+type WalkFunc func(path string, info fs.FileInfo, err error) error
 
 // FileSystem 抽象文件系统接口
 type FileSystem interface {
@@ -34,6 +38,12 @@ type FileSystem interface {
 	Base(path string) string
 	// Ext 获取文件扩展名
 	Ext(path string) string
+	// Walk 递归遍历目录
+	Walk(root string, fn WalkFunc) error
+	// Rel 返回相对路径
+	Rel(basepath, targpath string) (string, error)
+	// WriteFile 写入文件
+	WriteFile(path string, data []byte, perm fs.FileMode) error
 }
 
 // OSFileSystem 基于真实文件系统的实现
@@ -84,6 +94,20 @@ func (fs *OSFileSystem) Ext(path string) string {
 	return strings.ToLower(filepath.Ext(path))
 }
 
+func (f *OSFileSystem) Walk(root string, fn WalkFunc) error {
+	return filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		return fn(path, info, err)
+	})
+}
+
+func (f *OSFileSystem) Rel(basepath, targpath string) (string, error) {
+	return filepath.Rel(basepath, targpath)
+}
+
+func (f *OSFileSystem) WriteFile(path string, data []byte, perm fs.FileMode) error {
+	return os.WriteFile(path, data, perm)
+}
+
 // MemoryFileSystem 基于内存的文件系统实现
 type MemoryFileSystem struct {
 	files map[string][]byte // 文件路径 -> 内容
@@ -117,6 +141,10 @@ func (mfs *MemoryFileSystem) ReadFile(path string) ([]byte, error) {
 func (mfs *MemoryFileSystem) Stat(path string) (fs.FileInfo, error) {
 	if _, ok := mfs.files[path]; ok {
 		return &memoryFileInfo{name: path, size: int64(len(mfs.files[path]))}, nil
+	}
+	// "." or "" 表示根目录，只要有任何文件就视为存在
+	if (path == "." || path == "") && len(mfs.files) > 0 {
+		return &memoryFileInfo{name: path, isDir: true}, nil
 	}
 	// 检查是否是目录（通过查找子文件）
 	for filePath := range mfs.files {
@@ -161,6 +189,10 @@ func (mfs *MemoryFileSystem) ReadDir(path string) ([]fs.DirEntry, error) {
 }
 
 func (mfs *MemoryFileSystem) IsDir(path string) bool {
+	// "." or "" 表示根目录
+	if (path == "." || path == "") && len(mfs.files) > 0 {
+		return true
+	}
 	// 检查是否有子文件
 	for filePath := range mfs.files {
 		if strings.HasPrefix(filePath, path+"/") || strings.HasPrefix(filePath, path+"\\") {
@@ -189,6 +221,51 @@ func (mfs *MemoryFileSystem) Base(path string) string {
 
 func (mfs *MemoryFileSystem) Ext(path string) string {
 	return strings.ToLower(filepath.Ext(path))
+}
+
+func (mfs *MemoryFileSystem) Walk(root string, fn WalkFunc) error {
+	prefix := root + "/"
+	if root == "." || root == "" {
+		prefix = ""
+	}
+
+	// Collect and sort paths for deterministic walk order
+	var paths []string
+	for p := range mfs.files {
+		if strings.HasPrefix(p, prefix) || p == root {
+			paths = append(paths, p)
+		}
+	}
+	sort.Strings(paths)
+
+	// Walk root directory itself
+	rootInfo, err := mfs.Stat(root)
+	if err != nil {
+		return err
+	}
+	if err := fn(root, rootInfo, nil); err != nil {
+		return err
+	}
+
+	for _, p := range paths {
+		if p == root {
+			continue
+		}
+		info, err := mfs.Stat(p)
+		if fnErr := fn(p, info, err); fnErr != nil {
+			return fnErr
+		}
+	}
+	return nil
+}
+
+func (mfs *MemoryFileSystem) Rel(basepath, targpath string) (string, error) {
+	return filepath.Rel(basepath, targpath)
+}
+
+func (mfs *MemoryFileSystem) WriteFile(path string, data []byte, perm fs.FileMode) error {
+	mfs.files[path] = data
+	return nil
 }
 
 // memoryFileInfo 内存文件信息

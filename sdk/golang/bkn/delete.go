@@ -4,7 +4,7 @@ import "strings"
 
 // DeleteTarget specifies a single deletion target by type and id.
 type DeleteTarget struct {
-	Type string // "object", "relation", or "action"
+	Type string // "object", "relation", "action", or "risk"
 	ID   string
 }
 
@@ -45,6 +45,13 @@ func PlanDelete(network *BknNetwork, targets []DeleteTarget, dryRun bool) *Delet
 		case "action":
 			for _, a := range network.AllActions() {
 				if a.ID == t.ID {
+					exists = true
+					break
+				}
+			}
+		case "risk":
+			for _, r := range network.AllRisks() {
+				if r.ID == t.ID {
 					exists = true
 					break
 				}
@@ -100,6 +107,11 @@ func copyDocumentExcluding(doc *BknDocument, targetSet map[string]bool) *BknDocu
 	for _, a := range doc.Actions {
 		if !targetSet["action:"+a.ID] {
 			out.Actions = append(out.Actions, a)
+		}
+	}
+	for _, r := range doc.Risks {
+		if !targetSet["risk:"+r.ID] {
+			out.Risks = append(out.Risks, r)
 		}
 	}
 	return out

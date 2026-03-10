@@ -168,6 +168,9 @@ func collectSameDirBknFiles(directory, rootPath string) ([]string, error) {
 	return collectSameDirBknFilesWithFS(fsys, directory, rootPath)
 }
 
+// bknSubdirs lists the standard subdirectories for BKN definitions per DESIGN.md §3.1.
+var bknSubdirs = []string{"object_types", "relation_types", "action_types", "risk_types"}
+
 func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) ([]string, error) {
 	abs := fsys.Abs(directory)
 	absRoot := fsys.Abs(rootPath)
@@ -180,6 +183,8 @@ func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) (
 	}
 
 	var result []string
+
+	// Scan same-directory files
 	entries, err := fsys.ReadDir(abs)
 	if err != nil {
 		return nil, err
@@ -205,6 +210,37 @@ func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) (
 		}
 		result = append(result, p)
 	}
+
+	// Scan standard subdirectories (object_types/, relation_types/, action_types/, risk_types/)
+	for _, subdir := range bknSubdirs {
+		subdirPath := fsys.Join(abs, subdir)
+		if !fsys.IsDir(subdirPath) {
+			continue
+		}
+		subEntries, err := fsys.ReadDir(subdirPath)
+		if err != nil {
+			continue
+		}
+		for _, e := range subEntries {
+			if e.IsDir() {
+				continue
+			}
+			ext := fsys.Ext(e.Name())
+			if !supportedExtensions[ext] {
+				continue
+			}
+			p := fsys.Join(subdirPath, e.Name())
+			data, err := fsys.ReadFile(p)
+			if err != nil {
+				continue
+			}
+			if _, err := Parse(string(data), p); err != nil {
+				continue
+			}
+			result = append(result, p)
+		}
+	}
+
 	sort.Strings(result)
 	return result, nil
 }
@@ -280,16 +316,18 @@ func validateNetworkReferences(network *BknNetwork) error {
 	return nil
 }
 
-// 保持向后兼容的函数
+// Deprecated: Use FileSystem.ReadFile instead.
 func LoadFile(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
+// Deprecated: Use FileSystem.Stat instead.
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
 
+// Deprecated: Use FileSystem.IsDir instead.
 func IsDirectory(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {

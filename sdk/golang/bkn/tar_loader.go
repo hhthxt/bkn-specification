@@ -17,7 +17,7 @@ import (
 // 无需写入本地文件系统，完全在内存中处理
 func LoadNetworkFromTar(tarReader io.Reader) (*BknNetwork, error) {
 	// 1. 解压 tar 包到内存文件系统
-	mfs, rootFile, err := extractTarToMemory(tarReader)
+	mfs, rootFile, err := ExtractTarToMemory(tarReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract tar: %w", err)
 	}
@@ -26,9 +26,9 @@ func LoadNetworkFromTar(tarReader io.Reader) (*BknNetwork, error) {
 	return LoadNetworkWithFS(mfs, rootFile)
 }
 
-// extractTarToMemory 将 tar 包解压到内存文件系统
+// ExtractTarToMemory 将 tar 包解压到内存文件系统
 // 返回内存文件系统和根文件路径
-func extractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
+func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 	mfs := NewMemoryFileSystem()
 	tr := tar.NewReader(reader)
 
@@ -49,9 +49,10 @@ func extractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 			continue
 		}
 
-		// 只处理支持的文件类型
+		// 只处理支持的文件类型（.bkn, .md）以及 CHECKSUM 和 SKILL.md
 		ext := strings.ToLower(filepath.Ext(header.Name))
-		if !supportedExtensions[ext] {
+		base := filepath.Base(header.Name)
+		if !supportedExtensions[ext] && base != checksumFilename && base != "SKILL.md" {
 			continue
 		}
 
@@ -66,7 +67,6 @@ func extractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 		mfs.AddFile(path, content)
 
 		// 检查是否是根文件候选
-		base := filepath.Base(path)
 		for _, candidate := range rootCandidates {
 			if strings.EqualFold(base, candidate) {
 				rootFile = path

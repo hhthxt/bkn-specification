@@ -4,8 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"sort"
 	"strings"
 	"time"
@@ -13,45 +12,49 @@ import (
 
 const checksumFilename = "CHECKSUM"
 
+// hashHex computes SHA-256 and returns the first 8 bytes as 16 hex chars.
+func hashHex(data []byte) string {
+	h := sha256.Sum256(data)
+	return hex.EncodeToString(h[:8])
+}
+
 // GenerateChecksumFile validates BKN inputs, then generates CHECKSUM in
 // the given business directory. Covers .bkn and SKILL.md. Returns the
 // content written.
 func GenerateChecksumFile(root string) (string, error) {
-	abs, err := filepath.Abs(root)
-	if err != nil {
-		return "", err
-	}
-	info, err := os.Stat(abs)
-	if err != nil {
-		return "", err
-	}
-	if !info.IsDir() {
+	fsys := NewOSFileSystem()
+	return GenerateChecksumFileWithFS(fsys, root)
+}
+
+// GenerateChecksumFileWithFS generates CHECKSUM using the given FileSystem.
+func GenerateChecksumFileWithFS(fsys FileSystem, root string) (string, error) {
+	abs := fsys.Abs(root)
+	if !fsys.IsDir(abs) {
 		return "", fmt.Errorf("not a directory: %s", abs)
 	}
-	if err := validateChecksumInputs(abs); err != nil {
+	if err := validateChecksumInputsWithFS(fsys, abs); err != nil {
 		return "", err
 	}
 
 	var entries []string
-	err = filepath.Walk(abs, func(path string, info os.FileInfo, err error) error {
+	err := fsys.Walk(abs, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || filepath.Base(path) == checksumFilename {
+		if info.IsDir() || fsys.Base(path) == checksumFilename {
 			return nil
 		}
-		rel, _ := filepath.Rel(abs, path)
-		rel = filepath.ToSlash(rel)
-		name := filepath.Base(path)
-		ext := strings.ToLower(filepath.Ext(path))
+		rel, _ := fsys.Rel(abs, path)
+		name := fsys.Base(path)
+		ext := fsys.Ext(path)
 
 		if name == "SKILL.md" {
-			line := computeSkillChecksum(path, rel)
+			line := computeSkillChecksumWithFS(fsys, path, rel)
 			if line != "" {
 				entries = append(entries, line)
 			}
 		} else if ext == ".bkn" {
-			lines := computeBknChecksum(path)
+			lines := computeBknChecksumWithFS(fsys, path)
 			entries = append(entries, lines...)
 		}
 		return nil
@@ -69,32 +72,31 @@ func GenerateChecksumFile(root string) (string, error) {
 	lines = append(lines, entries...)
 	content := strings.Join(lines, "\n") + "\n"
 
-	outPath := filepath.Join(abs, checksumFilename)
-	if err := os.WriteFile(outPath, []byte(content), 0644); err != nil {
+	outPath := fsys.Join(abs, checksumFilename)
+	if err := fsys.WriteFile(outPath, []byte(content), 0644); err != nil {
 		return "", err
 	}
 	return content, nil
 }
 
-func validateChecksumInputs(root string) error {
+func validateChecksumInputsWithFS(fsys FileSystem, root string) error {
 	var networkPaths []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := fsys.Walk(root, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		// Only validate .bkn files, not .md files (SKILL.md is not a BKN file)
-		ext := strings.ToLower(filepath.Ext(path))
+		ext := fsys.Ext(path)
 		if ext != ".bkn" {
 			return nil
 		}
 
-		doc, loadErr := Load(path)
+		doc, loadErr := LoadWithFS(fsys, path)
 		if loadErr != nil {
-			rel, _ := filepath.Rel(root, path)
-			return fmt.Errorf("checksum validation failed for %s: %w", filepath.ToSlash(rel), loadErr)
+			rel, _ := fsys.Rel(root, path)
+			return fmt.Errorf("checksum validation failed for %s: %w", rel, loadErr)
 		}
 		if strings.EqualFold(strings.TrimSpace(doc.Frontmatter.Type), "network") {
 			networkPaths = append(networkPaths, path)
@@ -105,44 +107,31 @@ func validateChecksumInputs(root string) error {
 		return err
 	}
 
-	// Use root discovery per directory to avoid validating both network.bkn and
-	// index.bkn when both exist (network.bkn takes priority).
 	dirsWithNetworks := make(map[string]bool)
 	for _, p := range networkPaths {
-		dirsWithNetworks[filepath.Dir(p)] = true
+		dirsWithNetworks[fsys.Dir(p)] = true
 	}
-	var rootsToValidate []string
 	for d := range dirsWithNetworks {
-		rootPath, discoverErr := DiscoverRootFile(d)
+		_, discoverErr := DiscoverRootFileWithFS(fsys, d)
 		if discoverErr != nil {
 			return fmt.Errorf("checksum validation failed: %w", discoverErr)
 		}
-		rootsToValidate = append(rootsToValidate, rootPath)
 	}
-	// Deduplicate
-	seen := make(map[string]bool)
-	var unique []string
-	for _, r := range rootsToValidate {
-		if !seen[r] {
-			seen[r] = true
-			unique = append(unique, r)
-		}
-	}
-
-	// Network data validation removed - .bknd format no longer supported
-	_ = unique
 	return nil
 }
 
-// VerifyChecksumFile verifies checksum.txt against actual files.
+// VerifyChecksumFile verifies CHECKSUM against actual files.
 // Returns (ok, errorMessages).
 func VerifyChecksumFile(root string) (bool, []string) {
-	abs, err := filepath.Abs(root)
-	if err != nil {
-		return false, []string{err.Error()}
-	}
-	ckPath := filepath.Join(abs, checksumFilename)
-	data, err := os.ReadFile(ckPath)
+	fsys := NewOSFileSystem()
+	return VerifyChecksumFileWithFS(fsys, root)
+}
+
+// VerifyChecksumFileWithFS verifies CHECKSUM using the given FileSystem.
+func VerifyChecksumFileWithFS(fsys FileSystem, root string) (bool, []string) {
+	abs := fsys.Abs(root)
+	ckPath := fsys.Join(abs, checksumFilename)
+	data, err := fsys.ReadFile(ckPath)
 	if err != nil {
 		return false, []string{checksumFilename + " not found"}
 	}
@@ -153,7 +142,6 @@ func VerifyChecksumFile(root string) (bool, []string) {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		// Parse format: definition_type:id  sha256:hash
 		parts := strings.SplitN(line, "  ", 2)
 		if len(parts) == 2 {
 			declared[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
@@ -161,22 +149,35 @@ func VerifyChecksumFile(root string) (bool, []string) {
 	}
 
 	var errors []string
-	// Collect and verify each definition
-	var actualEntries []string
-	filepath.Walk(abs, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || filepath.Base(path) == checksumFilename {
+	fsys.Walk(abs, func(path string, info fs.FileInfo, err error) error {
+		if err != nil || info.IsDir() || fsys.Base(path) == checksumFilename {
 			return nil
 		}
-		name := filepath.Base(path)
-		ext := strings.ToLower(filepath.Ext(path))
+		name := fsys.Base(path)
+		ext := fsys.Ext(path)
 
 		if name == "SKILL.md" {
-			// SKILL.md is not a definition, skip in verification
-			return nil
+			// Verify SKILL.md checksum too (consistent with generation)
+			rel, _ := fsys.Rel(abs, path)
+			line := computeSkillChecksumWithFS(fsys, path, rel)
+			if line != "" {
+				parts := strings.SplitN(line, "  ", 2)
+				if len(parts) == 2 {
+					defKey := strings.TrimSpace(parts[0])
+					actualHash := strings.TrimSpace(parts[1])
+					if decl, ok := declared[defKey]; ok {
+						if decl != actualHash {
+							errors = append(errors, "Mismatch: "+defKey)
+						}
+						delete(declared, defKey)
+					} else {
+						errors = append(errors, "Unexpected definition: "+defKey)
+					}
+				}
+			}
 		} else if ext == ".bkn" {
-			lines := computeBknChecksum(path)
+			lines := computeBknChecksumWithFS(fsys, path)
 			for _, line := range lines {
-				actualEntries = append(actualEntries, line)
 				parts := strings.SplitN(line, "  ", 2)
 				if len(parts) == 2 {
 					defKey := strings.TrimSpace(parts[0])
@@ -204,21 +205,21 @@ func VerifyChecksumFile(root string) (bool, []string) {
 	return len(errors) == 0, errors
 }
 
-func computeSkillChecksum(path, rel string) string {
-	data, err := os.ReadFile(path)
+func computeSkillChecksumWithFS(fsys FileSystem, path, rel string) string {
+	data, err := fsys.ReadFile(path)
 	if err != nil {
 		return ""
 	}
 	norm := normalizeForChecksum(string(data))
-	h := sha256.Sum256([]byte(norm))
-	return rel + "  sha256:" + hex.EncodeToString(h[:16])
+	return rel + "  sha256:" + hashHex([]byte(norm))
 }
 
-// computeBknChecksum computes checksums for all definitions in a .bkn file.
-// Returns multiple lines for files with multiple definitions.
-// Format: definition_type:definition_id  sha256:hash
-func computeBknChecksum(path string) []string {
-	data, err := os.ReadFile(path)
+// computeBknChecksumWithFS computes checksums for all definitions in a .bkn file.
+// Format per DESIGN.md:
+//   - network type (no id suffix): "network  sha256:..."
+//   - definition types: "object_type:id  sha256:..."
+func computeBknChecksumWithFS(fsys FileSystem, path string) []string {
+	data, err := fsys.ReadFile(path)
 	if err != nil {
 		return nil
 	}
@@ -231,45 +232,41 @@ func computeBknChecksum(path string) []string {
 	var results []string
 	typeVal := strings.TrimSpace(fm.Type)
 
-	// For network type, use network:id format
+	// For network type, use "network" (no :id suffix per DESIGN.md)
 	if typeVal == "network" {
 		_, body := splitFrontmatter(content)
 		norm := normalizeForChecksum(body)
-		h := sha256.Sum256([]byte(norm))
-		id := fm.ID
-		if id == "" {
-			id = "network"
-		}
-		results = append(results, "network:"+id+"  sha256:"+hex.EncodeToString(h[:16]))
+		results = append(results, "network  sha256:"+hashHex([]byte(norm)))
 		return results
 	}
 
 	// For definition types, parse body and compute per definition
-	objects, relations, actions := ParseBody(content)
+	objects, relations, actions, risks := ParseBody(content)
+
+	_, body := splitFrontmatter(content)
 
 	for _, obj := range objects {
-		_, body := splitFrontmatter(content)
-		// Extract just this object's definition section
 		objSection := extractDefinitionSection(body, "Object", obj.ID)
 		norm := normalizeForChecksum(objSection)
-		h := sha256.Sum256([]byte(norm))
-		results = append(results, "object_type:"+obj.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+		results = append(results, "object_type:"+obj.ID+"  sha256:"+hashHex([]byte(norm)))
 	}
 
 	for _, rel := range relations {
-		_, body := splitFrontmatter(content)
 		relSection := extractDefinitionSection(body, "Relation", rel.ID)
 		norm := normalizeForChecksum(relSection)
-		h := sha256.Sum256([]byte(norm))
-		results = append(results, "relation_type:"+rel.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+		results = append(results, "relation_type:"+rel.ID+"  sha256:"+hashHex([]byte(norm)))
 	}
 
 	for _, act := range actions {
-		_, body := splitFrontmatter(content)
 		actSection := extractDefinitionSection(body, "Action", act.ID)
 		norm := normalizeForChecksum(actSection)
-		h := sha256.Sum256([]byte(norm))
-		results = append(results, "action_type:"+act.ID+"  sha256:"+hex.EncodeToString(h[:16]))
+		results = append(results, "action_type:"+act.ID+"  sha256:"+hashHex([]byte(norm)))
+	}
+
+	for _, risk := range risks {
+		riskSection := extractDefinitionSection(body, "Risk", risk.ID)
+		norm := normalizeForChecksum(riskSection)
+		results = append(results, "risk_type:"+risk.ID+"  sha256:"+hashHex([]byte(norm)))
 	}
 
 	return results
@@ -284,13 +281,10 @@ func extractDefinitionSection(body, defType, id string) string {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		// Check for section start: ## Object: id or ## Relation: id, etc.
 		if strings.HasPrefix(trimmed, "## ") {
 			if inSection {
-				// We were in a section, now found next section
 				break
 			}
-			// Check if this is our target section
 			prefix := "## " + defType + ": " + id
 			if strings.HasPrefix(trimmed, prefix) {
 				inSection = true
@@ -300,15 +294,7 @@ func extractDefinitionSection(body, defType, id string) string {
 		}
 
 		if inSection {
-			// Check for subsection (### or deeper)
-			if strings.HasPrefix(trimmed, "###") {
-				result = append(result, line)
-			} else if strings.HasPrefix(trimmed, "## ") {
-				// Next definition at same level
-				break
-			} else {
-				result = append(result, line)
-			}
+			result = append(result, line)
 		}
 	}
 

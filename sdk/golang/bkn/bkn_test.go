@@ -461,6 +461,286 @@ func TestLoadNetwork_ImplicitSameDir(t *testing.T) {
 	}
 }
 
+// --- RiskType tests ---
+
+func TestParseRiskType(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "risk_types", "restart_pod_high_risk.bkn")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read file: %v", err)
+	}
+	doc, err := Parse(string(data), path)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(doc.Risks) < 1 {
+		t.Fatalf("expected at least 1 risk, got %d", len(doc.Risks))
+	}
+	risk := doc.Risks[0]
+	if risk.ID != "restart_pod_high_risk" {
+		t.Errorf("expected risk id restart_pod_high_risk, got %q", risk.ID)
+	}
+	if risk.ControlScope == "" {
+		t.Error("expected non-empty ControlScope")
+	}
+	if len(risk.PreChecks) < 1 {
+		t.Error("expected at least 1 pre-check")
+	}
+}
+
+func TestLoadNetwork_WithRisks(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "network.bkn")
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Fatalf("load network: %v", err)
+	}
+	risks := net.AllRisks()
+	if len(risks) < 1 {
+		t.Errorf("expected at least 1 risk from includes, got %d", len(risks))
+	}
+}
+
+func TestParse_RiskTypeValid(t *testing.T) {
+	text := "---\ntype: risk_type\nid: test_risk\n---\n\n## Risk: test_risk\n**Test Risk**\n"
+	doc, err := Parse(text, "test.bkn")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if len(doc.Risks) != 1 {
+		t.Errorf("expected 1 risk, got %d", len(doc.Risks))
+	}
+}
+
+func TestPlanDelete_Risk(t *testing.T) {
+	root := repoRoot(t)
+	path := filepath.Join(root, "examples", "k8s-modular", "network.bkn")
+	net, err := LoadNetwork(path)
+	if err != nil {
+		t.Skipf("example not found: %v", err)
+	}
+	plan := PlanDelete(net, []DeleteTarget{{Type: "risk", ID: "restart_pod_high_risk"}}, true)
+	if !plan.OK() {
+		t.Errorf("expected ok, got not_found=%v", plan.NotFound)
+	}
+}
+
+// --- Subdirectory loading tests ---
+
+func TestLoadNetwork_SubdirectoryImplicit(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-subdir-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// Network with no includes - should discover subdirs
+	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: subdir-test\n---\n"), 0644)
+	os.MkdirAll(filepath.Join(dir, "object_types"), 0755)
+	os.WriteFile(filepath.Join(dir, "object_types", "item.bkn"), []byte("---\ntype: object_type\nid: item\n---\n## Object: item\n**Item**\n"), 0644)
+	os.MkdirAll(filepath.Join(dir, "risk_types"), 0755)
+	os.WriteFile(filepath.Join(dir, "risk_types", "test_risk.bkn"), []byte("---\ntype: risk_type\nid: test_risk\n---\n## Risk: test_risk\n**Test Risk**\n"), 0644)
+
+	net, err := LoadNetwork(dir)
+	if err != nil {
+		t.Fatalf("load network: %v", err)
+	}
+	if len(net.AllObjects()) != 1 {
+		t.Errorf("expected 1 object from subdirectory, got %d", len(net.AllObjects()))
+	}
+	if len(net.AllRisks()) != 1 {
+		t.Errorf("expected 1 risk from subdirectory, got %d", len(net.AllRisks()))
+	}
+}
+
+// --- Checksum format tests ---
+
+func TestChecksumHashLength(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-hashlen-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte("---\ntype: object_type\nid: x\n---\n\n## Object: x\n**X**\n"), 0644)
+	content, err := GenerateChecksumFile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "sha256:") && !strings.HasPrefix(line, "#") {
+			parts := strings.SplitN(line, "sha256:", 2)
+			hash := strings.TrimSpace(parts[1])
+			if len(hash) != 16 {
+				t.Errorf("expected 16 hex chars, got %d: %q", len(hash), hash)
+			}
+		}
+	}
+}
+
+func TestChecksumNetworkFormat(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-netfmt-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: test-net\n---\n# Test Network\n"), 0644)
+	content, err := GenerateChecksumFile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Should be "network  sha256:..." (no :id suffix)
+	found := false
+	for _, line := range strings.Split(content, "\n") {
+		if strings.HasPrefix(line, "network  sha256:") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected 'network  sha256:...' format, got:\n%s", content)
+	}
+}
+
+func TestChecksumSkillMdConsistency(t *testing.T) {
+	dir, err := os.MkdirTemp("", "bkn-skill-checksum-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: x\n---\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte("# Agent Guide\n\nSome content.\n"), 0644)
+
+	_, err = GenerateChecksumFile(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ok, errs := VerifyChecksumFile(dir)
+	if !ok {
+		t.Errorf("verify should pass with SKILL.md: %v", errs)
+	}
+}
+
+// --- Frontmatter fields tests ---
+
+func TestFrontmatter_NewFields(t *testing.T) {
+	text := `---
+type: object_type
+id: test
+branch: main
+author: team-a
+status: active
+capabilities: [read, write]
+created_at: "2025-01-01"
+updated_at: "2025-06-01"
+---
+## Object: test
+**Test**
+`
+	doc, err := Parse(text, "test.bkn")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	fm := doc.Frontmatter
+	if fm.Branch != "main" {
+		t.Errorf("expected branch main, got %q", fm.Branch)
+	}
+	if fm.Author != "team-a" {
+		t.Errorf("expected author team-a, got %q", fm.Author)
+	}
+	if fm.Status != "active" {
+		t.Errorf("expected status active, got %q", fm.Status)
+	}
+	if len(fm.Capabilities) != 2 {
+		t.Errorf("expected 2 capabilities, got %d", len(fm.Capabilities))
+	}
+	if fm.CreatedAt != "2025-01-01" {
+		t.Errorf("expected created_at 2025-01-01, got %q", fm.CreatedAt)
+	}
+	if fm.UpdatedAt != "2025-06-01" {
+		t.Errorf("expected updated_at 2025-06-01, got %q", fm.UpdatedAt)
+	}
+}
+
+// --- Serializer tests ---
+
+func TestSerialize_RoundTrip(t *testing.T) {
+	text := "---\ntype: object_type\nid: pod\nname: Pod\n---\n\n## Object: pod\n**Pod** - Kubernetes Pod\n"
+	doc, err := Parse(text, "test.bkn")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	serialized := Serialize(doc)
+	doc2, err := Parse(serialized, "test.bkn")
+	if err != nil {
+		t.Fatalf("re-parse: %v", err)
+	}
+	if doc2.Frontmatter.ID != "pod" {
+		t.Errorf("expected id pod, got %q", doc2.Frontmatter.ID)
+	}
+	if len(doc2.Objects) != 1 {
+		t.Errorf("expected 1 object, got %d", len(doc2.Objects))
+	}
+}
+
+func TestSerialize_Risk(t *testing.T) {
+	text := "---\ntype: risk_type\nid: test_risk\n---\n\n## Risk: test_risk\n**Test Risk**\n\n### Control Scope\n\nProduction environment.\n"
+	doc, err := Parse(text, "test.bkn")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	serialized := Serialize(doc)
+	if !strings.Contains(serialized, "## Risk: test_risk") {
+		t.Error("serialized output should contain risk definition")
+	}
+	if !strings.Contains(serialized, "### Control Scope") {
+		t.Error("serialized output should contain control scope section")
+	}
+}
+
+// --- Differ tests ---
+
+func TestDiffNetworks_CreateUpdateSkipDelete(t *testing.T) {
+	old := map[string]string{
+		"object_type:pod":              "sha256:aaaa",
+		"object_type:node":             "sha256:bbbb",
+		"relation_type:pod_belongs_node": "sha256:cccc",
+	}
+	new := map[string]string{
+		"object_type:pod":   "sha256:aaaa", // unchanged -> skip
+		"object_type:node":  "sha256:dddd", // changed -> update
+		"object_type:svc":   "sha256:eeee", // new -> create
+	}
+
+	result := DiffNetworks(old, new)
+	if !result.HasChanges() {
+		t.Error("expected changes")
+	}
+	creates := result.Creates()
+	if len(creates) != 1 || creates[0].ID != "svc" {
+		t.Errorf("expected 1 create for svc, got %v", creates)
+	}
+	updates := result.Updates()
+	if len(updates) != 1 || updates[0].ID != "node" {
+		t.Errorf("expected 1 update for node, got %v", updates)
+	}
+	skips := result.Skips()
+	if len(skips) != 1 || skips[0].ID != "pod" {
+		t.Errorf("expected 1 skip for pod, got %v", skips)
+	}
+	deletes := result.Deletes()
+	if len(deletes) != 1 || deletes[0].ID != "pod_belongs_node" {
+		t.Errorf("expected 1 delete for pod_belongs_node, got %v", deletes)
+	}
+}
+
 func TestDiscoverRootFile_MultipleNetworksFails(t *testing.T) {
 	dir, err := os.MkdirTemp("", "bkn-multi-root-*")
 	if err != nil {

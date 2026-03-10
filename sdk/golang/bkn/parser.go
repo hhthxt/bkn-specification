@@ -34,9 +34,11 @@ var sectionAliases = map[string]string{
 	"绑定对象": "Bound Object", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
 	"工具配置": "Tool Configuration", "参数绑定": "Parameter Binding",
 	"调度配置": "Schedule", "影响范围": "Scope of Impact", "执行说明": "Execution Description",
+	"管控范围": "Control Scope", "管控策略": "Control Policy",
+	"前置检查": "Pre-checks", "回滚方案": "Rollback Plan", "审计要求": "Audit Requirements",
 }
 
-var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action):\s*(\S+)`)
+var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Risk):\s*(\S+)`)
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
 var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
@@ -451,6 +453,44 @@ func parseActionBlock(blockID, blockText string) Action {
 	return action
 }
 
+func parseRiskBlock(blockID, blockText string) Risk {
+	name, desc := parseDisplayName(blockText)
+	tags, owner := parseInlineMeta(blockText)
+	sections := extractSections(blockText, "###")
+
+	risk := Risk{
+		ID:          blockID,
+		Name:        name,
+		Description: desc,
+		Tags:        tags,
+		Owner:       owner,
+	}
+	if s, ok := sections["Control Scope"]; ok {
+		risk.ControlScope = s
+	}
+	if s, ok := sections["Control Policy"]; ok {
+		risk.ControlPolicy = s
+	}
+	if s, ok := sections["Pre-checks"]; ok {
+		rows := parseTable(strings.Split(s, "\n"))
+		for _, row := range rows {
+			risk.PreChecks = append(risk.PreChecks, PreCondition{
+				Object:    row["Object"],
+				Check:     row["Check"],
+				Condition: row["Condition"],
+				Message:   row["Message"],
+			})
+		}
+	}
+	if s, ok := sections["Rollback Plan"]; ok {
+		risk.RollbackPlan = s
+	}
+	if s, ok := sections["Audit Requirements"]; ok {
+		risk.AuditRequirements = s
+	}
+	return risk
+}
+
 // ParseFrontmatter parses the YAML frontmatter of a .bkn file.
 func ParseFrontmatter(text string) (*Frontmatter, error) {
 	fmStr, _ := splitFrontmatter(text)
@@ -470,14 +510,19 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 		ID:          strVal(data, "id"),
 		Name:        strVal(data, "name"),
 		Version:     strVal(data, "version"),
+		Branch:      strVal(data, "branch"),
 		Description: strVal(data, "description"),
 		Network:     strVal(data, "network"),
 		Namespace:   strVal(data, "namespace"),
 		Owner:       strVal(data, "owner"),
+		Author:      strVal(data, "author"),
+		Status:      strVal(data, "status"),
 		SpecVersion: strVal(data, "spec_version"),
 		Object:      strVal(data, "object"),
 		Relation:    strVal(data, "relation"),
 		Source:      strVal(data, "source"),
+		CreatedAt:   strVal(data, "created_at"),
+		UpdatedAt:   strVal(data, "updated_at"),
 	}
 	if v, ok := data["tags"].([]any); ok {
 		for _, t := range v {
@@ -489,6 +534,11 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 			fm.Includes = append(fm.Includes, fmt.Sprint(i))
 		}
 	}
+	if v, ok := data["capabilities"].([]any); ok {
+		for _, c := range v {
+			fm.Capabilities = append(fm.Capabilities, fmt.Sprint(c))
+		}
+	}
 	if v, ok := data["enabled"].(bool); ok {
 		fm.Enabled = &v
 	}
@@ -497,10 +547,11 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 	}
 
 	known := map[string]bool{
-		"type": true, "id": true, "name": true, "version": true, "tags": true,
+		"type": true, "id": true, "name": true, "version": true, "branch": true, "tags": true,
 		"description": true, "includes": true, "network": true, "namespace": true,
-		"owner": true, "spec_version": true, "enabled": true,
+		"owner": true, "author": true, "status": true, "spec_version": true, "enabled": true,
 		"requires_approval": true, "object": true, "relation": true, "source": true,
+		"capabilities": true, "created_at": true, "updated_at": true,
 	}
 	fm.Extra = make(map[string]any)
 	for k, v := range data {
@@ -519,12 +570,13 @@ func strVal(m map[string]any, key string) string {
 }
 
 // ParseBody parses the Markdown body of a .bkn file into lists of definitions.
-func ParseBody(text string) ([]BknObject, []Relation, []Action) {
+func ParseBody(text string) ([]BknObject, []Relation, []Action, []Risk) {
 	_, body := splitFrontmatter(text)
 	matches := definitionRE.FindAllStringSubmatchIndex(body, -1)
 	var objects []BknObject
 	var relations []Relation
 	var actions []Action
+	var risks []Risk
 
 	for i, m := range matches {
 		defType := body[m[2]:m[3]]
@@ -545,13 +597,15 @@ func ParseBody(text string) ([]BknObject, []Relation, []Action) {
 			relations = append(relations, parseRelationBlock(defID, blockText))
 		case "Action":
 			actions = append(actions, parseActionBlock(defID, blockText))
+		case "Risk":
+			risks = append(risks, parseRiskBlock(defID, blockText))
 		}
 	}
-	return objects, relations, actions
+	return objects, relations, actions, risks
 }
 
 var validBknTypes = map[string]bool{
-	"network": true, "object_type": true, "relation_type": true, "action_type": true,
+	"network": true, "object_type": true, "relation_type": true, "action_type": true, "risk_type": true,
 }
 
 // Parse parses a complete .bkn/.md file into a BknDocument.
@@ -571,17 +625,18 @@ func Parse(text string, sourcePath string) (*BknDocument, error) {
 	}
 	typeVal := strings.TrimSpace(fm.Type)
 	if typeVal == "" {
-		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object_type, relation_type, action_type)")
+		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object_type, relation_type, action_type, risk_type)")
 	}
 	if !validBknTypes[typeVal] {
-		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object_type, relation_type, action_type", typeVal)
+		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object_type, relation_type, action_type, risk_type", typeVal)
 	}
-	objects, relations, actions := ParseBody(text)
+	objects, relations, actions, risks := ParseBody(text)
 	return &BknDocument{
 		Frontmatter: *fm,
 		Objects:     objects,
 		Relations:   relations,
 		Actions:     actions,
+		Risks:       risks,
 		SourcePath:  sourcePath,
 	}, nil
 }

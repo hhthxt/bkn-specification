@@ -13,6 +13,7 @@ includes:
   - relation_types/service_routes_pod.bkn
   - action_types/restart_pod.bkn
   - action_types/cordon_node.bkn
+  - risk_types/restart_pod_high_risk.bkn
 ---
 
 # Kubernetes模块化网络

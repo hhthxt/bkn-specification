@@ -6,12 +6,15 @@ type Frontmatter struct {
 	ID               string   `yaml:"id"`
 	Name             string   `yaml:"name"`
 	Version          string   `yaml:"version"`
+	Branch           string   `yaml:"branch"`
 	Tags             []string `yaml:"tags"`
 	Description      string   `yaml:"description"`
 	Includes         []string `yaml:"includes"`
 	Network          string   `yaml:"network"`
 	Namespace        string   `yaml:"namespace"`
 	Owner            string   `yaml:"owner"`
+	Author           string   `yaml:"author"`
+	Status           string   `yaml:"status"`
 	SpecVersion      string   `yaml:"spec_version"`
 	Enabled          *bool    `yaml:"enabled"`
 	RiskLevel        string   `yaml:"risk_level"`
@@ -19,6 +22,9 @@ type Frontmatter struct {
 	Object           string   `yaml:"object"`
 	Relation         string   `yaml:"relation"`
 	Source           string   `yaml:"source"`
+	Capabilities     []string `yaml:"capabilities"`
+	CreatedAt        string   `yaml:"created_at"`
+	UpdatedAt        string   `yaml:"updated_at"`
 	Extra            map[string]any
 }
 
@@ -147,12 +153,27 @@ type Action struct {
 	ExecutionDescription string
 }
 
+// Risk is a ## Risk: {id} block.
+type Risk struct {
+	ID                string
+	Name              string
+	Description       string
+	Tags              []string
+	Owner             string
+	ControlScope      string
+	ControlPolicy     string
+	PreChecks         []PreCondition
+	RollbackPlan      string
+	AuditRequirements string
+}
+
 // BknDocument is a parsed .bkn file: frontmatter + body definitions.
 type BknDocument struct {
 	Frontmatter Frontmatter
 	Objects     []BknObject
 	Relations   []Relation
 	Actions     []Action
+	Risks       []Risk
 	SourcePath  string
 }
 
@@ -188,6 +209,16 @@ func (n *BknNetwork) AllActions() []Action {
 	out = append(out, n.Root.Actions...)
 	for _, doc := range n.Includes {
 		out = append(out, doc.Actions...)
+	}
+	return out
+}
+
+// AllRisks returns all risks from root and included documents.
+func (n *BknNetwork) AllRisks() []Risk {
+	var out []Risk
+	out = append(out, n.Root.Risks...)
+	for _, doc := range n.Includes {
+		out = append(out, doc.Risks...)
 	}
 	return out
 }
