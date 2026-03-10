@@ -1,0 +1,19 @@
+---
+type: network
+id: k8s-modular
+name: Kubernetes模块化网络
+version: 1.0.0
+tags: [Kubernetes, 拓扑架构, 运维]
+description: 采用每定义一文件的模块化组织方式，适合大规模知识网络
+---
+
+# Kubernetes模块化网络
+
+采用模块化组织的 Kubernetes 知识网络，每个对象、关系、行动都是独立文件。
+
+## 网络概览
+
+- **对象** (object_types/): pod.bkn、node.bkn、service.bkn
+- **关系** (relation_types/): pod_belongs_node.bkn、service_routes_pod.bkn
+- **行动** (action_types/): restart_pod.bkn、cordon_node.bkn
+- **风险** (risk_types/): restart_pod_high_risk.bkn

@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: material2inventory
+name: material2inventory
+---
+
+**物料关联库存** - 
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| material | inventory | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| material_code | material_code |

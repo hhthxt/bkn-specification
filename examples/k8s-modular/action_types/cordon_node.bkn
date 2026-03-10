@@ -2,21 +2,13 @@
 type: action_type
 id: cordon_node
 name: 隔离节点
-version: 1.0.0
-spec_version: 1.0.0
-network: k8s-modular
-namespace: k8s
-owner: platform
 action_type: modify
 enabled: false
 risk_level: high
 requires_approval: true
 tags: [运维操作, 节点管理]
+description: 将故障节点标记为不可调度，防止新 Pod 被调度到该节点。
 ---
-
-## Action: cordon_node
-
-将故障节点标记为不可调度，防止新 Pod 被调度到该节点。
 
 ### Bound Object
 

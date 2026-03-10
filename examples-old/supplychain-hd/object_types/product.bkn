@@ -1,0 +1,62 @@
+---
+type: object_type
+id: product
+name: product
+---
+
+**产品** - 存储企业生产的成品基本信息，包括产品编码、名称。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d606tgg8ubbiutnq84lg | HD_产品 |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| material_name | 产品名称 | VARCHAR | |  |  |  | YES |
+| material_number | 产品编码 | VARCHAR | | 产品编码，产品物料也是成品物料，所以产品编码也是物料编码，但是物料不一定是产品。 | YES | YES | YES |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| material_name | 产品名称 | fulltext(standard) + vector(1951511856216674304) | |  |
+
+### Logic Properties
+
+#### product_bom
+
+- **Display**: product_bom
+- **Type**: operator
+- **Source**: bom_tree_builder (operator)
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| timeout | number | input | - |  |
+| authorization | string | const | <your_authorization_token> |  |
+| cache | boolean | input | - |  |
+| include_inventory | boolean | input | - |  |
+| include_substitutes | boolean | input | - |  |
+| knowledge_network_id | string | const | supplychain_hd0202 |  |
+| max_products | number | input | - |  |
+| product_codes | array | input | - |  |
+
+#### product_sales_history
+
+- **Display**: 产品历史销量
+- **Type**: metric
+- **Source**: 产品历史销量 (metric)
+- **Description**: 通过产品编码查询产品的历史销量，以月为单位，每个月该产品的累计销量。时间跨度可配置。
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| product_name | string | property | material_name | 产品名称，绑定 material_name |
+| instant | boolean | input | - | 是否是即时查询。可选，默认为 false。当 instant = true 时，表示即时查询；当 instant = false 时，表示范围查询。 |
+| start | integer | input | - | 指标查询的开始时间。 start=<unix_timestamp>，单位到毫秒。 例如: 1646360670123 |
+| end | integer | input | - | 指标查询的结束时间。end=<unix_timestamp>，单位到毫秒。例如: 1646471470123 |
+| step | string | input | - | 范围查询的步长。当 instant 为 false 时, 必须。step=<time_durations>，用一个数字，后面跟时间单位来定义。 |

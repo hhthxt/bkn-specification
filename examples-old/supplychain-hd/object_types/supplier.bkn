@@ -1,0 +1,34 @@
+---
+type: object_type
+id: supplier
+name: supplier
+---
+
+**供应商** - 记录供应商的基础信息，包括编码、名称、信用代码、付款条件及对应采购员。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 2017573348875202561 | erp_supplier |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| supplier_code | 供应商编码 | VARCHAR | | 供应商的唯一标识编码 | YES |  | YES |
+| supplier_name | 供应商名称 | VARCHAR | | 供应商的公司全称 |  | YES | YES |
+| societycreditcode | 统一社会信用代码 | VARCHAR | | 企业统一社会信用代码 |  |  | YES |
+| purchaserid_name | 采购员 | VARCHAR | | 负责该供应商的采购员姓名 |  |  | YES |
+| paycond_name | 付款条件 | VARCHAR | | 供应商的付款结算条款 |  |  | YES |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| supplier_name | 供应商名称 | fulltext(standard) + vector(1951511856216674304) | | 供应商的公司全称 |
+| societycreditcode | 统一社会信用代码 | fulltext(standard) | | 企业统一社会信用代码 |
+| purchaserid_name | 采购员 | fulltext(standard) | | 负责该供应商的采购员姓名 |
+| paycond_name | 付款条件 | fulltext(standard) + vector(1951511856216674304) | | 供应商的付款结算条款 |

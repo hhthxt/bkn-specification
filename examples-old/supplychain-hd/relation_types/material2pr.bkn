@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: material2pr
+name: material2pr
+---
+
+**物料关联采购申请单** - 
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| material | pr | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| material_code | material_number |

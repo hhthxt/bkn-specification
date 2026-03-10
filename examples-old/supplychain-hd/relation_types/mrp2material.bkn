@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: mrp2material
+name: mrp2material
+---
+
+**物料需求计划关联物料** - 
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| mrp | material | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| main_material | material_code |

@@ -1,0 +1,43 @@
+---
+type: object_type
+id: material
+name: material
+---
+
+**物料** - 记录物料的基础信息，包括编码、名称、规格型号、属性（自制/外购）及单位等及相关参数。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d607dm08ubbiutnq84mg | HD_物料 |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| material_code | 物料编码 | VARCHAR | | 物料的唯一标识编码 | YES |  | YES |
+| material_name | 物料名称 | VARCHAR | | 物料的正式名称 |  | YES | YES |
+| modelnum | 规格型号 | VARCHAR | | 物料的规格与其型号 |  |  | YES |
+| huid_productline_name | 产品线名称 | VARCHAR | | 所属产品线 |  |  | YES |
+| baseunit_number | 物料规格编码 | VARCHAR | | 计量单位的编码，pcs |  |  | YES |
+| baseunit_name | 物料规格 | VARCHAR | | 计量单位名称 (如:  个，套) |  |  | YES |
+| group_name | 存货类别 | VARCHAR | | 原材料-半成品 |  |  | YES |
+| group_type | 物料分类 | VARCHAR | | 物料的类别描述 |  |  | YES |
+| materialattr | 物料属性 | VARCHAR | | 物料属性 (如: 外购) |  |  | YES |
+| purchase_fixedleadtime | 采购固定提前期 | decimal | | 采购交货提前期 (天) |  |  |  |
+| product_fixedleadtime | 生产固定提前期 | decimal | | 自制件包括产成品、半成品的生产提前期 (天) |  |  |  |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| material_name | 物料名称 | fulltext(standard) + vector(1951511856216674304) | | 物料的正式名称 |
+| modelnum | 规格型号 | fulltext(standard) | | 物料的规格与其型号 |
+| huid_productline_name | 产品线名称 | fulltext(standard) | | 所属产品线 |
+| baseunit_name | 物料规格 | fulltext(standard) + vector(1951511856216674304) | | 计量单位名称 (如:  个，套) |
+| group_name | 存货类别 | fulltext(standard) + vector(1951511856216674304) | | 原材料-半成品 |
+| group_type | 物料分类 | fulltext(standard) + vector(1951511856216674304) | | 物料的类别描述 |
+| materialattr | 物料属性 | fulltext(standard) + vector(1951511856216674304) | | 物料属性 (如: 外购) |

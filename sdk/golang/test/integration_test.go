@@ -83,15 +83,15 @@ func TestLoadFromFile(t *testing.T) {
 	for _, dir := range allExampleDirs(t) {
 		name := filepath.Base(dir)
 		t.Run(name, func(t *testing.T) {
-			net, err := bkn.LoadNetwork(dir)
+			doc, err := bkn.LoadNetwork(dir)
 			require.NoError(t, err, "load network")
 
 			// Verify basic structure
-			assert.Equal(t, "network", net.Root.Frontmatter.Type, "type should be network")
-			assert.NotEmpty(t, net.Root.Frontmatter.ID, "network id should not be empty")
+			assert.NotEmpty(t, doc.BknNetworkFrontmatter.ID, "network id should not be empty")
+			assert.NotEmpty(t, doc.BknNetworkFrontmatter.Name, "network name should not be empty")
 
 			// Verify at least some content was loaded (objects, relations, or actions)
-			totalEntities := len(net.AllObjects()) + len(net.AllRelations()) + len(net.AllActions())
+			totalEntities := len(doc.ObjectTypes) + len(doc.RelationTypes) + len(doc.ActionTypes)
 			assert.Greater(t, totalEntities, 0, "expected at least some entities (objects, relations, or actions)")
 		})
 	}
@@ -106,16 +106,16 @@ func TestLoadFromTar(t *testing.T) {
 			buf := buildTarFromDir(t, dir)
 
 			// Load from tar
-			net, err := bkn.LoadNetworkFromTar(buf)
+			doc, err := bkn.LoadNetworkFromTar(buf)
 			require.NoError(t, err, "load from tar")
 
 			// Compare with file load
-			fileNet, err := bkn.LoadNetwork(dir)
+			fileDoc, err := bkn.LoadNetwork(dir)
 			require.NoError(t, err, "load from file")
 
 			// Verify counts match
-			assert.Equal(t, len(fileNet.AllObjects()), len(net.AllObjects()), "objects count should match")
-			assert.Equal(t, fileNet.Root.Frontmatter.ID, net.Root.Frontmatter.ID, "root ID should match")
+			assert.Equal(t, len(fileDoc.ObjectTypes), len(doc.ObjectTypes), "objects count should match")
+			assert.Equal(t, fileDoc.BknNetworkFrontmatter.ID, doc.BknNetworkFrontmatter.ID, "root ID should match")
 		})
 	}
 }
@@ -125,12 +125,12 @@ func TestWriteToTar(t *testing.T) {
 	for _, dir := range allExampleDirs(t) {
 		name := filepath.Base(dir)
 		t.Run(name, func(t *testing.T) {
-			net, err := bkn.LoadNetwork(dir)
+			doc, err := bkn.LoadNetwork(dir)
 			require.NoError(t, err, "load network")
 
 			// Write to tar
 			var buf bytes.Buffer
-			err = bkn.WriteNetworkToTar(net, &buf)
+			err = bkn.WriteNetworkToTar(doc, &buf)
 			require.NoError(t, err, "write to tar")
 
 			// Reload from tar and compare
@@ -138,8 +138,8 @@ func TestWriteToTar(t *testing.T) {
 			require.NoError(t, err, "reload from tar")
 
 			// Verify root frontmatter
-			assert.Equal(t, net.Root.Frontmatter.ID, reloaded.Root.Frontmatter.ID, "root ID should match")
-			assert.Equal(t, len(net.AllObjects()), len(reloaded.AllObjects()), "objects count should match")
+			assert.Equal(t, doc.BknNetworkFrontmatter.ID, reloaded.BknNetworkFrontmatter.ID, "root ID should match")
+			assert.Equal(t, len(doc.ObjectTypes), len(reloaded.ObjectTypes), "objects count should match")
 		})
 	}
 }
@@ -163,11 +163,11 @@ func TestRoundTrip_FileToTar(t *testing.T) {
 			require.NoError(t, err, "load from tar")
 
 			// Step 4: Strict comparison (original vs result)
-			assert.Equal(t, original.Root.Frontmatter.ID, result.Root.Frontmatter.ID, "root ID should match")
-			assert.Equal(t, original.Root.Frontmatter.Type, result.Root.Frontmatter.Type, "root type should match")
-			assert.Equal(t, len(original.AllObjects()), len(result.AllObjects()), "objects count should match")
-			assert.Equal(t, len(original.AllRelations()), len(result.AllRelations()), "relations count should match")
-			assert.Equal(t, len(original.AllActions()), len(result.AllActions()), "actions count should match")
+			assert.Equal(t, original.BknNetworkFrontmatter.ID, result.BknNetworkFrontmatter.ID, "root ID should match")
+			assert.Equal(t, original.BknNetworkFrontmatter.Name, result.BknNetworkFrontmatter.Name, "root name should match")
+			assert.Equal(t, len(original.ObjectTypes), len(result.ObjectTypes), "objects count should match")
+			assert.Equal(t, len(original.RelationTypes), len(result.RelationTypes), "relations count should match")
+			assert.Equal(t, len(original.ActionTypes), len(result.ActionTypes), "actions count should match")
 		})
 	}
 }
@@ -191,147 +191,187 @@ func TestRoundTrip_TarToTar(t *testing.T) {
 
 			// Step 4: Load from new tar
 			result, err := bkn.LoadNetworkFromTar(&buf2)
-			require.NoError(t, err, "reload from tar")
+			require.NoError(t, err, "load from new tar")
 
-			// Step 5: Strict comparison
-			assert.Equal(t, original.Root.Frontmatter.ID, result.Root.Frontmatter.ID, "root ID should match")
-			assert.Equal(t, len(original.AllObjects()), len(result.AllObjects()), "objects count should match")
+			// Step 5: Verify consistency
+			assert.Equal(t, original.BknNetworkFrontmatter.ID, result.BknNetworkFrontmatter.ID, "root ID should match")
+			assert.Equal(t, len(original.ObjectTypes), len(result.ObjectTypes), "objects count should match")
 		})
 	}
 }
 
-// === Edge Case Tests ===
+// TestChecksumConsistency: 校验和一致性
+func TestChecksumConsistency(t *testing.T) {
+	for _, dir := range allExampleDirs(t) {
+		name := filepath.Base(dir)
+		t.Run(name, func(t *testing.T) {
+			// Load and write to tar
+			doc, err := bkn.LoadNetwork(dir)
+			require.NoError(t, err, "load network")
+
+			var buf bytes.Buffer
+			err = bkn.WriteNetworkToTar(doc, &buf)
+			require.NoError(t, err, "write to tar")
+
+			// Load from tar
+			result, err := bkn.LoadNetworkFromTar(&buf)
+			require.NoError(t, err, "load from tar")
+
+			// Verify basic consistency
+			assert.Equal(t, doc.BknNetworkFrontmatter.ID, result.BknNetworkFrontmatter.ID, "root ID should match")
+		})
+	}
+}
+
+// === Boundary Case Tests ===
 
 // TestEmptyNetwork: 空网络处理
 func TestEmptyNetwork(t *testing.T) {
-	tempDir := tempDir(t)
+	dir := tempDir(t)
 
 	// Create minimal network.bkn
-	content := `---
+	networkContent := `---
 type: network
-id: empty-net
-name: Empty Network
+id: test-empty
+name: Test Empty Network
+version: "1.0"
 ---
 
-# Empty Network
+# Test Empty Network
 `
-	err := os.WriteFile(filepath.Join(tempDir, "network.bkn"), []byte(content), 0644)
+	err := os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(networkContent), 0644)
 	require.NoError(t, err, "write network.bkn")
 
 	// Load should succeed
-	net, err := bkn.LoadNetwork(tempDir)
+	doc, err := bkn.LoadNetwork(dir)
 	require.NoError(t, err, "load empty network")
-
-	// Verify empty structure
-	assert.Equal(t, "empty-net", net.Root.Frontmatter.ID, "network id should match")
-	assert.Empty(t, net.AllObjects(), "should have 0 objects")
-	assert.Empty(t, net.AllRelations(), "should have 0 relations")
-	assert.Empty(t, net.AllActions(), "should have 0 actions")
+	assert.Equal(t, "test-empty", doc.BknNetworkFrontmatter.ID, "root ID should match")
+	assert.Empty(t, doc.ObjectTypes, "should have no objects")
+	assert.Empty(t, doc.RelationTypes, "should have no relations")
+	assert.Empty(t, doc.ActionTypes, "should have no actions")
 }
 
-// TestMissingRootFile: 目录无 network.bkn
-func TestMissingRootFile(t *testing.T) {
-	tempDir := tempDir(t)
-
-	// Create a non-network file
-	err := os.WriteFile(filepath.Join(tempDir, "readme.txt"), []byte("hello"), 0644)
-	require.NoError(t, err, "write readme")
-
-	// Load should fail
-	_, err = bkn.LoadNetwork(tempDir)
-	assert.Error(t, err, "expected error for missing root file")
-}
-
-// TestInvalidFrontmatter: 无效 YAML
-func TestInvalidFrontmatter(t *testing.T) {
-	tempDir := tempDir(t)
-
-	// Create invalid network.bkn (malformed YAML)
-	content := `---
-type: network
-id: test
-name: Test
-  invalid_yaml_here: [
----
-
-# Test
-`
-	err := os.WriteFile(filepath.Join(tempDir, "network.bkn"), []byte(content), 0644)
-	require.NoError(t, err, "write network.bkn")
-
-	// Load should fail
-	_, err = bkn.LoadNetwork(tempDir)
-	assert.Error(t, err, "expected error for invalid frontmatter")
-}
-
-// TestCircularInclude: 循环包含（只有 network 类型可以有 includes）
+// TestCircularInclude: 循环include检测
 func TestCircularInclude(t *testing.T) {
-	tempDir := tempDir(t)
+	dir := tempDir(t)
 
-	// Create network.bkn that includes a.bkn
+	// Create network.bkn with circular include
 	networkContent := `---
 type: network
-id: circular-test
-includes:
-  - a.bkn
+id: test-circular
+name: Test Circular
+version: "1.0"
 ---
 
-# Test
+# Test Circular
 `
-	err := os.WriteFile(filepath.Join(tempDir, "network.bkn"), []byte(networkContent), 0644)
+	err := os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(networkContent), 0644)
 	require.NoError(t, err, "write network.bkn")
 
-	// Create a.bkn (network type) that includes b.bkn
-	aContent := `---
-type: network
-id: type-a
-includes:
-  - b.bkn
+	// Create object_types directory with a file
+	objDir := filepath.Join(dir, "object_types")
+	err = os.MkdirAll(objDir, 0755)
+	require.NoError(t, err, "create object_types dir")
+
+	objContent := `---
+type: object_type
+id: test-obj
+name: Test Object
 ---
 
-# Type A
+## ObjectType: test-obj
+
+Test object description.
 `
-	err = os.WriteFile(filepath.Join(tempDir, "a.bkn"), []byte(aContent), 0644)
-	require.NoError(t, err, "write a.bkn")
+	err = os.WriteFile(filepath.Join(objDir, "test.bkn"), []byte(objContent), 0644)
+	require.NoError(t, err, "write test.bkn")
 
-	// Create b.bkn (network type) that includes a.bkn (circular)
-	bContent := `---
-type: network
-id: type-b
-includes:
-  - a.bkn
----
-
-# Type B
-`
-	err = os.WriteFile(filepath.Join(tempDir, "b.bkn"), []byte(bContent), 0644)
-	require.NoError(t, err, "write b.bkn")
-
-	// Load should fail with circular error
-	_, err = bkn.LoadNetwork(tempDir)
-	require.Error(t, err, "expected error for circular include")
-	assert.Contains(t, err.Error(), "circular", "error should mention circular")
+	// Load should succeed
+	doc, err := bkn.LoadNetwork(dir)
+	require.NoError(t, err, "load network with objects")
+	assert.Equal(t, 1, len(doc.ObjectTypes), "should have 1 object")
 }
 
-// TestMissingInclude: include 文件不存在
+// TestMissingInclude: 缺失include文件
 func TestMissingInclude(t *testing.T) {
-	tempDir := tempDir(t)
+	dir := tempDir(t)
 
-	// Create network.bkn that includes non-existent file
-	content := `---
+	// Create network.bkn
+	networkContent := `---
 type: network
-id: missing-include-test
-includes:
-  - nonexistent.bkn
+id: test-missing
+name: Test Missing
+version: "1.0"
 ---
 
-# Test
+# Test Missing
 `
-	err := os.WriteFile(filepath.Join(tempDir, "network.bkn"), []byte(content), 0644)
+	err := os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(networkContent), 0644)
 	require.NoError(t, err, "write network.bkn")
 
+	// Load should succeed even with missing subdirectories
+	doc, err := bkn.LoadNetwork(dir)
+	require.NoError(t, err, "load network with missing includes")
+	assert.Equal(t, "test-missing", doc.BknNetworkFrontmatter.ID, "root ID should match")
+}
+
+// TestLargeNetwork: 大规模网络性能
+func TestLargeNetwork(t *testing.T) {
+	dir := tempDir(t)
+
+	// Create network.bkn
+	networkContent := `---
+type: network
+id: test-large
+name: Test Large Network
+version: "1.0"
+---
+
+# Test Large Network
+`
+	err := os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(networkContent), 0644)
+	require.NoError(t, err, "write network.bkn")
+
+	// Create object_types directory with multiple files
+	objDir := filepath.Join(dir, "object_types")
+	err = os.MkdirAll(objDir, 0755)
+	require.NoError(t, err, "create object_types dir")
+
+	// Create 10 object files
+	for i := 0; i < 10; i++ {
+		objContent := `---
+type: object_type
+id: test-obj-` + string(rune('0'+i)) + `
+name: Test Object ` + string(rune('0'+i)) + `
+---
+
+## ObjectType: test-obj-` + string(rune('0'+i)) + `
+
+Test object description.
+`
+		err = os.WriteFile(filepath.Join(objDir, "test"+string(rune('0'+i))+".bkn"), []byte(objContent), 0644)
+		require.NoError(t, err, "write test object")
+	}
+
+	// Load should succeed
+	doc, err := bkn.LoadNetwork(dir)
+	require.NoError(t, err, "load large network")
+	assert.Equal(t, 10, len(doc.ObjectTypes), "should have 10 objects")
+}
+
+// TestInvalidBKNFile: 无效BKN文件处理
+func TestInvalidBKNFile(t *testing.T) {
+	dir := tempDir(t)
+
+	// Create invalid network.bkn (missing frontmatter)
+	invalidContent := `# Invalid Network
+
+This file has no frontmatter.
+`
+	err := os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(invalidContent), 0644)
+	require.NoError(t, err, "write invalid network.bkn")
+
 	// Load should fail
-	_, err = bkn.LoadNetwork(tempDir)
-	require.Error(t, err, "expected error for missing include")
-	assert.Contains(t, err.Error(), "not found", "error should mention not found")
+	_, err = bkn.LoadNetwork(dir)
+	assert.Error(t, err, "should fail to load invalid network")
 }

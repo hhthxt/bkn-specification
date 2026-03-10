@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: po2material
+name: po2material
+---
+
+**物料采购订单关联物料** - 物料采购订单PO是关于某个物料的采购，基于物料编码来进行连接
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| po | material | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| material_number | material_code |

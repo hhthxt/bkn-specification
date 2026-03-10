@@ -7,345 +7,154 @@ package bkn
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
-// Supported file extensions for BKN content. .md is allowed as a carrier;
-// content must still satisfy BKN frontmatter/type/structure requirements.
-var supportedExtensions = map[string]bool{
-	".bkn": true, ".md": true,
-}
-
 // Root file discovery: network.bkn
-const rootCandidateName = "network.bkn"
+const (
+	RootFileName     = "network.bkn"
+	ChecksumFileName = "CHECKSUM"
+	SkillFileName    = "SKILL.md"
+	ExtensionBkn     = ".bkn"
+)
 
-// LoadNetwork loads a network file and recursively resolves its includes.
-// Supported extensions: .bkn, .md. Root file should be type: network.
-// When rootPath is a directory, the root file is discovered automatically (network.bkn).
-// If the root has no includes, same-directory BKN files are loaded implicitly.
-// Otherwise only files listed in frontmatter includes are loaded.
+// Supported file extensions for BKN content.
+var (
+	SupportedExtensions = map[string]bool{
+		".bkn": true,
+		".md":  true,
+	}
+	// SupportedBknSubDirs defines the standard subdirectories for BKN definitions.
+	SupportedBknSubDirs = map[string]bool{
+		"object_types":   true,
+		"relation_types": true,
+		"action_types":   true,
+		"risk_types":     true,
+		"concept_groups": true,
+	}
+)
+
+// LoadNetwork loads a BKN network from a directory.
+// It reads network.bkn and SKILL.md from the root, then traverses
+// object_types/, relation_types/, action_types/, risk_types/ subdirectories
+// to build a complete BknNetwork.
 func LoadNetwork(rootPath string) (*BknNetwork, error) {
 	fsys := NewOSFileSystem()
 	return LoadNetworkWithFS(fsys, rootPath)
 }
 
-// LoadNetworkWithFS 使用指定的文件系统加载网络
+// LoadNetworkWithFS loads a BKN network using the specified filesystem.
+// rootPath should be a directory containing network.bkn and standard subdirectories.
 func LoadNetworkWithFS(fsys FileSystem, rootPath string) (*BknNetwork, error) {
 	absRoot := fsys.Abs(rootPath)
 
-	// 检查是否是目录
-	if fsys.IsDir(absRoot) {
-		var err error
-		absRoot, err = DiscoverRootFileWithFS(fsys, absRoot)
-		if err != nil {
-			return nil, err
-		}
+	// Ensure rootPath is a directory
+	if !fsys.IsDir(absRoot) {
+		return nil, fmt.Errorf("root path must be a directory: %s", absRoot)
 	}
 
-	rootDoc, err := LoadWithFS(fsys, absRoot)
+	// Step 1: Load network.bkn for frontmatter
+	networkFile := fsys.Join(absRoot, RootFileName)
+	if _, err := fsys.Stat(networkFile); err != nil {
+		return nil, fmt.Errorf("network.bkn not found in %s", absRoot)
+	}
+
+	data, err := fsys.ReadFile(networkFile)
 	if err != nil {
 		return nil, err
 	}
 
-	loadedPaths := map[string]bool{absRoot: true}
-	recursionStack := map[string]bool{}
-	var includes []BknDocument
-	baseDir := fsys.Dir(absRoot)
-
-	if len(rootDoc.Frontmatter.Includes) > 0 {
-		if err := resolveIncludesWithFS(fsys, rootDoc, baseDir, loadedPaths, recursionStack, &includes); err != nil {
-			return nil, err
-		}
-	} else {
-		// No includes: for type: network only, implicitly load same-dir files
-		docType := strings.ToLower(strings.TrimSpace(rootDoc.Frontmatter.Type))
-		if docType == "network" {
-			implicitPaths, err := collectSameDirBknFilesWithFS(fsys, baseDir, absRoot)
-			if err != nil {
-				return nil, err
-			}
-			for _, incPath := range implicitPaths {
-				incAbs := fsys.Abs(incPath)
-				if loadedPaths[incAbs] {
-					continue
-				}
-				if recursionStack[incAbs] {
-					return nil, fmt.Errorf("circular include detected: %s (resolved to %s)", fsys.Base(incPath), incAbs)
-				}
-				loadedPaths[incAbs] = true
-				incDoc, err := LoadWithFS(fsys, incAbs)
-				if err != nil {
-					return nil, err
-				}
-				includes = append(includes, *incDoc)
-				recursionStack[incAbs] = true
-				if err := resolveIncludesWithFS(fsys, incDoc, fsys.Dir(incAbs), loadedPaths, recursionStack, &includes); err != nil {
-					return nil, err
-				}
-				delete(recursionStack, incAbs)
-			}
-		}
-	}
-
-	network := &BknNetwork{
-		Root:     *rootDoc,
-		Includes: includes,
-	}
-	if err := validateNetworkReferences(network); err != nil {
-		return nil, err
-	}
-	return network, nil
-}
-
-// DiscoverRootFile discovers the root network file in a directory.
-// Order: network.bkn > network.md > index.bkn > index.md.
-// If none exist, and exactly one file in the directory has type: network,
-// use that file. Otherwise return error.
-func DiscoverRootFile(directory string) (string, error) {
-	fsys := NewOSFileSystem()
-	return DiscoverRootFileWithFS(fsys, directory)
-}
-
-// DiscoverRootFileWithFS 使用指定的文件系统发现根文件
-func DiscoverRootFileWithFS(fsys FileSystem, directory string) (string, error) {
-	abs := fsys.Abs(directory)
-
-	// 1. Check named candidate
-	candidate := fsys.Join(abs, rootCandidateName)
-	if _, err := fsys.Stat(candidate); err == nil {
-		ext := fsys.Ext(candidate)
-		if supportedExtensions[ext] {
-			return candidate, nil
-		}
-	}
-
-	// 2. Scan same directory for type: network files
-	var networkFiles []string
-	entries, err := fsys.ReadDir(abs)
+	bknDoc, err := ParseNetworkFile(string(data), absRoot)
 	if err != nil {
-		return "", err
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		ext := fsys.Ext(e.Name())
-		if !supportedExtensions[ext] {
-			continue
-		}
-		p := fsys.Join(abs, e.Name())
-		data, err := fsys.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		doc, err := Parse(string(data), p)
-		if err != nil {
-			continue
-		}
-		if strings.EqualFold(strings.TrimSpace(doc.Frontmatter.Type), "network") {
-			networkFiles = append(networkFiles, p)
-		}
+		return nil, fmt.Errorf("load network.bkn: %w", err)
 	}
 
-	if len(networkFiles) == 1 {
-		return networkFiles[0], nil
-	}
-	if len(networkFiles) > 1 {
-		names := make([]string, len(networkFiles))
-		for i, p := range networkFiles {
-			names[i] = fsys.Base(p)
-		}
-		return "", fmt.Errorf("multiple network roots in %s: %v; use %s as the single root", abs, names, rootCandidateName)
-	}
-	return "", fmt.Errorf("no root network file found in %s; expected %s or a single type: network file", abs, rootCandidateName)
-}
-
-func collectSameDirBknFiles(directory, rootPath string) ([]string, error) {
-	fsys := NewOSFileSystem()
-	return collectSameDirBknFilesWithFS(fsys, directory, rootPath)
-}
-
-// bknSubdirs lists the standard subdirectories for BKN definitions per DESIGN.md §3.1.
-var bknSubdirs = []string{"object_types", "relation_types", "action_types", "risk_types"}
-
-func collectSameDirBknFilesWithFS(fsys FileSystem, directory, rootPath string) ([]string, error) {
-	abs := fsys.Abs(directory)
-	absRoot := fsys.Abs(rootPath)
-	rootName := fsys.Base(absRoot)
-
-	excludeNames := map[string]bool{rootName: true}
-	candidate := fsys.Join(abs, rootCandidateName)
-	if _, err := fsys.Stat(candidate); err == nil {
-		excludeNames[rootCandidateName] = true
+	// Step 2: Load SKILL.md if exists (for additional metadata)
+	skillFile := fsys.Join(absRoot, SkillFileName)
+	if _, err := fsys.Stat(skillFile); err == nil {
+		// SKILL.md exists, could parse additional metadata if needed
+		// For now, we use network.bkn as the primary source of truth
+		_ = skillFile
 	}
 
-	var result []string
-
-	// Scan same-directory files
-	entries, err := fsys.ReadDir(abs)
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		if excludeNames[e.Name()] {
-			continue
-		}
-		ext := fsys.Ext(e.Name())
-		if !supportedExtensions[ext] {
-			continue
-		}
-		p := fsys.Join(abs, e.Name())
-		data, err := fsys.ReadFile(p)
-		if err != nil {
-			continue
-		}
-		if _, err := Parse(string(data), p); err != nil {
-			continue
-		}
-		result = append(result, p)
-	}
-
-	// Scan standard subdirectories (object_types/, relation_types/, action_types/, risk_types/)
-	for _, subdir := range bknSubdirs {
-		subdirPath := fsys.Join(abs, subdir)
+	// Step 4: Traverse subdirectories and load definitions
+	for subdir := range SupportedBknSubDirs {
+		subdirPath := fsys.Join(absRoot, subdir)
 		if !fsys.IsDir(subdirPath) {
 			continue
 		}
-		subEntries, err := fsys.ReadDir(subdirPath)
-		if err != nil {
-			continue
-		}
-		for _, e := range subEntries {
-			if e.IsDir() {
-				continue
-			}
-			ext := fsys.Ext(e.Name())
-			if !supportedExtensions[ext] {
-				continue
-			}
-			p := fsys.Join(subdirPath, e.Name())
-			data, err := fsys.ReadFile(p)
-			if err != nil {
-				continue
-			}
-			if _, err := Parse(string(data), p); err != nil {
-				continue
-			}
-			result = append(result, p)
+
+		if err := loadSubdirWithFS(fsys, subdirPath, subdir, bknDoc); err != nil {
+			return nil, fmt.Errorf("load %s: %w", subdir, err)
 		}
 	}
 
-	sort.Strings(result)
-	return result, nil
+	return bknDoc, nil
 }
 
-func checkExtension(path string) error {
-	ext := strings.ToLower(filepath.Ext(path))
-	if !supportedExtensions[ext] {
-		return fmt.Errorf("unsupported file extension: %q; BKN supports: .bkn, .md", ext)
-	}
-	return nil
-}
-
-// Load loads and parses a single .bkn/.md file.
-// Supported extensions: .bkn, .md. Content must satisfy BKN
-// frontmatter, type, and structure requirements regardless of extension.
-func Load(path string) (*BknDocument, error) {
-	fsys := NewOSFileSystem()
-	return LoadWithFS(fsys, path)
-}
-
-// LoadWithFS 使用指定的文件系统加载文件
-func LoadWithFS(fsys FileSystem, path string) (*BknDocument, error) {
-	if err := checkExtension(path); err != nil {
-		return nil, err
-	}
-	data, err := fsys.ReadFile(path)
+// loadSubdirWithFS loads all .bkn/.md files from a subdirectory into the result document.
+// It uses the subdirectory name to determine which type-specific parser to use.
+func loadSubdirWithFS(fsys FileSystem, subdirPath, subdirName string, result *BknNetwork) error {
+	entries, err := fsys.ReadDir(subdirPath)
 	if err != nil {
-		return nil, err
-	}
-	abs := fsys.Abs(path)
-	return Parse(string(data), abs)
-}
-
-// resolveIncludes recursively resolves includes from a document's frontmatter.
-// Deduplication: paths in loadedPaths are skipped (already loaded).
-// Circular: only when path is in recursionStack (back to self in chain).
-func resolveIncludes(doc *BknDocument, baseDir string, loadedPaths, recursionStack map[string]bool, result *[]BknDocument) error {
-	fsys := NewOSFileSystem()
-	return resolveIncludesWithFS(fsys, doc, baseDir, loadedPaths, recursionStack, result)
-}
-
-func resolveIncludesWithFS(fsys FileSystem, doc *BknDocument, baseDir string, loadedPaths, recursionStack map[string]bool, result *[]BknDocument) error {
-	// Only network type documents can have includes
-	docType := strings.ToLower(strings.TrimSpace(doc.Frontmatter.Type))
-	if docType != "network" {
-		return nil
+		return err
 	}
 
-	for _, includeRel := range doc.Frontmatter.Includes {
-		includePath := fsys.Join(baseDir, includeRel)
-		absPath := fsys.Abs(includePath)
-
-		// Check for circular include first (before deduplication)
-		if recursionStack[absPath] {
-			return fmt.Errorf("circular include detected: %s (resolved to %s)", includeRel, absPath)
-		}
-
-		// Deduplication: skip if already loaded
-		if loadedPaths[absPath] {
+	for _, entry := range entries {
+		if entry.IsDir() {
 			continue
 		}
 
-		if _, err := fsys.Stat(absPath); err != nil {
-			return fmt.Errorf("include file not found: %s (resolved to %s)", includeRel, absPath)
+		name := entry.Name()
+		ext := strings.ToLower(filepath.Ext(name))
+		if ext != ExtensionBkn {
+			continue
 		}
 
-		loadedPaths[absPath] = true
-		incDoc, err := LoadWithFS(fsys, absPath)
+		filePath := fsys.Join(subdirPath, name)
+		data, err := fsys.ReadFile(filePath)
 		if err != nil {
 			return err
 		}
-		*result = append(*result, *incDoc)
 
-		// Add to recursion stack before recursing
-		recursionStack[absPath] = true
-		err = resolveIncludesWithFS(fsys, incDoc, fsys.Dir(absPath), loadedPaths, recursionStack, result)
-		delete(recursionStack, absPath)
+		// Use type-specific parser based on subdirectory type
+		switch subdirName {
+		case "object_types":
+			obj, err := ParseObjectTypeFile(string(data), filePath)
+			if err == nil {
+				result.ObjectTypes = append(result.ObjectTypes, obj)
+			}
+		case "relation_types":
+			rel, err := ParseRelationTypeFile(string(data), filePath)
+			if err == nil {
+				result.RelationTypes = append(result.RelationTypes, rel)
+			}
+		case "action_types":
+			act, err := ParseActionTypeFile(string(data), filePath)
+			if err == nil {
+				result.ActionTypes = append(result.ActionTypes, act)
+			}
+		case "risk_types":
+			ris, err := ParseRiskTypeFile(string(data), filePath)
+			if err == nil {
+				result.RiskTypes = append(result.RiskTypes, ris)
+			}
+		case "concept_groups":
+			// Concept groups use generic parsing for now
+			grp, err := ParseConceptGroupFile(string(data), filePath)
+			if err == nil {
+				result.ConceptGroups = append(result.ConceptGroups, grp)
+			}
+		default:
+			// Fallback to generic Parse for unknown subdirectories
+			return fmt.Errorf("unknown subdirectory type: %s", subdirName)
+		}
+
 		if err != nil {
-			return err
+			return fmt.Errorf("parse %s: %w", name, err)
 		}
 	}
+
 	return nil
-}
-
-func validateNetworkReferences(network *BknNetwork) error {
-	// Connection validation removed as Connection type is no longer supported
-	return nil
-}
-
-// Deprecated: Use FileSystem.ReadFile instead.
-func LoadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
-}
-
-// Deprecated: Use FileSystem.Stat instead.
-func FileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-// Deprecated: Use FileSystem.IsDir instead.
-func IsDirectory(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
 }

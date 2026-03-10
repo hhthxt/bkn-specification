@@ -2,14 +2,9 @@
 type: object_type
 id: node
 name: Node节点
-version: 1.0.0
-network: k8s-modular
 tags: [拓扑架构, 基础设施, Kubernetes]
+description: Kubernetes 集群中的工作节点，承载 Pod 运行。
 ---
-
-## Object: node
-
-Kubernetes 集群中的工作节点，承载 Pod 运行。
 
 ### Data Source
 
@@ -19,23 +14,24 @@ Kubernetes 集群中的工作节点，承载 Pod 运行。
 
 ### Data Properties
 
-| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|-------------|:-----------:|:-----------:|:-----:|
-| id | ID | int64 | 主键ID | YES | | YES |
-| node_name | 节点名称 | VARCHAR | 节点名称 | | YES | YES |
-| node_status | 节点状态 | VARCHAR | 节点状态 (Ready/NotReady) | | | YES |
-| node_cpu_capacity | CPU容量 | VARCHAR | CPU总容量（核心数） | | | |
-| node_memory_capacity | 内存容量 | VARCHAR | 内存总容量 | | | |
-| node_cpu_allocatable | 可分配CPU | VARCHAR | 可分配的CPU（核心数） | | | |
-| node_memory_allocatable | 可分配内存 | VARCHAR | 可分配的内存 | | | |
-| node_kubelet_version | Kubelet版本 | VARCHAR | Kubelet版本 | | | |
-| node_os_image | 操作系统 | VARCHAR | 操作系统镜像 | | | |
+| Property | Display Name | Type | Description |
+|----------|--------------|------|-------------|
+| id | ID | integer | 主键ID |
+| node_name | 节点名称 | STRING | 节点名称 |
+| node_status | 节点状态 | STRING | 节点状态 (Ready/NotReady) |
+| node_cpu_capacity | CPU容量 | STRING | CPU总容量（核心数） |
+| node_memory_capacity | 内存容量 | STRING | 内存总容量 |
+| node_cpu_allocatable | 可分配CPU | STRING | 可分配的CPU（核心数） |
+| node_memory_allocatable | 可分配内存 | STRING | 可分配的内存 |
+| node_kubelet_version | Kubelet版本 | STRING | Kubelet版本 |
+| node_os_image | 操作系统 | STRING | 操作系统镜像 |
 
-### Property Override
+### Logic Properties
 
-| Property | Display Name | Index Config | Constraint | Description |
-|----------|--------------|--------------|------------|-------------|
-| node_status | 节点状态 | | in(Ready,NotReady,Unknown) | Ready/NotReady/Unknown |
+### Keys
+Primary Key: id
+Display Key: node_name
+Incremental Key:
 
 ### Business Semantics
 

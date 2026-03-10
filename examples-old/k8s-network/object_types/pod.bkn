@@ -1,0 +1,46 @@
+---
+type: object_type
+id: pod
+name: pod
+---
+
+**Pod实例** - Kubernetes 中的最小部署单元
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380dis0 | pod_info_view |
+
+### Data Properties
+
+| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|--------------|:-----------:|:-----------:|:-----:|
+| id | ID | int64 | Primary key ID | YES | | YES |
+| pod_name | Pod名称 | VARCHAR | Pod名称 | | YES | YES |
+| pod_status | Pod状态 | VARCHAR | Pod状态 (Running/Pending/Failed) | | | YES |
+| pod_node_name | 所在节点 | VARCHAR | Pod所在节点名称 | | | YES |
+| pod_namespace | 命名空间 | VARCHAR | Pod所属命名空间 | | | YES |
+| pod_ip | Pod IP | VARCHAR | Pod IP地址 | | | |
+| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | | |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| pod_status | 状态 | fulltext + vector | in(Running,Pending,Failed,Unknown) | 支持全文和语义搜索 |
+| pod_name | Pod名称 | keyword + fulltext | not_null | 支持精确和模糊匹配 |
+
+### Logic Properties
+
+#### pod_metrics
+
+- **Type**: metric
+- **Source**: pod_metric (metric-model)
+- **Description**: Pod的监控指标
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| id | int64 | property | id | Bind Pod primary key |
+| pod_name | string | property | pod_name | Bind Pod name |
+| instant | string | input | - | Query instant |

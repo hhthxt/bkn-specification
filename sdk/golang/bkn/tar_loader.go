@@ -17,23 +17,22 @@ import (
 // 无需写入本地文件系统，完全在内存中处理
 func LoadNetworkFromTar(tarReader io.Reader) (*BknNetwork, error) {
 	// 1. 解压 tar 包到内存文件系统
-	mfs, rootFile, err := ExtractTarToMemory(tarReader)
+	mfs, rootDir, err := ExtractTarToMemory(tarReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract tar: %w", err)
 	}
 
-	// 2. 使用内存文件系统加载网络
-	return LoadNetworkWithFS(mfs, rootFile)
+	// 2. 使用内存文件系统加载网络（使用目录路径）
+	return LoadNetworkWithFS(mfs, rootDir)
 }
 
 // ExtractTarToMemory 将 tar 包解压到内存文件系统
-// 返回内存文件系统和根文件路径
+// 返回内存文件系统和根目录路径
 func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 	mfs := NewMemoryFileSystem()
 	tr := tar.NewReader(reader)
 
-	var rootFile string
-	rootCandidates := []string{"network.bkn", "network.md", "index.bkn", "index.md"}
+	var rootDir string
 
 	for {
 		header, err := tr.Next()
@@ -49,10 +48,10 @@ func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 			continue
 		}
 
-		// 只处理支持的文件类型（.bkn, .md）以及 CHECKSUM 和 SKILL.md
+		// 只处理支持的文件类型（.bkn, .md）以及 CHECKSUM 文件
 		ext := strings.ToLower(filepath.Ext(header.Name))
 		base := filepath.Base(header.Name)
-		if !supportedExtensions[ext] && base != checksumFilename && base != "SKILL.md" {
+		if !SupportedExtensions[ext] && base != ChecksumFileName {
 			continue
 		}
 
@@ -66,32 +65,16 @@ func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 		path := filepath.ToSlash(header.Name)
 		mfs.AddFile(path, content)
 
-		// 检查是否是根文件候选
-		for _, candidate := range rootCandidates {
-			if strings.EqualFold(base, candidate) {
-				rootFile = path
-				break
-			}
+		// 检查是否是根文件候选，记录其目录
+		if strings.EqualFold(base, RootFileName) {
+			rootDir = filepath.Dir(path)
+			// Keep . as current directory (memory FS root)
 		}
 	}
 
-	if rootFile == "" {
-		// 如果没有找到标准根文件，尝试查找 type: network 的文件
-		for path, content := range mfs.files {
-			doc, err := Parse(string(content), path)
-			if err != nil {
-				continue
-			}
-			if strings.EqualFold(strings.TrimSpace(doc.Frontmatter.Type), "network") {
-				rootFile = path
-				break
-			}
-		}
-	}
-
-	if rootFile == "" {
+	if rootDir == "" {
 		return nil, "", fmt.Errorf("no root network file found in tar")
 	}
 
-	return mfs, rootFile, nil
+	return mfs, rootDir, nil
 }

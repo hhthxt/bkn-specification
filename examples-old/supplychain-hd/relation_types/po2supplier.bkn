@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: po2supplier
+name: po2supplier
+---
+
+**采购订单关联供应商** - 
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| po | supplier | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| supplier_number | supplier_code |

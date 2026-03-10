@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const checksumFilename = "CHECKSUM"
-
 // hashHex computes SHA-256 and returns the first 8 bytes as 16 hex chars.
 func hashHex(data []byte) string {
 	h := sha256.Sum256(data)
@@ -41,7 +39,7 @@ func GenerateChecksumFileWithFS(fsys FileSystem, root string) (string, error) {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || fsys.Base(path) == checksumFilename {
+		if info.IsDir() || fsys.Base(path) == ChecksumFileName {
 			return nil
 		}
 		rel, _ := fsys.Rel(abs, path)
@@ -72,7 +70,7 @@ func GenerateChecksumFileWithFS(fsys FileSystem, root string) (string, error) {
 	lines = append(lines, entries...)
 	content := strings.Join(lines, "\n") + "\n"
 
-	outPath := fsys.Join(abs, checksumFilename)
+	outPath := fsys.Join(abs, ChecksumFileName)
 	if err := fsys.WriteFile(outPath, []byte(content), 0644); err != nil {
 		return "", err
 	}
@@ -93,12 +91,17 @@ func validateChecksumInputsWithFS(fsys FileSystem, root string) error {
 			return nil
 		}
 
-		doc, loadErr := LoadWithFS(fsys, path)
+		doc, loadErr := fsys.ReadFile(path)
 		if loadErr != nil {
 			rel, _ := fsys.Rel(root, path)
 			return fmt.Errorf("checksum validation failed for %s: %w", rel, loadErr)
 		}
-		if strings.EqualFold(strings.TrimSpace(doc.Frontmatter.Type), "network") {
+		data, err := ParseFrontmatter(string(doc))
+		if err != nil {
+			rel, _ := fsys.Rel(root, path)
+			return fmt.Errorf("checksum validation failed for %s: %w", rel, err)
+		}
+		if strings.EqualFold(strings.TrimSpace(data["type"].(string)), "network") {
 			networkPaths = append(networkPaths, path)
 		}
 		return nil
@@ -107,14 +110,15 @@ func validateChecksumInputsWithFS(fsys FileSystem, root string) error {
 		return err
 	}
 
+	// Check that each directory with a network file has a network.bkn root file
 	dirsWithNetworks := make(map[string]bool)
 	for _, p := range networkPaths {
 		dirsWithNetworks[fsys.Dir(p)] = true
 	}
 	for d := range dirsWithNetworks {
-		_, discoverErr := DiscoverRootFileWithFS(fsys, d)
-		if discoverErr != nil {
-			return fmt.Errorf("checksum validation failed: %w", discoverErr)
+		rootFile := fsys.Join(d, RootFileName)
+		if _, err := fsys.Stat(rootFile); err != nil {
+			return fmt.Errorf("checksum validation failed: %s not found in %s", RootFileName, d)
 		}
 	}
 	return nil
@@ -130,10 +134,10 @@ func VerifyChecksumFile(root string) (bool, []string) {
 // VerifyChecksumFileWithFS verifies CHECKSUM using the given FileSystem.
 func VerifyChecksumFileWithFS(fsys FileSystem, root string) (bool, []string) {
 	abs := fsys.Abs(root)
-	ckPath := fsys.Join(abs, checksumFilename)
+	ckPath := fsys.Join(abs, ChecksumFileName)
 	data, err := fsys.ReadFile(ckPath)
 	if err != nil {
-		return false, []string{checksumFilename + " not found"}
+		return false, []string{ChecksumFileName + " not found"}
 	}
 
 	declared := make(map[string]string)
@@ -150,7 +154,7 @@ func VerifyChecksumFileWithFS(fsys FileSystem, root string) (bool, []string) {
 
 	var errors []string
 	fsys.Walk(abs, func(path string, info fs.FileInfo, err error) error {
-		if err != nil || info.IsDir() || fsys.Base(path) == checksumFilename {
+		if err != nil || info.IsDir() || fsys.Base(path) == ChecksumFileName {
 			return nil
 		}
 		name := fsys.Base(path)
@@ -224,13 +228,15 @@ func computeBknChecksumWithFS(fsys FileSystem, path string) []string {
 		return nil
 	}
 	content := string(data)
+
 	fm, err := ParseFrontmatter(content)
 	if err != nil {
 		return nil
 	}
 
 	var results []string
-	typeVal := strings.TrimSpace(fm.Type)
+	typeVal := strings.TrimSpace(fm["type"].(string))
+	id := strings.TrimSpace(fm["id"].(string))
 
 	// For network type, use "network" (no :id suffix per DESIGN.md)
 	if typeVal == "network" {
@@ -240,65 +246,24 @@ func computeBknChecksumWithFS(fsys FileSystem, path string) []string {
 		return results
 	}
 
-	// For definition types, parse body and compute per definition
-	objects, relations, actions, risks := ParseBody(content)
-
+	// For definition types, compute checksum based on type and id
 	_, body := splitFrontmatter(content)
+	norm := normalizeForChecksum(body)
 
-	for _, obj := range objects {
-		objSection := extractDefinitionSection(body, "Object", obj.ID)
-		norm := normalizeForChecksum(objSection)
-		results = append(results, "object_type:"+obj.ID+"  sha256:"+hashHex([]byte(norm)))
-	}
-
-	for _, rel := range relations {
-		relSection := extractDefinitionSection(body, "Relation", rel.ID)
-		norm := normalizeForChecksum(relSection)
-		results = append(results, "relation_type:"+rel.ID+"  sha256:"+hashHex([]byte(norm)))
-	}
-
-	for _, act := range actions {
-		actSection := extractDefinitionSection(body, "Action", act.ID)
-		norm := normalizeForChecksum(actSection)
-		results = append(results, "action_type:"+act.ID+"  sha256:"+hashHex([]byte(norm)))
-	}
-
-	for _, risk := range risks {
-		riskSection := extractDefinitionSection(body, "Risk", risk.ID)
-		norm := normalizeForChecksum(riskSection)
-		results = append(results, "risk_type:"+risk.ID+"  sha256:"+hashHex([]byte(norm)))
+	switch typeVal {
+	case "object_type":
+		results = append(results, "object_type:"+id+"  sha256:"+hashHex([]byte(norm)))
+	case "relation_type":
+		results = append(results, "relation_type:"+id+"  sha256:"+hashHex([]byte(norm)))
+	case "action_type":
+		results = append(results, "action_type:"+id+"  sha256:"+hashHex([]byte(norm)))
+	case "risk_type":
+		results = append(results, "risk_type:"+id+"  sha256:"+hashHex([]byte(norm)))
+	case "concept_group":
+		results = append(results, "concept_group:"+id+"  sha256:"+hashHex([]byte(norm)))
 	}
 
 	return results
-}
-
-// extractDefinitionSection extracts a specific definition section from body
-func extractDefinitionSection(body, defType, id string) string {
-	lines := strings.Split(body, "\n")
-	var result []string
-	inSection := false
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-
-		if strings.HasPrefix(trimmed, "## ") {
-			if inSection {
-				break
-			}
-			prefix := "## " + defType + ": " + id
-			if strings.HasPrefix(trimmed, prefix) {
-				inSection = true
-				result = append(result, line)
-				continue
-			}
-		}
-
-		if inSection {
-			result = append(result, line)
-		}
-	}
-
-	return strings.Join(result, "\n")
 }
 
 // normalizeForChecksum normalizes text before hashing so that blank lines,

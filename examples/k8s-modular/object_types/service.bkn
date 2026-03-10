@@ -2,14 +2,9 @@
 type: object_type
 id: service
 name: Service服务
-version: 1.0.0
-network: k8s-modular
 tags: [拓扑架构, 网络, Kubernetes]
+description: Kubernetes 服务抽象层，提供稳定的访问入口。
 ---
-
-## Object: service
-
-Kubernetes 服务抽象层，提供稳定的访问入口。
 
 ### Data Source
 
@@ -29,6 +24,13 @@ Kubernetes 服务抽象层，提供稳定的访问入口。
 | service_ports | 端口映射 | VARCHAR | | 服务端口映射 | | | |
 | service_selector | Pod选择器 | VARCHAR | | Pod选择器标签 | | | |
 | service_created_at | 创建时间 | TIMESTAMP | | Service创建时间 | | | |
+
+### Logic Properties
+
+### Keys
+Primary Key: id
+Display Key: service_name
+Incremental Key:
 
 ### Business Semantics
 

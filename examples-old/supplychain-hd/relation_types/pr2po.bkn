@@ -1,0 +1,21 @@
+---
+type: relation_type
+id: pr2po
+name: pr2po
+---
+
+**采购请购单关联采购订单** - 
+
+- **Tags**: 已审核
+
+### Endpoints
+
+| Source | Target | Type | Required | Min | Max |
+|--------|--------|------|----------|-----|-----|
+| pr | po | direct | NO | 0 | - |
+
+### Mapping Rules
+
+| Source Property | Target Property |
+|------------------|-----------------|
+| material_number | material_number |

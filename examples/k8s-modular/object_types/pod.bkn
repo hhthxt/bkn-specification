@@ -2,14 +2,9 @@
 type: object_type
 id: pod
 name: Pod实例
-version: 1.0.0
-network: k8s-modular
 tags: [拓扑架构, 容器, Kubernetes]
+description: Kubernetes 中的最小部署单元，一个或多个容器的集合。
 ---
-
-## Object: pod
-
-Kubernetes 中的最小部署单元，一个或多个容器的集合。
 
 ### Data Source
 
@@ -19,36 +14,22 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 
 ### Data Properties
 
-| Property | Display Name | Type | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|-------------|:-----------:|:-----------:|:-----:|
-| id | ID | int64 | 主键ID | YES | | YES |
-| pod_name | Pod名称 | VARCHAR | Pod名称 | | YES | YES |
-| pod_status | Pod状态 | VARCHAR | Pod状态 (Running/Pending/Failed) | | | YES |
-| pod_node_name | 所在节点 | VARCHAR | Pod所在节点名称 | | | YES |
-| pod_namespace | 命名空间 | VARCHAR | Pod所属命名空间 | | | YES |
-| pod_ip | Pod IP | VARCHAR | Pod IP地址 | | | |
-| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 | | | |
-
-### Property Override
-
-| Property | Display Name | Index Config | Constraint | Description |
-|----------|--------------|--------------|------------|-------------|
-| pod_status | 状态 | fulltext + vector | in(Running,Pending,Failed,Unknown) | 支持全文和语义搜索 |
-| pod_name | Pod名称 | keyword + fulltext | not_null | 支持精确和模糊匹配 |
+| Property | Display Name | Type | Description | 
+|----------|--------------|------|-------------|
+| id | ID | integer | 主键ID |
+| pod_name | Pod名称 | STRING | Pod名称 |
+| pod_status | Pod状态 | STRING | Pod状态 (Running/Pending/Failed) |
+| pod_node_name | 所在节点 | STRING | Pod所在节点名称 |
+| pod_namespace | 命名空间 | STRING | Pod所属命名空间 |
+| pod_ip | Pod IP | STRING | Pod IP地址 |
+| pod_created_at | 创建时间 | TIMESTAMP | Pod创建时间 |
 
 ### Logic Properties
 
-#### pod_metrics
-
-- **Type**: metric
-- **Source**: pod_metric (metric-model)
-- **Description**: Pod monitoring metrics
-
-| Parameter | Type | Source | Binding | Description |
-|-----------|------|--------|---------|-------------|
-| id | int64 | property | id | Bind Pod primary key |
-| pod_name | string | property | pod_name | Bind Pod name |
-| instant | string | input | - | Query instant |
+### Keys
+Primary Key: id
+Display Key: pod_name
+Incremental Key:
 
 ### Business Semantics
 

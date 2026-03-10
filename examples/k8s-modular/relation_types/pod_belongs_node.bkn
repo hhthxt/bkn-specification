@@ -2,14 +2,9 @@
 type: relation_type
 id: pod_belongs_node
 name: Pod属于节点
-version: 1.0.0
-network: k8s-modular
 tags: [拓扑架构]
+description: Pod 与其所在节点之间的归属关系。
 ---
-
-## Relation: pod_belongs_node
-
-Pod 与其所在节点之间的归属关系。
 
 ### Endpoints
 

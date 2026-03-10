@@ -1,7 +1,6 @@
 package bkn
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -218,123 +217,46 @@ func parseDisplayName(text string) (name, desc string) {
 	return name, desc
 }
 
-func parseDataSource(sectionText string) *DataSource {
+func parseDataSource(sectionText string) *ResourceInfo {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
 		return nil
 	}
 	r := rows[0]
-	return &DataSource{
+	return &ResourceInfo{
 		Type: r["Type"],
 		ID:   r["ID"],
 		Name: r["Name"],
 	}
 }
 
-func parseDataProperties(sectionText string) []DataProperty {
+func parseDataProperties(sectionText string) []*DataProperty {
 	rows := parseTable(strings.Split(sectionText, "\n"))
-	var props []DataProperty
+	var props []*DataProperty
 	for _, row := range rows {
-		props = append(props, DataProperty{
-			Property:    row["Property"],
+		props = append(props, &DataProperty{
+			Name:        row["Name"],
 			DisplayName: row["Display Name"],
 			Type:        row["Type"],
-			Constraint:  row["Constraint"],
 			Description: row["Description"],
-			PrimaryKey:  isYes(row["Primary Key"]),
-			DisplayKey:  isYes(row["Display Key"]),
-			Index:       isYes(row["Index"]),
 		})
 	}
 	return props
 }
 
-func parsePropertyOverrides(sectionText string) []PropertyOverride {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	var out []PropertyOverride
-	for _, row := range rows {
-		out = append(out, PropertyOverride{
-			Property:    row["Property"],
-			DisplayName: row["Display Name"],
-			IndexConfig: row["Index Config"],
-			Constraint:  row["Constraint"],
-			Description: row["Description"],
-		})
-	}
-	return out
-}
-
-func parseLogicProperties(sectionText string) []LogicProperty {
-	subs := extractSections(sectionText, "####")
-	var props []LogicProperty
-	for propName, content := range subs {
-		lp := LogicProperty{Name: propName}
-		if m := regexp.MustCompile(`-\s+\*\*Type\*\*:\s*(\S+)`).FindStringSubmatch(content); len(m) >= 2 {
-			lp.LPType = strings.TrimSpace(m[1])
-		}
-		if m := regexp.MustCompile(`(?s)-\s+\*\*Source\*\*:\s*(.+?)(?:\((.+?)\))?\s*$`).FindStringSubmatch(content); len(m) >= 2 {
-			lp.Source = strings.TrimSpace(m[1])
-			if len(m) >= 3 {
-				lp.SourceType = strings.TrimSpace(m[2])
-			}
-		}
-		if m := regexp.MustCompile(`(?s)-\s+\*\*Description\*\*:\s*(.+)$`).FindStringSubmatch(content); len(m) >= 2 {
-			lp.Description = strings.TrimSpace(m[1])
-		}
-		rows := parseTable(strings.Split(content, "\n"))
-		for _, row := range rows {
-			lp.Parameters = append(lp.Parameters, LogicPropertyParameter{
-				Parameter:   row["Parameter"],
-				Type:        row["Type"],
-				Source:      row["Source"],
-				Binding:     row["Binding"],
-				Description: row["Description"],
-			})
-		}
-		props = append(props, lp)
-	}
-	return props
-}
-
-func parseEndpoints(sectionText string) []Endpoint {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	var out []Endpoint
-	for _, row := range rows {
-		out = append(out, Endpoint{
-			Source:   row["Source"],
-			Target:   row["Target"],
-			Type:     row["Type"],
-			Required: row["Required"],
-			Min:      row["Min"],
-			Max:      row["Max"],
-		})
-	}
-	return out
-}
-
-func parseMappingRules(sectionText string) []MappingRule {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	var out []MappingRule
-	for _, row := range rows {
-		out = append(out, MappingRule{
-			SourceProperty: row["Source Property"],
-			TargetProperty: row["Target Property"],
-		})
-	}
-	return out
-}
-
-func parseObjectBlock(blockID, blockText string) BknObject {
+func parseObjectBlock(blockID, blockText string) (*BknObjectType, error) {
 	name, desc := parseDisplayName(blockText)
-	tags, owner := parseInlineMeta(blockText)
+	tags, _ := parseInlineMeta(blockText)
 	sections := extractSections(blockText, "###")
 
-	obj := BknObject{
-		ID:          blockID,
-		Name:        name,
-		Description: desc,
-		Tags:        tags,
-		Owner:       owner,
+	obj := &BknObjectType{
+		BknObjectTypeFrontmatter: BknObjectTypeFrontmatter{
+			Type:        "object_type",
+			ID:          blockID,
+			Name:        name,
+			Tags:        tags,
+			Description: desc,
+		},
 	}
 	if s, ok := sections["Data Source"]; ok {
 		obj.DataSource = parseDataSource(s)
@@ -342,128 +264,57 @@ func parseObjectBlock(blockID, blockText string) BknObject {
 	if s, ok := sections["Data Properties"]; ok {
 		obj.DataProperties = parseDataProperties(s)
 	}
-	if s, ok := sections["Property Override"]; ok {
-		obj.PropertyOverrides = parsePropertyOverrides(s)
-	}
-	if s, ok := sections["Logic Properties"]; ok {
-		obj.LogicProperties = parseLogicProperties(s)
-	}
-	if s, ok := sections["Business Semantics"]; ok {
-		obj.BusinessSemantics = s
-	}
-	return obj
+
+	return obj, nil
 }
 
-func parseRelationBlock(blockID, blockText string) Relation {
+func parseRelationBlock(blockID, blockText string) (*BknRelationType, error) {
 	name, desc := parseDisplayName(blockText)
-	tags, owner := parseInlineMeta(blockText)
-	sections := extractSections(blockText, "###")
+	tags, _ := parseInlineMeta(blockText)
 
-	rel := Relation{
-		ID:          blockID,
-		Name:        name,
-		Description: desc,
-		Tags:        tags,
-		Owner:       owner,
+	rel := &BknRelationType{
+		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
+			Type:        "relation_type",
+			ID:          blockID,
+			Name:        name,
+			Tags:        tags,
+			Description: desc,
+		},
 	}
-	if s, ok := sections["Endpoints"]; ok {
-		rel.Endpoints = parseEndpoints(s)
-	}
-	if s, ok := sections["Mapping Rules"]; ok {
-		rel.MappingRules = parseMappingRules(s)
-	}
-	if s, ok := sections["Business Semantics"]; ok {
-		rel.BusinessSemantics = s
-	}
-	return rel
+
+	return rel, nil
 }
 
-func parseActionBlock(blockID, blockText string) Action {
+func parseActionBlock(blockID, blockText string) (*BknActionType, error) {
 	name, desc := parseDisplayName(blockText)
-	sections := extractSections(blockText, "###")
+	tags, _ := parseInlineMeta(blockText)
 
-	action := Action{
-		ID:          blockID,
-		Name:        name,
-		Description: desc,
+	action := &BknActionType{
+		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
+			Type:        "action_type",
+			ID:          blockID,
+			Name:        name,
+			Tags:        tags,
+			Description: desc,
+		},
 	}
-	boundRows := parseTable(strings.Split(blockText, "\n"))
-	for _, row := range boundRows {
-		if _, ok := row["Bound Object"]; ok {
-			action.BoundObject = row["Bound Object"]
-			action.ActionType = row["Action Type"]
-			break
-		}
-	}
-	if s, ok := sections["Trigger Condition"]; ok {
-		if m := yamlBlockRE.FindStringSubmatch(s); len(m) >= 2 {
-			action.TriggerCondition = strings.TrimSpace(m[1])
-		} else {
-			action.TriggerCondition = s
-		}
-	}
-	if s, ok := sections["Pre-conditions"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		for _, row := range rows {
-			action.PreConditions = append(action.PreConditions, PreCondition{
-				Object:    row["Object"],
-				Check:     row["Check"],
-				Condition: row["Condition"],
-				Message:   row["Message"],
-			})
-		}
-	}
-	if s, ok := sections["Tool Configuration"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		if len(rows) > 0 {
-			r := rows[0]
-			toolType := r["Type"]
-			toolID := r["Tool ID"]
-			if toolID == "" {
-				toolID = r["MCP"]
-			}
-			action.ToolConfig = &ToolConfig{Type: toolType, ToolID: toolID}
-		}
-	}
-	if s, ok := sections["Parameter Binding"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		for _, row := range rows {
-			action.ParameterBinding = append(action.ParameterBinding, row)
-		}
-	}
-	if s, ok := sections["Schedule"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		if len(rows) > 0 {
-			r := rows[0]
-			action.Schedule = &Schedule{
-				Type:       r["Type"],
-				Expression: r["Expression"],
-			}
-		}
-	}
-	if s, ok := sections["Scope of Impact"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		for _, row := range rows {
-			action.ScopeOfImpact = append(action.ScopeOfImpact, row)
-		}
-	}
-	if s, ok := sections["Execution Description"]; ok {
-		action.ExecutionDescription = s
-	}
-	return action
+
+	return action, nil
 }
 
-func parseRiskBlock(blockID, blockText string) Risk {
+func parseRiskBlock(blockID, blockText string) (*BknRiskType, error) {
 	name, desc := parseDisplayName(blockText)
-	tags, owner := parseInlineMeta(blockText)
+	tags, _ := parseInlineMeta(blockText)
 	sections := extractSections(blockText, "###")
 
-	risk := Risk{
-		ID:          blockID,
-		Name:        name,
-		Description: desc,
-		Tags:        tags,
-		Owner:       owner,
+	risk := &BknRiskType{
+		BknRiskTypeFrontmatter: BknRiskTypeFrontmatter{
+			Type:        "risk_type",
+			ID:          blockID,
+			Name:        name,
+			Tags:        tags,
+			Description: desc,
+		},
 	}
 	if s, ok := sections["Control Scope"]; ok {
 		risk.ControlScope = s
@@ -471,31 +322,32 @@ func parseRiskBlock(blockID, blockText string) Risk {
 	if s, ok := sections["Control Policy"]; ok {
 		risk.ControlPolicy = s
 	}
-	if s, ok := sections["Pre-checks"]; ok {
-		rows := parseTable(strings.Split(s, "\n"))
-		for _, row := range rows {
-			risk.PreChecks = append(risk.PreChecks, PreCondition{
-				Object:    row["Object"],
-				Check:     row["Check"],
-				Condition: row["Condition"],
-				Message:   row["Message"],
-			})
-		}
+
+	return risk, nil
+}
+
+func parseConceptGroupBlock(blockID, blockText string) (*BknConceptGroup, error) {
+	name, desc := parseDisplayName(blockText)
+	tags, _ := parseInlineMeta(blockText)
+
+	grp := &BknConceptGroup{
+		BknConceptGroupFrontmatter: BknConceptGroupFrontmatter{
+			Type:        "concept_group",
+			ID:          blockID,
+			Name:        name,
+			Tags:        tags,
+			Description: desc,
+		},
 	}
-	if s, ok := sections["Rollback Plan"]; ok {
-		risk.RollbackPlan = s
-	}
-	if s, ok := sections["Audit Requirements"]; ok {
-		risk.AuditRequirements = s
-	}
-	return risk
+
+	return grp, nil
 }
 
 // ParseFrontmatter parses the YAML frontmatter of a .bkn file.
-func ParseFrontmatter(text string) (*Frontmatter, error) {
+func ParseFrontmatter(text string) (map[string]any, error) {
 	fmStr, _ := splitFrontmatter(text)
 	if fmStr == "" {
-		return &Frontmatter{}, nil
+		return map[string]any{}, nil
 	}
 	var data map[string]any
 	if err := yaml.Unmarshal([]byte(fmStr), &data); err != nil {
@@ -505,61 +357,7 @@ func ParseFrontmatter(text string) (*Frontmatter, error) {
 		data = make(map[string]any)
 	}
 
-	fm := &Frontmatter{
-		Type:        strVal(data, "type"),
-		ID:          strVal(data, "id"),
-		Name:        strVal(data, "name"),
-		Version:     strVal(data, "version"),
-		Branch:      strVal(data, "branch"),
-		Description: strVal(data, "description"),
-		Network:     strVal(data, "network"),
-		Namespace:   strVal(data, "namespace"),
-		Owner:       strVal(data, "owner"),
-		Author:      strVal(data, "author"),
-		Status:      strVal(data, "status"),
-		SpecVersion: strVal(data, "spec_version"),
-		Object:      strVal(data, "object"),
-		Relation:    strVal(data, "relation"),
-		Source:      strVal(data, "source"),
-		CreatedAt:   strVal(data, "created_at"),
-		UpdatedAt:   strVal(data, "updated_at"),
-	}
-	if v, ok := data["tags"].([]any); ok {
-		for _, t := range v {
-			fm.Tags = append(fm.Tags, fmt.Sprint(t))
-		}
-	}
-	if v, ok := data["includes"].([]any); ok {
-		for _, i := range v {
-			fm.Includes = append(fm.Includes, fmt.Sprint(i))
-		}
-	}
-	if v, ok := data["capabilities"].([]any); ok {
-		for _, c := range v {
-			fm.Capabilities = append(fm.Capabilities, fmt.Sprint(c))
-		}
-	}
-	if v, ok := data["enabled"].(bool); ok {
-		fm.Enabled = &v
-	}
-	if v, ok := data["requires_approval"].(bool); ok {
-		fm.RequiresApproval = &v
-	}
-
-	known := map[string]bool{
-		"type": true, "id": true, "name": true, "version": true, "branch": true, "tags": true,
-		"description": true, "includes": true, "network": true, "namespace": true,
-		"owner": true, "author": true, "status": true, "spec_version": true, "enabled": true,
-		"requires_approval": true, "object": true, "relation": true, "source": true,
-		"capabilities": true, "created_at": true, "updated_at": true,
-	}
-	fm.Extra = make(map[string]any)
-	for k, v := range data {
-		if !known[k] {
-			fm.Extra[k] = v
-		}
-	}
-	return fm, nil
+	return data, nil
 }
 
 func strVal(m map[string]any, key string) string {
@@ -569,74 +367,88 @@ func strVal(m map[string]any, key string) string {
 	return ""
 }
 
-// ParseBody parses the Markdown body of a .bkn file into lists of definitions.
-func ParseBody(text string) ([]BknObject, []Relation, []Action, []Risk) {
-	_, body := splitFrontmatter(text)
-	matches := definitionRE.FindAllStringSubmatchIndex(body, -1)
-	var objects []BknObject
-	var relations []Relation
-	var actions []Action
-	var risks []Risk
-
-	for i, m := range matches {
-		defType := body[m[2]:m[3]]
-		defID := body[m[4]:m[5]]
-		start := m[1]
-		end := len(body)
-		if i+1 < len(matches) {
-			end = matches[i+1][0]
-		}
-		blockText := body[start:end]
-		hrSplit := regexp.MustCompile(`(?m)^\s*---\s*$`).Split(blockText, 2)
-		blockText = hrSplit[0]
-
-		switch defType {
-		case "Object":
-			objects = append(objects, parseObjectBlock(defID, blockText))
-		case "Relation":
-			relations = append(relations, parseRelationBlock(defID, blockText))
-		case "Action":
-			actions = append(actions, parseActionBlock(defID, blockText))
-		case "Risk":
-			risks = append(risks, parseRiskBlock(defID, blockText))
-		}
-	}
-	return objects, relations, actions, risks
-}
-
-var validBknTypes = map[string]bool{
-	"network": true, "object_type": true, "relation_type": true, "action_type": true, "risk_type": true,
-}
-
-// Parse parses a complete .bkn/.md file into a BknDocument.
-// Content must have YAML frontmatter with a valid type field.
-func Parse(text string, sourcePath string) (*BknDocument, error) {
-	fm, err := ParseFrontmatter(text)
+// ParseNetworkFile parses a network.bkn file (type: network).
+// Network files contain only frontmatter, no body definitions.
+func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
+	data, err := ParseFrontmatter(text)
 	if err != nil {
 		return nil, err
 	}
-	fmStr, _ := splitFrontmatter(text)
-	if strings.TrimSpace(fmStr) == "" {
-		hint := ""
-		if strings.HasSuffix(strings.ToLower(sourcePath), ".md") {
-			hint = " .md files used as BKN must start with YAML frontmatter (--- ... ---)."
-		}
-		return nil, errors.New("BKN file must have YAML frontmatter with a valid type" + hint)
-	}
-	typeVal := strings.TrimSpace(fm.Type)
-	if typeVal == "" {
-		return nil, errors.New("BKN frontmatter must include a valid 'type' field (network, object_type, relation_type, action_type, risk_type)")
-	}
-	if !validBknTypes[typeVal] {
-		return nil, fmt.Errorf("invalid BKN type: %q; valid types: network, object_type, relation_type, action_type, risk_type", typeVal)
-	}
-	objects, relations, actions, risks := ParseBody(text)
-	return &BknDocument{
-		Frontmatter: *fm,
-		Objects:     objects,
-		Relations:   relations,
-		Actions:     actions,
-		Risks:       risks,
-		SourcePath:  sourcePath,
+	return &BknNetwork{
+		BknNetworkFrontmatter: BknNetworkFrontmatter{
+			Type:        data["type"].(string),
+			ID:          data["id"].(string),
+			Name:        data["name"].(string),
+			Tags:        data["tags"].([]string),
+			Description: data["description"].(string),
+			Version:     data["version"].(string),
+			Branch:      data["branch"].(string),
+		},
 	}, nil
+}
+
+// ParseObjectTypeFile parses an object_type definition file.
+func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error) {
+	data, err := ParseFrontmatter(text)
+	if err != nil {
+		return nil, err
+	}
+	obj, err := parseObjectBlock(data["id"].(string), text)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// ParseRelationTypeFile parses a relation_type definition file.
+func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, error) {
+	data, err := ParseFrontmatter(text)
+	if err != nil {
+		return nil, err
+	}
+	rel, err := parseRelationBlock(data["id"].(string), text)
+	if err != nil {
+		return nil, err
+	}
+	return rel, nil
+}
+
+// ParseActionTypeFile parses an action_type definition file.
+func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error) {
+	data, err := ParseFrontmatter(text)
+	if err != nil {
+		return nil, err
+	}
+	act, err := parseActionBlock(data["id"].(string), text)
+	if err != nil {
+		return nil, err
+	}
+	return act, nil
+}
+
+// ParseRiskTypeFile parses a risk_type definition file.
+func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
+	data, err := ParseFrontmatter(text)
+	if err != nil {
+		return nil, err
+	}
+	risk, err := parseRiskBlock(data["id"].(string), text)
+	if err != nil {
+		return nil, err
+	}
+	return risk, nil
+}
+
+func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, error) {
+	data, err := ParseFrontmatter(text)
+	if err != nil {
+		return nil, err
+	}
+	grp, err := parseConceptGroupBlock(data["id"].(string), text)
+	if err != nil {
+		return nil, err
+	}
+
+	return grp, nil
 }

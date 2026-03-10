@@ -1,0 +1,26 @@
+---
+type: object_type
+id: node
+name: node
+---
+
+**Node节点** - Kubernetes 集群中的工作节点
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380disg | node_info_view |
+
+### Data Properties
+
+| Property | Primary Key | Display Key |
+|----------|:-----------:|:-----------:|
+| id | YES | |
+| node_name | | YES |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| node_status | 节点状态 | | in(Ready,NotReady,Unknown) | Ready/NotReady/Unknown |

@@ -1,0 +1,54 @@
+---
+type: action_type
+id: cordon_node
+name: cordon_node
+---
+
+**隔离节点** - 将故障节点标记为不可调度
+
+| Bound Object | Action Type |
+|--------------|-------------|
+| node | modify |
+
+### Trigger Condition
+
+```yaml
+condition:
+  object_type_id: node
+  field: node_status
+  operation: ==
+  value: NotReady
+```
+
+> 当 Node 状态为 NotReady 时触发
+
+### Pre-conditions
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| node | property:node_status | != Ready | Node 状态必须为非 Ready 时才执行隔离 |
+
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|---------------------|
+| node | Mark node as unschedulable |
+
+### Tool Configuration
+
+| Type | MCP ID | Tool Name |
+|------|--------|-----------|
+| mcp | kubernetes-mcp | cordon_node |
+
+### Parameter Binding
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| node | string | property | node_name | Node name |
+
+### Execution Description
+
+1. 执行 `kubectl cordon` 标记节点不可调度
+2. 现有 Pod 继续运行
+3. 新 Pod 不会调度到该节点
+4. 节点恢复后手动 `kubectl uncordon` 解除

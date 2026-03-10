@@ -1,0 +1,59 @@
+---
+type: network
+id: supplychain
+name: HD供应链业务知识网络_v2
+version: 1.0.0
+tags: [供应链, 采购, 库存, MRP]
+description: 产品供应分析路径：需求预测→产品→BOM→库存→生产计划/采购申请→采购订单→供应商。 逻辑：1. 基于需求预测，结合BOM结构展开物料需求；2. 核查成品及物料库存，进行MRP运算生成建议订单；3. 根据物料属性（自制/外购），生成生产计划或采购申请；4. 采购申请转化为采购订单并由供应商执行，生产计划指导工厂生产；5. 最终输出缺口数量及补货建议，支撑供应链决策。
+---
+
+# HD供应链业务知识网络
+
+产品供应分析路径：需求预测→产品→BOM→库存→生产计划/采购申请→采购订单→供应商。
+
+## 网络概览
+
+- **对象** (object_types/): 采购订单、销售订单、库存、需求预测、产品BOM、工厂生产计划、物料需求计划、产品、物料、供应商、采购申请单、产品需求计划
+- **关系** (relation_types/): 14 个关系，覆盖从需求预测到采购订单的完整供应链链路
+
+## 目录结构
+
+```
+supplychain-hd/
+├── network.bkn                    # 本文件（网络索引）
+├── object_types/
+│   ├── po.bkn                     # 采购订单
+│   ├── salesorder.bkn             # 销售订单
+│   ├── inventory.bkn              # 库存
+│   ├── forecast.bkn               # 需求预测
+│   ├── bom.bkn                    # 产品BOM
+│   ├── mps.bkn                    # 工厂生产计划
+│   ├── mrp.bkn                    # 物料需求计划
+│   ├── product.bkn                # 产品
+│   ├── material.bkn               # 物料
+│   ├── supplier.bkn               # 供应商
+│   ├── pr.bkn                     # 采购申请单
+│   └── pp.bkn                     # 产品需求计划
+└── relation_types/
+    ├── product2bom.bkn            # 产品→BOM
+    ├── po2supplier.bkn            # 采购订单→供应商
+    ├── pr2po.bkn                  # 采购申请→采购订单
+    ├── material2inventory.bkn     # 物料→库存
+    ├── bom2material.bkn           # BOM→物料
+    ├── product2inventory.bkn      # 产品→库存
+    ├── demand2pp.bkn              # 需求→产品需求计划
+    ├── mrp2material.bkn           # MRP→物料
+    ├── material2pr.bkn            # 物料→采购申请
+    ├── po2material.bkn            # 采购订单→物料
+    ├── pp2mrp.bkn                 # 产品需求计划→MRP
+    ├── pp2product.bkn             # 产品需求计划→产品
+    ├── salesorder2product.bkn     # 销售订单→产品
+    └── pp2mps.bkn                 # 产品需求计划→生产计划
+```
+
+## 网络统计
+
+| 类型 | 数量 |
+|------|------|
+| 对象类 | 12 |
+| 关系类 | 14 |
