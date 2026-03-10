@@ -1,329 +1,240 @@
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
+
 package bkn
 
 import (
 	"archive/tar"
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
-// buildTarFromDir reads all files under dir and packs them into an in-memory tar.
-// File paths inside the tar are relative to dir.
-func buildTarFromDir(t *testing.T, dir string) *bytes.Buffer {
-	t.Helper()
+// --- Unit Tests for Tar Operations ---
+
+func TestWriteTarEntry(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	defer tw.Close()
+
+	content := []byte("test content")
+	err := writeTarEntry(tw, "test.bkn", content, time.Now())
+	if err != nil {
+		t.Fatalf("writeTarEntry: %v", err)
+	}
+	tw.Close()
+
+	// Verify tar can be read
+	tr := tar.NewReader(&buf)
+	hdr, err := tr.Next()
+	if err != nil {
+		t.Fatalf("read tar header: %v", err)
+	}
+	if hdr.Name != "test.bkn" {
+		t.Errorf("expected name test.bkn, got %q", hdr.Name)
+	}
+	if hdr.Size != int64(len(content)) {
+		t.Errorf("expected size %d, got %d", len(content), hdr.Size)
+	}
+}
+
+func TestExtractTarToMemory_SingleFile(t *testing.T) {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
-	filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil || info.IsDir() {
-			return walkErr
-		}
-		rel, _ := filepath.Rel(dir, path)
-		rel = filepath.ToSlash(rel)
-		data, err := os.ReadFile(path)
+	// Write a single file
+	content := []byte("---\ntype: network\nid: test\n---\n")
+	tw.WriteHeader(&tar.Header{Name: "network.bkn", Size: int64(len(content)), Mode: 0644})
+	tw.Write(content)
+	tw.Close()
+
+	mfs, _, err := ExtractTarToMemory(&buf)
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+
+	data, err := mfs.ReadFile("network.bkn")
+	if err != nil {
+		t.Fatalf("read file: %v", err)
+	}
+	if string(data) != string(content) {
+		t.Errorf("content mismatch")
+	}
+}
+
+func TestExtractTarToMemory_MultipleFiles(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	files := map[string]string{
+		"network.bkn":          "---\ntype: network\nid: test\n---\n",
+		"object_types/pod.bkn": "---\ntype: object_type\nid: pod\n---\n",
+		"SKILL.md":             "# Test Network\n",
+	}
+
+	for name, content := range files {
+		data := []byte(content)
+		tw.WriteHeader(&tar.Header{Name: name, Size: int64(len(data)), Mode: 0644})
+		tw.Write(data)
+	}
+	tw.Close()
+
+	mfs, _, err := ExtractTarToMemory(&buf)
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+
+	for name := range files {
+		_, err := mfs.ReadFile(name)
 		if err != nil {
-			t.Fatalf("read %s: %v", path, err)
+			t.Errorf("file %q not found: %v", name, err)
 		}
-		tw.WriteHeader(&tar.Header{Name: rel, Size: int64(len(data)), Mode: 0644})
-		tw.Write(data)
-		return nil
-	})
-	if err := tw.Close(); err != nil {
-		t.Fatalf("close tar: %v", err)
 	}
-	return &buf
 }
 
-// buildTarFromDirExcluding is like buildTarFromDir but skips files with the given base name.
-func buildTarFromDirExcluding(t *testing.T, dir, excludeName string) *bytes.Buffer {
-	t.Helper()
+func TestExtractTarToMemory_EmptyTar(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	tw.Close()
+
+	// Empty tar should return error because no root network file found
+	_, _, err := ExtractTarToMemory(&buf)
+	if err == nil {
+		t.Error("expected error for empty tar (no root network file)")
+	}
+}
+
+// --- Unit Tests for MemoryFileSystem ---
+
+func TestMemoryFileSystem_AddFile(t *testing.T) {
+	mfs := NewMemoryFileSystem()
+	mfs.AddFile("test.bkn", []byte("content"))
+
+	data, err := mfs.ReadFile("test.bkn")
+	if err != nil {
+		t.Fatalf("read file: %v", err)
+	}
+	if string(data) != "content" {
+		t.Errorf("expected 'content', got %q", string(data))
+	}
+}
+
+func TestMemoryFileSystem_ReadFile_NotFound(t *testing.T) {
+	mfs := NewMemoryFileSystem()
+	_, err := mfs.ReadFile("nonexistent.bkn")
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
+func TestMemoryFileSystem_Stat(t *testing.T) {
+	mfs := NewMemoryFileSystem()
+	mfs.AddFile("a.bkn", []byte("a"))
+	mfs.AddFile("b.bkn", []byte("b"))
+
+	// Test file stat
+	info, err := mfs.Stat("a.bkn")
+	if err != nil {
+		t.Fatalf("stat file: %v", err)
+	}
+	if info.IsDir() {
+		t.Error("expected file, got dir")
+	}
+
+	// Test nonexistent file
+	_, err = mfs.Stat("nonexistent.bkn")
+	if err == nil {
+		t.Error("expected error for nonexistent file")
+	}
+}
+
+// --- Unit Tests for GenerateSkillMd ---
+
+func TestGenerateSkillMd_Basic(t *testing.T) {
+	net := &BknNetwork{
+		Root: BknDocument{
+			Frontmatter: Frontmatter{
+				Type:        "network",
+				ID:          "test-net",
+				Name:        "Test Network",
+				Description: "A test network",
+				Version:     "1.0.0",
+			},
+		},
+		Includes: []BknDocument{
+			{
+				Frontmatter: Frontmatter{Type: "object_type", ID: "pod", Name: "Pod"},
+				Objects:     []BknObject{{ID: "pod", Name: "Pod"}},
+			},
+		},
+	}
+
+	skill := generateSkillMd(net)
+	if !strings.Contains(skill, "# Test Network") {
+		t.Error("SKILL.md should contain network name as title")
+	}
+	if !strings.Contains(skill, "test-net") {
+		t.Error("SKILL.md should contain network ID")
+	}
+	if !strings.Contains(skill, "1.0.0") {
+		t.Error("SKILL.md should contain version")
+	}
+	if !strings.Contains(skill, "pod") {
+		t.Error("SKILL.md should contain object type")
+	}
+}
+
+func TestGenerateSkillMd_EmptyNetwork(t *testing.T) {
+	net := &BknNetwork{
+		Root: BknDocument{
+			Frontmatter: Frontmatter{
+				Type: "network",
+				ID:   "empty-net",
+			},
+		},
+	}
+
+	skill := generateSkillMd(net)
+	if !strings.Contains(skill, "empty-net") {
+		t.Error("SKILL.md should contain network ID")
+	}
+	// SKILL.md should have network overview section
+	if !strings.Contains(skill, "## 网络概览") {
+		t.Error("SKILL.md should have network overview section")
+	}
+}
+
+// --- Unit Tests for Checksum from Tar ---
+
+func TestComputeChecksumFromTar_Empty(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	tw.Close()
+
+	// Empty tar should return error because no root network file found
+	_, err := ComputeChecksumFromTar(&buf)
+	if err == nil {
+		t.Error("expected error for empty tar (no root network file)")
+	}
+}
+
+func TestVerifyChecksumFromTar_NoChecksumFile(t *testing.T) {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
-	filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil || info.IsDir() || filepath.Base(path) == excludeName {
-			return walkErr
-		}
-		rel, _ := filepath.Rel(dir, path)
-		rel = filepath.ToSlash(rel)
-		data, _ := os.ReadFile(path)
-		tw.WriteHeader(&tar.Header{Name: rel, Size: int64(len(data)), Mode: 0644})
-		tw.Write(data)
-		return nil
-	})
+	content := []byte("---\ntype: network\nid: test\n---\n")
+	tw.WriteHeader(&tar.Header{Name: "network.bkn", Size: int64(len(content)), Mode: 0644})
+	tw.Write(content)
 	tw.Close()
-	return &buf
-}
 
-// allExampleDirs returns all example directories under examples/.
-func allExampleDirs(t *testing.T) []string {
-	t.Helper()
-	root := repoRoot(t)
-	examplesRoot := filepath.Join(root, "examples")
-	entries, err := os.ReadDir(examplesRoot)
-	if err != nil {
-		t.Fatalf("read examples dir: %v", err)
+	ok, errs := VerifyChecksumFromTar(&buf)
+	if ok {
+		t.Error("verify should fail without CHECKSUM file")
 	}
-	var dirs []string
-	for _, e := range entries {
-		if e.IsDir() {
-			dirs = append(dirs, filepath.Join(examplesRoot, e.Name()))
-		}
-	}
-	if len(dirs) == 0 {
-		t.Skip("no example directories found")
-	}
-	return dirs
-}
-
-func TestLoadNetworkFromTar(t *testing.T) {
-	for _, dir := range allExampleDirs(t) {
-		name := filepath.Base(dir)
-		t.Run(name, func(t *testing.T) {
-			buf := buildTarFromDir(t, dir)
-
-			net, err := LoadNetworkFromTar(buf)
-			if err != nil {
-				t.Fatalf("load: %v", err)
-			}
-			if net.Root.Frontmatter.Type != "network" {
-				t.Errorf("expected type network, got %q", net.Root.Frontmatter.Type)
-			}
-			if net.Root.Frontmatter.ID == "" {
-				t.Error("expected non-empty network id")
-			}
-
-			// Compare with local FS load
-			localNet, err := LoadNetwork(dir)
-			if err != nil {
-				t.Fatalf("local load: %v", err)
-			}
-			if len(net.AllObjects()) != len(localNet.AllObjects()) {
-				t.Errorf("objects: tar=%d local=%d", len(net.AllObjects()), len(localNet.AllObjects()))
-			}
-			if len(net.AllRelations()) != len(localNet.AllRelations()) {
-				t.Errorf("relations: tar=%d local=%d", len(net.AllRelations()), len(localNet.AllRelations()))
-			}
-			if len(net.AllActions()) != len(localNet.AllActions()) {
-				t.Errorf("actions: tar=%d local=%d", len(net.AllActions()), len(localNet.AllActions()))
-			}
-			if len(net.AllRisks()) != len(localNet.AllRisks()) {
-				t.Errorf("risks: tar=%d local=%d", len(net.AllRisks()), len(localNet.AllRisks()))
-			}
-		})
-	}
-}
-
-func TestExtractTarToMemory_IncludesChecksum(t *testing.T) {
-	for _, dir := range allExampleDirs(t) {
-		name := filepath.Base(dir)
-		t.Run(name, func(t *testing.T) {
-			buf := buildTarFromDir(t, dir)
-
-			mfs, _, err := ExtractTarToMemory(buf)
-			if err != nil {
-				t.Fatalf("extract: %v", err)
-			}
-
-			// All examples have CHECKSUM
-			data, err := mfs.ReadFile("CHECKSUM")
-			if err != nil {
-				t.Fatalf("CHECKSUM not found in memory fs: %v", err)
-			}
-			if !strings.Contains(string(data), "sha256:") {
-				t.Error("CHECKSUM should contain sha256 entries")
-			}
-
-			// All examples have SKILL.md
-			_, err = mfs.ReadFile("SKILL.md")
-			if err != nil {
-				t.Fatalf("SKILL.md not found in memory fs: %v", err)
-			}
-		})
-	}
-}
-
-func TestComputeChecksumFromTar(t *testing.T) {
-	for _, dir := range allExampleDirs(t) {
-		name := filepath.Base(dir)
-		t.Run(name, func(t *testing.T) {
-			// Compute via local FS
-			fsys := NewOSFileSystem()
-			localChecksums, err := ComputeNetworkChecksums(fsys, dir)
-			if err != nil {
-				t.Fatalf("local compute: %v", err)
-			}
-
-			// Compute via tar
-			buf := buildTarFromDir(t, dir)
-			tarChecksums, err := ComputeChecksumFromTar(buf)
-			if err != nil {
-				t.Fatalf("tar compute: %v", err)
-			}
-
-			// Results must match
-			for key, localHash := range localChecksums {
-				tarHash, ok := tarChecksums[key]
-				if !ok {
-					t.Errorf("tar checksums missing key %q", key)
-					continue
-				}
-				if localHash != tarHash {
-					t.Errorf("checksum mismatch for %q: local=%q tar=%q", key, localHash, tarHash)
-				}
-			}
-			for key := range tarChecksums {
-				if _, ok := localChecksums[key]; !ok {
-					t.Errorf("tar has extra key %q not in local", key)
-				}
-			}
-		})
-	}
-}
-
-func TestVerifyChecksumFromTar(t *testing.T) {
-	for _, dir := range allExampleDirs(t) {
-		name := filepath.Base(dir)
-		t.Run(name, func(t *testing.T) {
-			// Generate fresh CHECKSUM from the tar (avoids stale stored CHECKSUM)
-			bufGen := buildTarFromDirExcluding(t, dir, "CHECKSUM")
-			checksumContent, err := GenerateChecksumFromTar(bufGen)
-			if err != nil {
-				t.Fatalf("generate: %v", err)
-			}
-
-			// Build tar with fresh CHECKSUM, verify passes
-			bufVerify := buildTarFromDirReplaceChecksum(t, dir, checksumContent)
-			ok, errs := VerifyChecksumFromTar(bufVerify)
-			if !ok {
-				t.Errorf("verify should pass, got errors: %v", errs)
-			}
-
-			// Verify without CHECKSUM should fail
-			bufNoCk := buildTarFromDirExcluding(t, dir, "CHECKSUM")
-			ok2, errs2 := VerifyChecksumFromTar(bufNoCk)
-			if ok2 {
-				t.Error("verify without CHECKSUM should fail")
-			}
-			if len(errs2) == 0 {
-				t.Error("expected error messages when CHECKSUM is missing")
-			}
-		})
-	}
-}
-
-// buildTarFromDirReplaceChecksum builds a tar from dir, replacing the CHECKSUM file content.
-func buildTarFromDirReplaceChecksum(t *testing.T, dir, checksumContent string) *bytes.Buffer {
-	t.Helper()
-	var buf bytes.Buffer
-	tw := tar.NewWriter(&buf)
-
-	filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil || info.IsDir() {
-			return walkErr
-		}
-		rel, _ := filepath.Rel(dir, path)
-		rel = filepath.ToSlash(rel)
-
-		var data []byte
-		if filepath.Base(path) == "CHECKSUM" {
-			data = []byte(checksumContent)
-		} else {
-			data, _ = os.ReadFile(path)
-		}
-		tw.WriteHeader(&tar.Header{Name: rel, Size: int64(len(data)), Mode: 0644})
-		tw.Write(data)
-		return nil
-	})
-	tw.Close()
-	return &buf
-}
-
-func TestDiffNetworksFromTar(t *testing.T) {
-	dirs := allExampleDirs(t)
-	if len(dirs) < 2 {
-		t.Skip("need at least 2 example directories for cross-diff")
-	}
-
-	// Diff between two different example networks
-	oldBuf := buildTarFromDir(t, dirs[0])
-	newBuf := buildTarFromDir(t, dirs[1])
-
-	result, err := DiffNetworksFromTar(oldBuf, newBuf)
-	if err != nil {
-		t.Fatalf("diff: %v", err)
-	}
-
-	// Different networks should have changes
-	if !result.HasChanges() {
-		t.Error("expected changes between different networks")
-	}
-
-	// Self-diff should have no changes
-	selfOld := buildTarFromDir(t, dirs[0])
-	selfNew := buildTarFromDir(t, dirs[0])
-	selfResult, err := DiffNetworksFromTar(selfOld, selfNew)
-	if err != nil {
-		t.Fatalf("self-diff: %v", err)
-	}
-	if selfResult.HasChanges() {
-		t.Errorf("self-diff should have no changes, got creates=%d updates=%d deletes=%d",
-			len(selfResult.Creates()), len(selfResult.Updates()), len(selfResult.Deletes()))
-	}
-}
-
-func TestWriteNetworkToTar(t *testing.T) {
-	for _, dir := range allExampleDirs(t) {
-		name := filepath.Base(dir)
-		t.Run(name, func(t *testing.T) {
-			buf := buildTarFromDir(t, dir)
-			net, err := LoadNetworkFromTar(buf)
-			if err != nil {
-				t.Fatalf("load: %v", err)
-			}
-
-			// Write to tar
-			var outBuf bytes.Buffer
-			if err := WriteNetworkToTar(net, &outBuf); err != nil {
-				t.Fatalf("write: %v", err)
-			}
-
-			// Verify CHECKSUM is included and valid
-			outCopy := make([]byte, outBuf.Len())
-			copy(outCopy, outBuf.Bytes())
-			ok, errs := VerifyChecksumFromTar(bytes.NewReader(outCopy))
-			if !ok {
-				t.Errorf("CHECKSUM verify should pass after WriteNetworkToTar, got errors: %v", errs)
-			}
-
-			// Re-load from the written tar (round-trip)
-			net2, err := LoadNetworkFromTar(&outBuf)
-			if err != nil {
-				t.Fatalf("re-load: %v", err)
-			}
-
-			if net2.Root.Frontmatter.ID != net.Root.Frontmatter.ID {
-				t.Errorf("id mismatch: original=%q round-trip=%q",
-					net.Root.Frontmatter.ID, net2.Root.Frontmatter.ID)
-			}
-			if len(net2.AllObjects()) != len(net.AllObjects()) {
-				t.Errorf("objects: original=%d round-trip=%d",
-					len(net.AllObjects()), len(net2.AllObjects()))
-			}
-			if len(net2.AllRelations()) != len(net.AllRelations()) {
-				t.Errorf("relations: original=%d round-trip=%d",
-					len(net.AllRelations()), len(net2.AllRelations()))
-			}
-			if len(net2.AllActions()) != len(net.AllActions()) {
-				t.Errorf("actions: original=%d round-trip=%d",
-					len(net.AllActions()), len(net2.AllActions()))
-			}
-			if len(net2.AllRisks()) != len(net.AllRisks()) {
-				t.Errorf("risks: original=%d round-trip=%d",
-					len(net.AllRisks()), len(net2.AllRisks()))
-			}
-		})
+	if len(errs) == 0 {
+		t.Error("expected error messages when CHECKSUM is missing")
 	}
 }

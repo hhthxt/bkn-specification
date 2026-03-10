@@ -283,24 +283,38 @@ func resolveIncludes(doc *BknDocument, baseDir string, loadedPaths, recursionSta
 }
 
 func resolveIncludesWithFS(fsys FileSystem, doc *BknDocument, baseDir string, loadedPaths, recursionStack map[string]bool, result *[]BknDocument) error {
+	// Only network type documents can have includes
+	docType := strings.ToLower(strings.TrimSpace(doc.Frontmatter.Type))
+	if docType != "network" {
+		return nil
+	}
+
 	for _, includeRel := range doc.Frontmatter.Includes {
 		includePath := fsys.Join(baseDir, includeRel)
 		absPath := fsys.Abs(includePath)
-		if loadedPaths[absPath] {
-			continue // Deduplication: already loaded via another path
-		}
+
+		// Check for circular include first (before deduplication)
 		if recursionStack[absPath] {
 			return fmt.Errorf("circular include detected: %s (resolved to %s)", includeRel, absPath)
 		}
+
+		// Deduplication: skip if already loaded
+		if loadedPaths[absPath] {
+			continue
+		}
+
 		if _, err := fsys.Stat(absPath); err != nil {
 			return fmt.Errorf("include file not found: %s (resolved to %s)", includeRel, absPath)
 		}
+
 		loadedPaths[absPath] = true
 		incDoc, err := LoadWithFS(fsys, absPath)
 		if err != nil {
 			return err
 		}
 		*result = append(*result, *incDoc)
+
+		// Add to recursion stack before recursing
 		recursionStack[absPath] = true
 		err = resolveIncludesWithFS(fsys, incDoc, fsys.Dir(absPath), loadedPaths, recursionStack, result)
 		delete(recursionStack, absPath)
