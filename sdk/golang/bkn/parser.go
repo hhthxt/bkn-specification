@@ -355,15 +355,69 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 
 	rel := &BknRelationType{
 		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-			Type:        "relation_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: strVal(fmData, "description"),
+			Type:               "relation_type",
+			ID:                 strVal(fmData, "id"),
+			Name:               strVal(fmData, "name"),
+			Tags:               strSliceVal(fmData, "tags"),
+			Description:        strVal(fmData, "description"),
+			SourceObjectTypeID: strVal(fmData, "source_object_type"),
+			TargetObjectTypeID: strVal(fmData, "target_object_type"),
 		},
 	}
 
+	sections := extractSections(text, "###")
+
+	if s, ok := sections["Mapping Rules"]; ok {
+		rel.RelationType, rel.MappingRules = parseRelationMappingRules(s)
+	}
+
 	return rel, nil
+}
+
+// parseRelationMappingRules parses the mapping rules section for a relation.
+// It returns the relation type (direct, data_view, etc.) and the mapping rules.
+func parseRelationMappingRules(sectionText string) (string, any) {
+	lines := strings.Split(sectionText, "\n")
+
+	var relationType string
+	var tableStart int
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "type:") {
+			relationType = strings.TrimSpace(strings.TrimPrefix(trimmed, "type:"))
+		}
+		if strings.HasPrefix(trimmed, "|") && tableStart == 0 {
+			tableStart = i
+		}
+	}
+
+	if tableStart == 0 {
+		return relationType, nil
+	}
+
+	rows := parseTable(lines[tableStart:])
+	if len(rows) == 0 {
+		return relationType, nil
+	}
+
+	var mappingRules []MappingRule
+	for _, row := range rows {
+		sourceProp := row["Source Property"]
+		targetProp := row["Target Property"]
+		if sourceProp != "" || targetProp != "" {
+			mappingRules = append(mappingRules, MappingRule{
+				SourceProperty: sourceProp,
+				TargetProperty: targetProp,
+			})
+		}
+	}
+
+	if relationType == "direct" {
+		return relationType, DirectMappingRule(mappingRules)
+	}
+
+	return relationType, mappingRules
 }
 
 // ParseActionTypeFile parses an action_type definition file.
@@ -375,15 +429,172 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 
 	act := &BknActionType{
 		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-			Type:        "action_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: strVal(fmData, "description"),
+			Type:             "action_type",
+			ID:               strVal(fmData, "id"),
+			Name:             strVal(fmData, "name"),
+			Tags:             strSliceVal(fmData, "tags"),
+			Description:      strVal(fmData, "description"),
+			ActionType:       strVal(fmData, "action_type"),
+			Enabled:          parseBool(fmData, "enabled"),
+			RiskLevel:        strVal(fmData, "risk_level"),
+			RequiresApproval: parseBool(fmData, "requires_approval"),
 		},
 	}
 
+	sections := extractSections(text, "###")
+
+	if s, ok := sections["Bound Object"]; ok {
+		act.ObjectTypeID, act.BoundObject = parseBoundObject(s)
+	}
+	if s, ok := sections["Trigger Condition"]; ok {
+		act.TriggerCondition = parseTriggerCondition(s)
+	}
+	if s, ok := sections["Pre-conditions"]; ok {
+		act.PreConditions = parsePreConditions(s)
+	}
+	if s, ok := sections["Scope of Impact"]; ok {
+		act.ScopeOfImpact = parseScopeOfImpact(s)
+	}
+	if s, ok := sections["Tool Configuration"]; ok {
+		act.ToolConfig = parseToolConfiguration(s)
+	}
+	if s, ok := sections["Parameter Binding"]; ok {
+		act.Parameters = parseParameterBinding(s)
+	}
+	if s, ok := sections["Schedule"]; ok {
+		act.Schedule = parseSchedule(s)
+	}
+
 	return act, nil
+}
+
+// parseBool safely parses a boolean value from frontmatter.
+func parseBool(m map[string]any, key string) bool {
+	if v, ok := m[key]; ok && v != nil {
+		switch val := v.(type) {
+		case bool:
+			return val
+		case string:
+			return strings.EqualFold(val, "true") || val == "1" || strings.EqualFold(val, "yes")
+		case int:
+			return val != 0
+		}
+	}
+	return false
+}
+
+// parseBoundObject parses the bound object section.
+func parseBoundObject(sectionText string) (objectTypeID, boundObject string) {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return "", ""
+	}
+	r := rows[0]
+	return r["Bound Object"], r["Action Type"]
+}
+
+// parseTriggerCondition parses the trigger condition from YAML code block.
+func parseTriggerCondition(sectionText string) *CondCfg {
+	// Extract YAML content from ```yaml ... ``` block
+	matches := yamlBlockRE.FindStringSubmatch(sectionText)
+	if len(matches) < 2 {
+		return nil
+	}
+
+	yamlContent := matches[1]
+
+	var cond struct {
+		Condition *CondCfg `yaml:"condition"`
+	}
+	if err := yaml.Unmarshal([]byte(yamlContent), &cond); err != nil {
+		return nil
+	}
+	return cond.Condition
+}
+
+// parsePreConditions parses the pre-conditions table.
+func parsePreConditions(sectionText string) []*PreCondition {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var conditions []*PreCondition
+	for _, row := range rows {
+		conditions = append(conditions, &PreCondition{
+			Object:    row["Object"],
+			Check:     row["Check"],
+			Condition: row["Condition"],
+			Message:   row["Message"],
+		})
+	}
+	return conditions
+}
+
+// parseScopeOfImpact parses the scope of impact table.
+func parseScopeOfImpact(sectionText string) []*ImpactEntry {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var entries []*ImpactEntry
+	for _, row := range rows {
+		entries = append(entries, &ImpactEntry{
+			Object:      row["Object"],
+			Description: row["Impact Description"],
+		})
+	}
+	return entries
+}
+
+// parseToolConfiguration parses the tool configuration table.
+func parseToolConfiguration(sectionText string) *ToolConfiguration {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return nil
+	}
+	r := rows[0]
+
+	config := &ToolConfiguration{
+		Type: r["Type"],
+	}
+
+	switch config.Type {
+	case "tool":
+		config.BoxID = r["Toolbox ID"]
+		config.ToolID = r["Tool ID"]
+	case "mcp":
+		config.McpID = r["MCP ID"]
+		config.ToolName = r["Tool Name"]
+	}
+
+	return config
+}
+
+// parseParameterBinding parses the parameter binding table.
+func parseParameterBinding(sectionText string) []Parameter {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var params []Parameter
+	for _, row := range rows {
+		param := Parameter{
+			Name:        row["Parameter"],
+			Source:      row["Source"],
+			ValueFrom:   row["Binding"],
+			Description: row["Description"],
+		}
+		// Try to parse value as int if it's a const source
+		if param.Source == "const" && row["Binding"] != "" {
+			param.Value = row["Binding"]
+		}
+		params = append(params, param)
+	}
+	return params
+}
+
+// parseSchedule parses the schedule table.
+func parseSchedule(sectionText string) *Schedule {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return nil
+	}
+	r := rows[0]
+	return &Schedule{
+		Type:       r["Type"],
+		Expression: r["Expression"],
+	}
 }
 
 // ParseRiskTypeFile parses a risk_type definition file.
@@ -411,8 +622,36 @@ func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
 	if s, ok := sections["Control Policy"]; ok {
 		risk.ControlPolicy = s
 	}
+	if s, ok := sections["Pre-checks"]; ok {
+		risk.PreChecks = parseRiskPreChecks(s)
+	}
+	if s, ok := sections["Rollback Plan"]; ok {
+		risk.RollbackPlan = s
+	}
+	if s, ok := sections["Audit Requirements"]; ok {
+		risk.AuditRequirements = s
+	}
 
 	return risk, nil
+}
+
+// parseRiskPreChecks parses the pre-checks table for risk types.
+func parseRiskPreChecks(sectionText string) []*CondCfg {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var checks []*CondCfg
+	for _, row := range rows {
+		check := &CondCfg{
+			ObjectTypeID: row["Object"],
+			Field:        row["Check"],
+			Operation:    row["Condition"],
+		}
+		// Parse value from condition if it's a simple comparison
+		if val := row["Condition"]; val != "" {
+			check.Value = val
+		}
+		checks = append(checks, check)
+	}
+	return checks
 }
 
 func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, error) {
@@ -431,5 +670,30 @@ func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, er
 		},
 	}
 
+	sections := extractSections(text, "###")
+
+	if s, ok := sections["Object Types"]; ok {
+		cg.ObjectTypes = parseConceptGroupObjectTypes(s)
+	}
+
 	return cg, nil
+}
+
+// parseConceptGroupObjectTypes parses the object types list for a concept group.
+// Supports both table format and list format.
+func parseConceptGroupObjectTypes(sectionText string) []string {
+	// Try table format first
+	rows := parseTable(strings.Split(sectionText, "\n"))
+
+	var objectTypes []string
+	if len(rows) > 0 {
+		for _, row := range rows {
+			// Check various possible column names for object type ID
+			if id := row["ID"]; id != "" {
+				objectTypes = append(objectTypes, id)
+			}
+		}
+	}
+
+	return objectTypes
 }

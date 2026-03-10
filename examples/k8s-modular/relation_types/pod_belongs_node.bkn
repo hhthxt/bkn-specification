@@ -15,6 +15,7 @@ type: direct
 |-----------------|-----------------|
 | pod_node_name | node_name |
 
+
 ### Business Semantics
 
 一个 Pod 运行在某个 Node 上，通过 Kubernetes 调度器分配。

@@ -6,17 +6,13 @@ tags: [拓扑架构, 网络]
 description: Service 到 Pod 的流量路由关系。
 ---
 
-### Endpoints
-
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| service | pod | direct | NO | 0 | - |
-
 ### Mapping Rules
+type: direct
 
 | Source Property | Target Property |
 |-----------------|-----------------|
 | service_name | service_name |
+
 
 ### Business Semantics
 
