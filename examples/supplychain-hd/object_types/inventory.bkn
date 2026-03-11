@@ -2,7 +2,7 @@
 type: object_type
 id: inventory
 name: 库存
-tags: [供应链, 库存, 已审核]]
+tags: [供应链, 库存, 已审核]
 ---
 
 ## ObjectType: 库存

@@ -102,18 +102,21 @@ type BknRelationTypeFrontmatter struct {
 	Name        string   `yaml:"name"`
 	Tags        []string `yaml:"tags"`
 	Description string   `yaml:"description"`
-
-	SourceObjectTypeID string `yaml:"source_object_type"`
-	TargetObjectTypeID string `yaml:"target_object_type"`
 }
 
 // BknRelationType represents a relation type definition.
 type BknRelationType struct {
 	BknRelationTypeFrontmatter
 
-	// Mapping Rules
-	RelationType string // direct/data_view.
+	// Endpoint
+	Endpoint     Endpoint
 	MappingRules any
+}
+
+type Endpoint struct {
+	Source string
+	Target string
+	Type   string // direct | data_view
 }
 
 // MappingRule represents a property mapping between source and target.
@@ -178,12 +181,12 @@ type BknActionType struct {
 
 // CondCfg represents a condition configuration.
 type CondCfg struct {
-	ObjectTypeID string    `yaml:"object_type_id"`
-	Field        string    `yaml:"field"`
-	Operation    string    `yaml:"operation"`
+	ObjectTypeID string     `yaml:"object_type_id"`
+	Field        string     `yaml:"field"`
+	Operation    string     `yaml:"operation"`
 	SubConds     []*CondCfg `yaml:"sub_conds"`
-	ValueFrom    string    `yaml:"value_from"`
-	Value        any       `yaml:"value"`
+	ValueFrom    string     `yaml:"value_from"`
+	Value        any        `yaml:"value"`
 }
 
 // PreCondition represents a pre-condition check.

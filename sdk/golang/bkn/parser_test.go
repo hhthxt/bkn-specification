@@ -183,13 +183,17 @@ func TestParseRelationType_Basic(t *testing.T) {
 type: relation_type
 id: belongs_to
 name: Belongs To
-source_object_type: pod
-target_object_type: node
 ---
 
 ## RelationType: belongs_to
 
 Pod belongs to Node
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| pod | node | direct |
 
 ### Mapping Rules
 
@@ -201,22 +205,32 @@ Pod belongs to Node
 	rt, err := ParseRelationTypeFile(text, "/test/belongs_to.bkn")
 	require.NoError(t, err)
 	assert.Equal(t, "belongs_to", rt.ID)
-	assert.Equal(t, "pod", rt.SourceObjectTypeID)
-	assert.Equal(t, "node", rt.TargetObjectTypeID)
+	assert.Equal(t, "Pod belongs to Node", rt.Description)
+	assert.Equal(t, "pod", rt.Endpoint.Source)
+	assert.Equal(t, "node", rt.Endpoint.Target)
+	assert.Equal(t, "direct", rt.Endpoint.Type)
+	rules, ok := rt.MappingRules.(DirectMappingRule)
+	require.True(t, ok, "MappingRules should be DirectMappingRule")
+	require.Len(t, rules, 2)
+	assert.Equal(t, "node_name", rules[0].SourceProperty)
 }
 
-func TestParseRelationType_WithRelationType(t *testing.T) {
+func TestParseRelationType_EndpointTable(t *testing.T) {
 	text := `---
 type: relation_type
 id: runs_on
 name: Runs On
-source_object_type: container
-target_object_type: pod
 ---
 
 ## RelationType: runs_on
 
 Container runs on Pod
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| container | pod | indirect |
 
 ### Mapping Rules
 
@@ -226,8 +240,12 @@ Container runs on Pod
 `
 	rt, err := ParseRelationTypeFile(text, "/test/runs_on.bkn")
 	require.NoError(t, err)
-	// RelationType is parsed from mapping rules
-	assert.Equal(t, "pod", rt.TargetObjectTypeID)
+	assert.Equal(t, "container", rt.Endpoint.Source)
+	assert.Equal(t, "pod", rt.Endpoint.Target)
+	assert.Equal(t, "indirect", rt.Endpoint.Type)
+	rules, ok := rt.MappingRules.([]MappingRule)
+	require.True(t, ok, "MappingRules should be []MappingRule for indirect")
+	require.Len(t, rules, 1)
 }
 
 // === Parse Action Type Tests ===

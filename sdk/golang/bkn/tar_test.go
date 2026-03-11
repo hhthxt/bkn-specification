@@ -250,13 +250,15 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 		RelationTypes: []*BknRelationType{
 			{
 				BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-					Type:               "relation_type",
-					ID:                 "belongs_to",
-					Name:               "Belongs To",
-					SourceObjectTypeID: "pod",
-					TargetObjectTypeID: "node",
+					Type: "relation_type",
+					ID:   "belongs_to",
+					Name: "Belongs To",
 				},
-				RelationType: "direct",
+				Endpoint: Endpoint{
+					Source: "pod",
+					Target: "node",
+					Type:   "direct",
+				},
 			},
 		},
 		ActionTypes: []*BknActionType{
@@ -302,9 +304,9 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 	// Verify relation type
 	require.Len(t, loaded.RelationTypes, 1)
 	assert.Equal(t, "belongs_to", loaded.RelationTypes[0].ID)
-	assert.Equal(t, "pod", loaded.RelationTypes[0].SourceObjectTypeID)
-	assert.Equal(t, "node", loaded.RelationTypes[0].TargetObjectTypeID)
-	assert.Equal(t, "direct", loaded.RelationTypes[0].RelationType)
+	assert.Equal(t, "pod", loaded.RelationTypes[0].Endpoint.Source)
+	assert.Equal(t, "node", loaded.RelationTypes[0].Endpoint.Target)
+	assert.Equal(t, "direct", loaded.RelationTypes[0].Endpoint.Type)
 
 	// Verify action type
 	require.Len(t, loaded.ActionTypes, 1)
@@ -345,13 +347,15 @@ func TestRoundTrip_NetworkWithAllTypes(t *testing.T) {
 		RelationTypes: []*BknRelationType{
 			{
 				BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-					Type:               "relation_type",
-					ID:                 "rel1",
-					Name:               "Relation 1",
-					SourceObjectTypeID: "obj1",
-					TargetObjectTypeID: "obj2",
+					Type: "relation_type",
+					ID:   "rel1",
+					Name: "Relation 1",
 				},
-				RelationType: "direct",
+				Endpoint: Endpoint{
+					Source: "obj1",
+					Target: "obj2",
+					Type:   "direct",
+				},
 			},
 		},
 		ActionTypes: []*BknActionType{

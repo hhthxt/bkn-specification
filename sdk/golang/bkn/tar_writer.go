@@ -205,15 +205,16 @@ func serializeRelationType(rt *BknRelationType) string {
 	sb.WriteString(fmt.Sprintf("name: %s\n", rt.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(rt.Tags, ", ")))
 	sb.WriteString(fmt.Sprintf("description: %s\n", rt.Description))
-	sb.WriteString(fmt.Sprintf("source_object_type: %s\n", rt.SourceObjectTypeID))
-	sb.WriteString(fmt.Sprintf("target_object_type: %s\n", rt.TargetObjectTypeID))
 	sb.WriteString("---\n\n")
+
+	// Endpoint
+	sb.WriteString("### Endpoint\n\n")
+	sb.WriteString("| Source | Target | Type |\n")
+	sb.WriteString("|--------|--------|------|\n")
+	sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n\n", rt.Endpoint.Source, rt.Endpoint.Target, rt.Endpoint.Type))
 
 	// Mapping Rules
 	sb.WriteString("### Mapping Rules\n\n")
-	if rt.RelationType != "" {
-		sb.WriteString(fmt.Sprintf("type: %s\n\n", rt.RelationType))
-	}
 
 	return sb.String()
 }

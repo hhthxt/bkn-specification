@@ -447,11 +447,9 @@ func verifyRelationTypes(t *testing.T, original, result []*bkn.BknRelationType) 
 		assert.Equal(t, orig.Name, rt.Name, "relation %s: Name mismatch", rt.ID)
 		assert.Equal(t, orig.Description, rt.Description, "relation %s: Description mismatch", rt.ID)
 		assert.ElementsMatch(t, orig.Tags, rt.Tags, "relation %s: Tags mismatch", rt.ID)
-		assert.Equal(t, orig.SourceObjectTypeID, rt.SourceObjectTypeID, "relation %s: SourceObjectTypeID mismatch", rt.ID)
-		assert.Equal(t, orig.TargetObjectTypeID, rt.TargetObjectTypeID, "relation %s: TargetObjectTypeID mismatch", rt.ID)
-
-		// Compare RelationType
-		assert.Equal(t, orig.RelationType, rt.RelationType, "relation %s: RelationType mismatch", rt.ID)
+		assert.Equal(t, orig.Endpoint.Source, rt.Endpoint.Source, "relation %s: Endpoint.Source mismatch", rt.ID)
+		assert.Equal(t, orig.Endpoint.Target, rt.Endpoint.Target, "relation %s: Endpoint.Target mismatch", rt.ID)
+		assert.Equal(t, orig.Endpoint.Type, rt.Endpoint.Type, "relation %s: Endpoint.Type mismatch", rt.ID)
 	}
 }
 

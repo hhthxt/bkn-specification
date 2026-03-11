@@ -8,96 +8,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Column name aliases (Chinese -> English)
-var columnAliases = map[string]string{
-	"属性":   "Property",
-	"显示名":  "Display Name",
-	"显示名称": "Display Name",
-	"类型":   "Type",
-	"约束":   "Constraint",
-	"描述":   "Description",
-	"说明":   "Description",
-	"主键":   "Primary Key",
-	"显示属性": "Display Key",
-	"索引":   "Index",
-	"数据来源": "Data Source",
-	"名称":   "Name",
-	"起点":   "Source",
-	"终点":   "Target",
-	"必须":   "Required",
-	"起点属性": "Source Property",
-	"终点属性": "Target Property",
-	"参数":   "Parameter",
-	"来源":   "Source",
-	"绑定":   "Binding",
-	"工具":   "Tool ID",
-	"绑定对象": "Bound Object",
-	"行动类型": "Action Type",
-	"对象":   "Object",
-	"检查":   "Check",
-	"条件":   "Condition",
-	"消息":   "Message",
-	"表达式":  "Expression",
-	"索引配置": "Index Config",
-	"影响说明": "Impact Description",
-	"端点":   "Endpoint",
-	"凭据引用": "Secret Ref",
-}
-
-// Section name aliases
-var sectionAliases = map[string]string{
-	"数据来源": "Data Source",
-	"数据属性": "Data Properties",
-	"属性覆盖": "Property Override",
-	"逻辑属性": "Logic Properties",
-	"业务语义": "Business Semantics",
-	"关联定义": "Endpoints",
-	"映射规则": "Mapping Rules",
-	"映射视图": "Mapping View",
-	"起点映射": "Source Mapping",
-	"终点映射": "Target Mapping",
-	"绑定对象": "Bound Object",
-	"触发条件": "Trigger Condition",
-	"前置条件": "Pre-conditions",
-	"工具配置": "Tool Configuration",
-	"参数绑定": "Parameter Binding",
-	"调度配置": "Schedule",
-	"影响范围": "Scope of Impact",
-	"执行说明": "Execution Description",
-	"管控范围": "Control Scope",
-	"管控策略": "Control Policy",
-	"前置检查": "Pre-checks",
-	"回滚方案": "Rollback Plan",
-	"审计要求": "Audit Requirements",
-}
-
-var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Risk):\s*(\S+)`)
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
-var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
-var displayNameRE = regexp.MustCompile(`(?m)^\*\*(.+?)\*\*(?:\s*-\s*(.*))?$`)
 var headingRE = regexp.MustCompile(`(?m)^#{1,2}\s+(.+)$`)
 var tableSepRE = regexp.MustCompile(`^\|?[\s:*-]+(\|[\s:*-]+)*\|?$`)
 var yamlBlockRE = regexp.MustCompile("(?s)```yaml\\s*\\n(.+?)```")
 
-func normalizeColumn(name string) string {
-	name = strings.TrimSpace(name)
-	if v, ok := columnAliases[name]; ok {
-		return v
+// extractBodyDescription extracts the description text between the ## heading and the first ### section.
+func extractBodyDescription(text string) string {
+	_, body := splitFrontmatter(text)
+	// Find the ## heading
+	loc := headingRE.FindStringIndex(body)
+	if loc == nil {
+		return ""
 	}
-	return name
-}
-
-func normalizeSection(name string) string {
-	name = strings.TrimSpace(name)
-	if v, ok := sectionAliases[name]; ok {
-		return v
+	// Start after the ## heading line
+	rest := body[loc[1]:]
+	// Find the first ### section
+	secLoc := sectionRE.FindStringIndex(rest)
+	if secLoc == nil {
+		return strings.TrimSpace(rest)
 	}
-	return name
-}
-
-func isYes(val string) bool {
-	return strings.TrimSpace(strings.ToUpper(val)) == "YES"
+	return strings.TrimSpace(rest[:secLoc[0]])
 }
 
 func splitFrontmatter(text string) (fm string, body string) {
@@ -144,9 +76,6 @@ func parseTable(lines []string) []map[string]string {
 		return nil
 	}
 	headers := splitRow(tableLines[0])
-	for i, h := range headers {
-		headers[i] = normalizeColumn(h)
-	}
 	sepLine := strings.TrimSpace(tableLines[1])
 	dataStart := 2
 	if !tableSepRE.MatchString(sepLine) {
@@ -178,7 +107,7 @@ func extractSections(body string, level string) map[string]string {
 	matches := re.FindAllStringSubmatchIndex(body, -1)
 	sections := make(map[string]string)
 	for i, m := range matches {
-		title := normalizeSection(strings.TrimSpace(body[m[2]:m[3]]))
+		title := strings.TrimSpace(body[m[2]:m[3]])
 		start := m[1]
 		end := len(body)
 		if i+1 < len(matches) {
@@ -187,36 +116,6 @@ func extractSections(body string, level string) map[string]string {
 		sections[title] = strings.TrimSpace(body[start:end])
 	}
 	return sections
-}
-
-func extractFirstTableLines(text string) []string {
-	var tableLines []string
-	started := false
-	for _, line := range strings.Split(text, "\n") {
-		s := strings.TrimSpace(line)
-		if strings.HasPrefix(s, "|") {
-			tableLines = append(tableLines, s)
-			started = true
-		} else if started {
-			break
-		}
-	}
-	return tableLines
-}
-
-func parseTableColumns(tableLines []string) []string {
-	if len(tableLines) == 0 {
-		return nil
-	}
-	header := strings.TrimSpace(tableLines[0])
-	header = strings.TrimPrefix(header, "|")
-	header = strings.TrimSuffix(header, "|")
-	parts := strings.Split(header, "|")
-	var cols []string
-	for _, p := range parts {
-		cols = append(cols, normalizeColumn(strings.TrimSpace(p)))
-	}
-	return cols
 }
 
 func parseDataSource(sectionText string) *ResourceInfo {
@@ -413,69 +312,51 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 
 	rel := &BknRelationType{
 		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-			Type:               "relation_type",
-			ID:                 strVal(fmData, "id"),
-			Name:               strVal(fmData, "name"),
-			Tags:               strSliceVal(fmData, "tags"),
-			Description:        strVal(fmData, "description"),
-			SourceObjectTypeID: strVal(fmData, "source_object_type"),
-			TargetObjectTypeID: strVal(fmData, "target_object_type"),
+			Type:        "relation_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: extractBodyDescription(text),
 		},
 	}
 
 	sections := extractSections(text, "###")
 
+	if s, ok := sections["Endpoint"]; ok {
+		rows := parseTable(strings.Split(s, "\n"))
+		if len(rows) > 0 {
+			row := rows[0]
+			rel.Endpoint = Endpoint{
+				Source: row["Source"],
+				Target: row["Target"],
+				Type:   row["Type"],
+			}
+		}
+	}
+
 	if s, ok := sections["Mapping Rules"]; ok {
-		rel.RelationType, rel.MappingRules = parseRelationMappingRules(s)
+		rules := parseRelationMappingRules(s)
+		if rel.Endpoint.Type == "direct" {
+			rel.MappingRules = DirectMappingRule(rules)
+		} else {
+			rel.MappingRules = rules
+		}
 	}
 
 	return rel, nil
 }
 
 // parseRelationMappingRules parses the mapping rules section for a relation.
-// It returns the relation type (direct, data_view, etc.) and the mapping rules.
-func parseRelationMappingRules(sectionText string) (string, any) {
-	lines := strings.Split(sectionText, "\n")
-
-	var relationType string
-	var tableStart int
-
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "type:") {
-			relationType = strings.TrimSpace(strings.TrimPrefix(trimmed, "type:"))
-		}
-		if strings.HasPrefix(trimmed, "|") && tableStart == 0 {
-			tableStart = i
-		}
-	}
-
-	if tableStart == 0 {
-		return relationType, nil
-	}
-
-	rows := parseTable(lines[tableStart:])
-	if len(rows) == 0 {
-		return relationType, nil
-	}
-
-	var mappingRules []MappingRule
+func parseRelationMappingRules(sectionText string) []MappingRule {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	var rules []MappingRule
 	for _, row := range rows {
-		sourceProp := row["Source Property"]
-		targetProp := row["Target Property"]
-		if sourceProp != "" || targetProp != "" {
-			mappingRules = append(mappingRules, MappingRule{
-				SourceProperty: sourceProp,
-				TargetProperty: targetProp,
-			})
+		sp, tp := row["Source Property"], row["Target Property"]
+		if sp != "" || tp != "" {
+			rules = append(rules, MappingRule{SourceProperty: sp, TargetProperty: tp})
 		}
 	}
-
-	if relationType == "direct" {
-		return relationType, DirectMappingRule(mappingRules)
-	}
-
-	return relationType, mappingRules
+	return rules
 }
 
 // ParseActionTypeFile parses an action_type definition file.
