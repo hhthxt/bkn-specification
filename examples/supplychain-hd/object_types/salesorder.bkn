@@ -11,17 +11,17 @@ tags: [供应链, 销售, 已审核, 老数据]
 
 ### Data Properties
 
-| Name | Display Name | Type | Description |
-|----------|--------------|------|-------------|
-| contract_number | 合同编号 | string |  |
-| signing_quantity | 签约数量 | integer |  |
-| promised_delivery_date | 承诺交期时间 | date |  |
-| product_category | 产品类别 | string |  |
-| shipping_date | 交付时间 | date |  |
-| shipping_quantity | 交付数量 | float |  |
-| product_code | 产品编码 | string |  |
-| product_name | 产品名称 | string |  |
-| signing_date | 签约时间 | date |  |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| contract_number | 合同编号 | string |  | contract_number |
+| signing_quantity | 签约数量 | integer |  | signing_quantity |
+| promised_delivery_date | 承诺交期时间 | date |  | promised_delivery_date |
+| product_category | 产品类别 | string |  | product_category |
+| shipping_date | 交付时间 | date |  | shipping_date |
+| shipping_quantity | 交付数量 | float |  | shipping_quantity |
+| product_code | 产品编码 | string |  | product_code |
+| product_name | 产品名称 | string |  | product_name |
+| signing_date | 签约时间 | date |  | signing_date |
 
 ### Logic Properties
 

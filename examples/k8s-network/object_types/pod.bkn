@@ -11,15 +11,15 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 
 ### Data Properties
 
-| Name | Display Name | Type | Description | 
-|----------|--------------|------|-------------|
-| id | ID | integer | 主键ID |
-| pod_name | Pod名称 | string | Pod名称 |
-| pod_status | Pod状态 | string | Pod状态 (Running/Pending/Failed) |
-| pod_node_name | 所在节点 | string | Pod所在节点名称 |
-| pod_namespace | 命名空间 | string | Pod所属命名空间 |
-| pod_ip | Pod IP | string | Pod IP地址 |
-| pod_created_at | 创建时间 | datetime | Pod创建时间 |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | ID | integer | 主键ID | id |
+| pod_name | Pod名称 | string | Pod名称 | pod_name |
+| pod_status | Pod状态 | string | Pod状态 (Running/Pending/Failed) | pod_status |
+| pod_node_name | 所在节点 | string | Pod所在节点名称 | pod_node_name |
+| pod_namespace | 命名空间 | string | Pod所属命名空间 | pod_namespace |
+| pod_ip | Pod IP | string | Pod IP地址 | pod_ip |
+| pod_created_at | 创建时间 | datetime | Pod创建时间 | pod_created_at |
 
 ### Logic Properties
 

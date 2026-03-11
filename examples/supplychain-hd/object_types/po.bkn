@@ -11,15 +11,15 @@ tags: [供应链, 采购, 已审核]
 
 ### Data Properties
 
-| Name | Display Name | Type | Description |
-|----------|--------------|------|-------------|
-| billno | 采购订单单号 | string | 采购订单单号 |
-| biztime | 采购日期 | date | 业务日期 |
-| org_name | 购买组织 | string | 购买签订的主体 |
-| billtype_name | 订单类型 | string | 生产项目采购订单、研发项目采购订单等等。 |
-| supplier_number | 供应商编码 | string | 供应商编码 |
-| supplier_name | 供应商名称 | string | 供应商名称 |
-| operatorname | 执行采购人 | string | 执行采购的采购人员 |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| billno | 采购订单单号 | string | 采购订单单号 | billno |
+| biztime | 采购日期 | date | 业务日期 | biztime |
+| org_name | 购买组织 | string | 购买签订的主体 | org_name |
+| billtype_name | 订单类型 | string | 生产项目采购订单、研发项目采购订单等等。 | billtype_name |
+| supplier_number | 供应商编码 | string | 供应商编码 | supplier_number |
+| supplier_name | 供应商名称 | string | 供应商名称 | supplier_name |
+| operatorname | 执行采购人 | string | 执行采购的采购人员 | operatorname |
 
 ### Logic Properties
 

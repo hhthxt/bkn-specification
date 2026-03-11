@@ -31,7 +31,7 @@ func WriteNetworkToTar(doc *BknNetwork, w io.Writer) error {
 	mfs := NewMemoryFileSystem()
 
 	// Write network.bkn (frontmatter only)
-	rootContent := serializeFrontmatter(doc.BknNetworkFrontmatter)
+	rootContent := serializeBknNetworkFrontmatter(doc.BknNetworkFrontmatter)
 	mfs.AddFile("network.bkn", []byte(rootContent))
 	if err := writeTarEntry(tw, "network.bkn", []byte(rootContent), now); err != nil {
 		return err
@@ -106,8 +106,8 @@ func WriteNetworkToTar(doc *BknNetwork, w io.Writer) error {
 	return nil
 }
 
-// serializeFrontmatter serializes BknNetworkFrontmatter to BKN format
-func serializeFrontmatter(fm BknNetworkFrontmatter) string {
+// serializeBknNetworkFrontmatter serializes BknNetworkFrontmatter to BKN format
+func serializeBknNetworkFrontmatter(fm BknNetworkFrontmatter) string {
 	var sb strings.Builder
 	sb.WriteString("---\n")
 	sb.WriteString("type: network\n")

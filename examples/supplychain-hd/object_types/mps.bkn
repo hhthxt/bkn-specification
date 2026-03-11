@@ -11,15 +11,15 @@ tags: [供应链, 生产, 已审核, 手工表]
 
 ### Data Properties
 
-| Name | Display Name | Type | Description |
-|----------|--------------|------|-------------|
-| bom_code | 产品编码 | string |  |
-| product_category | 产品类别 | string |  |
-| quantity | 生产数量 | integer |  |
-| product_name | 产品名称 | string |  |
-| planned_start_date | 计划开工时间 | string |  |
-| order_type | 工单类型 | string |  |
-| seq_no | 生产序号 | integer |  |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| bom_code | 产品编码 | string |  | bom_code |
+| product_category | 产品类别 | string |  | product_category |
+| quantity | 生产数量 | integer |  | quantity |
+| product_name | 产品名称 | string |  | product_name |
+| planned_start_date | 计划开工时间 | string |  | planned_start_date |
+| order_type | 工单类型 | string |  | order_type |
+| seq_no | 生产序号 | integer |  | seq_no |
 
 ### Logic Properties
 

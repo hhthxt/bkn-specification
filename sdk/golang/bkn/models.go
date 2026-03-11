@@ -60,8 +60,7 @@ type DataProperty struct {
 	DisplayName string
 	Type        string
 	Description string
-
-	MappedField *Field
+	MappedField string
 }
 
 // LogicProperty represents a logic property definition.

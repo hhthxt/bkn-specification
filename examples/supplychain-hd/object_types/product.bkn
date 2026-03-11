@@ -11,10 +11,10 @@ tags: [供应链, 产品, 已审核]
 
 ### Data Properties
 
-| Name | Display Name | Type | Description |
-|----------|--------------|------|-------------|
-| material_name | 产品名称 | string |  |
-| material_number | 产品编码 | string | 产品编码，产品物料也是成品物料，所以产品编码也是物料编码，但是物料不一定是产品。 |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| material_name | 产品名称 | string |  | material_name |
+| material_number | 产品编码 | string | 产品编码，产品物料也是成品物料，所以产品编码也是物料编码，但是物料不一定是产品。 | material_number |
 
 ### Logic Properties
 
