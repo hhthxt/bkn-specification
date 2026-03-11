@@ -3,14 +3,11 @@ type: object_type
 id: service
 name: Service服务
 tags: [拓扑架构, 网络, Kubernetes]
-description: Kubernetes 服务抽象层，提供稳定的访问入口。
 ---
 
-### Data Source
+## ObjectType: Service服务
 
-| Type | ID | Name |
-|------|-----|------|
-| data_view | d2mio43q6gt6p380dith | service_info_view |
+Kubernetes 服务抽象层，提供稳定的访问入口。
 
 ### Data Properties
 
@@ -27,19 +24,14 @@ description: Kubernetes 服务抽象层，提供稳定的访问入口。
 
 ### Logic Properties
 
+
 ### Keys
-Primary Key: id
+Primary Keys: id
 Display Key: service_name
 Incremental Key:
 
-### Business Semantics
+### Data Source
 
-Service 为一组 Pod 提供统一的访问入口和负载均衡。
-
-#### 服务类型
-
-| 类型 | 说明 |
-|------|------|
-| ClusterIP | 集群内部访问 |
-| NodePort | 节点端口暴露 |
-| LoadBalancer | 外部负载均衡 |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380dith | service_info_view |

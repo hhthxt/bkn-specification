@@ -210,8 +210,8 @@ func serializeRelationType(rt *BknRelationType) string {
 	sb.WriteString("---\n\n")
 
 	// Mapping Rules
+	sb.WriteString("### Mapping Rules\n\n")
 	if rt.RelationType != "" {
-		sb.WriteString("### Mapping Rules\n\n")
 		sb.WriteString(fmt.Sprintf("type: %s\n\n", rt.RelationType))
 	}
 

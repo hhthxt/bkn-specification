@@ -3,14 +3,17 @@ type: network
 id: k8s-network
 name: Kubernetes网络
 tags: [Kubernetes, 拓扑架构, 运维]
-description: 采用每定义一文件的模块化组织方式，适合大规模知识网络
 business_domain: kubernetes
 ---
 
-## 网络概览
+# Kubernetes网络
 
-- **对象** (object_types/): pod.bkn、node.bkn、service.bkn
-- **关系** (relation_types/): pod_belongs_node.bkn、service_routes_pod.bkn
-- **行动** (action_types/): restart_pod.bkn、cordon_node.bkn
-- **风险** (risk_types/): restart_pod_high_risk.bkn
-- **分组** (concept_groups/): k8s.bkn
+采用每定义一文件的模块化组织方式，适合大规模知识网络
+
+## Network Overview
+
+- **ObjectTypes** (object_types/): pod、node、service
+- **RelationTypes** (relation_types/): pod_belongs_node、service_routes_pod
+- **ActionTypes** (action_types/): restart_pod、cordon_node
+- **RiskTypes** (risk_types/): restart_pod_high_risk
+- **ConceptGroups** (concept_groups/): k8s

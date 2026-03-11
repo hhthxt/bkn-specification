@@ -2,15 +2,12 @@
 type: risk_type
 id: restart_pod_high_risk
 name: Pod重启高风险管控
-tags: []
-description: 对Pod重启操作的高风险管控策略
+tags: [risk, pod, restart]
 ---
 
-## Risk: restart_pod_high_risk
-**Pod重启高风险管控** - 对生产环境中Pod重启操作的风险管控
+## RiskType: Pod重启高风险管控
 
-- **Tags**: risk, pod, restart
-- **Owner**: SRE团队
+对Pod重启操作的高风险管控策略
 
 ### Control Scope
 

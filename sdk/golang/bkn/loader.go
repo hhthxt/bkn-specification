@@ -7,6 +7,7 @@ package bkn
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -46,6 +47,8 @@ func LoadNetwork(rootPath string) (*BknNetwork, error) {
 
 // LoadNetworkWithFS loads a BKN network using the specified filesystem.
 // rootPath should be a directory containing network.bkn and standard subdirectories.
+// If CHECKSUM file exists, it will be validated against the actual file contents.
+// Checksum validation failures are logged as warnings but do not prevent loading.
 func LoadNetworkWithFS(fsys FileSystem, rootPath string) (*BknNetwork, error) {
 	absRoot := fsys.Abs(rootPath)
 
@@ -54,7 +57,21 @@ func LoadNetworkWithFS(fsys FileSystem, rootPath string) (*BknNetwork, error) {
 		return nil, fmt.Errorf("root path must be a directory: %s", absRoot)
 	}
 
-	// Step 1: Load network.bkn for frontmatter
+	// Step 1: Verify CHECKSUM if exists
+	checksumFile := fsys.Join(absRoot, ChecksumFileName)
+	if _, err := fsys.Stat(checksumFile); err == nil {
+		// CHECKSUM exists, validate it
+		ok, errMsgs := VerifyChecksumFileWithFS(fsys, absRoot)
+		if !ok {
+			// Log warnings for checksum mismatches but continue loading
+			fmt.Fprintf(os.Stderr, "[WARN] CHECKSUM validation failed for %s:\n", absRoot)
+			for _, msg := range errMsgs {
+				fmt.Fprintf(os.Stderr, "  - %s\n", msg)
+			}
+		}
+	}
+
+	// Step 2: Load network.bkn for frontmatter
 	networkFile := fsys.Join(absRoot, RootFileName)
 	if _, err := fsys.Stat(networkFile); err != nil {
 		return nil, fmt.Errorf("network.bkn not found in %s", absRoot)
@@ -70,7 +87,7 @@ func LoadNetworkWithFS(fsys FileSystem, rootPath string) (*BknNetwork, error) {
 		return nil, fmt.Errorf("load network.bkn: %w", err)
 	}
 
-	// Step 2: Load SKILL.md if exists (for additional metadata)
+	// Step 3: Load SKILL.md if exists (for additional metadata)
 	skillFile := fsys.Join(absRoot, SkillFileName)
 	if _, err := fsys.Stat(skillFile); err == nil {
 		// SKILL.md exists, could parse additional metadata if needed

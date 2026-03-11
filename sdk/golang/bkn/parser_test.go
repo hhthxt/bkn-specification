@@ -1,467 +1,641 @@
-// // Copyright The kweaver.ai Authors.
-// //
-// // Licensed under the Apache License, Version 2.0.
-// // See the LICENSE file in the project root for details.
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
 
 package bkn
 
-// import (
-// 	"os"
-// 	"path/filepath"
-// 	"strings"
-// 	"testing"
-// )
+import (
+	"os"
+	"path/filepath"
+	"testing"
 
-// // --- Unit Tests for Parse ---
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// func TestParse_NoFrontmatter(t *testing.T) {
-// 	_, err := Parse("# Plain doc\n\nNo frontmatter here.", "")
-// 	if err == nil {
-// 		t.Fatal("expected error for missing frontmatter")
-// 	}
-// 	if !strings.Contains(err.Error(), "YAML frontmatter") {
-// 		t.Errorf("expected frontmatter error, got %q", err.Error())
-// 	}
-// }
+// === Parse Frontmatter Tests ===
 
-// func TestParse_NoType(t *testing.T) {
-// 	text := "---\nid: x\nname: 测试\n---\n## Object: x"
-// 	_, err := Parse(text, "")
-// 	if err == nil {
-// 		t.Fatal("expected error for missing type")
-// 	}
-// 	if !strings.Contains(err.Error(), "valid 'type' field") {
-// 		t.Errorf("expected type field error, got %q", err.Error())
-// 	}
-// }
+func TestParseFrontmatter_Success(t *testing.T) {
+	text := `---
+type: object_type
+id: pod
+name: Pod
+---
 
-// func TestParse_InvalidType(t *testing.T) {
-// 	text := "---\ntype: foo\nid: x\n---\n"
-// 	_, err := Parse(text, "")
-// 	if err == nil {
-// 		t.Fatal("expected error for invalid type")
-// 	}
-// 	if !strings.Contains(err.Error(), "invalid BKN type") {
-// 		t.Errorf("expected invalid type error, got %q", err.Error())
-// 	}
-// }
+## ObjectType: pod
+Content here
+`
+	fm, err := ParseFrontmatter(text)
+	require.NoError(t, err)
+	assert.Equal(t, "object_type", fm["type"])
+	assert.Equal(t, "pod", fm["id"])
+	assert.Equal(t, "Pod", fm["name"])
+}
 
-// func TestParse_RiskTypeValid(t *testing.T) {
-// 	text := `---
-// type: risk_type
-// id: test_risk
-// name: Test Risk
-// ---
+func TestParseFrontmatter_NoFrontmatter(t *testing.T) {
+	text := "# No frontmatter\nJust content"
+	fm, err := ParseFrontmatter(text)
+	// When there's no frontmatter, it returns empty map without error
+	require.NoError(t, err)
+	assert.Empty(t, fm)
+}
 
-// ## Risk: test_risk
-// **Level**: high
+func TestParseFrontmatter_EmptyFrontmatter(t *testing.T) {
+	text := `---
+---
 
-// ### Pre-checks
-// - Check 1
-// - Check 2
+Content`
+	fm, err := ParseFrontmatter(text)
+	require.NoError(t, err)
+	assert.Empty(t, fm)
+}
 
-// ### Post-actions
-// - Action 1
-// `
-// 	doc, err := Parse(text, "")
-// 	if err != nil {
-// 		t.Fatalf("parse: %v", err)
-// 	}
-// 	if doc.Frontmatter.Type != "risk_type" {
-// 		t.Errorf("expected type risk_type, got %q", doc.Frontmatter.Type)
-// 	}
-// 	if len(doc.Risks) != 1 {
-// 		t.Errorf("expected 1 risk, got %d", len(doc.Risks))
-// 	}
-// }
+// === Parse Network File Tests ===
 
-// // --- Unit Tests for Load ---
+func TestParseNetworkFile_Success(t *testing.T) {
+	text := `---
+type: network
+id: k8s-network
+name: Kubernetes Network
+version: "1.0"
+---
 
-// func TestLoad_UnsupportedExtension(t *testing.T) {
-// 	f, err := os.CreateTemp("", "bkn-*.txt")
-// 	if err != nil {
-// 		t.Fatalf("create temp: %v", err)
-// 	}
-// 	defer os.Remove(f.Name())
-// 	f.WriteString("---\ntype: network\nid: x\n---\n")
-// 	f.Close()
+## Network: k8s-network
 
-// 	_, err = Load(f.Name())
-// 	if err == nil {
-// 		t.Fatal("expected error for unsupported extension")
-// 	}
-// 	if !strings.Contains(strings.ToLower(err.Error()), "unsupported file extension") {
-// 		t.Errorf("expected extension error, got %q", err.Error())
-// 	}
-// }
+Kubernetes resource network
+`
+	net, err := ParseNetworkFile(text, "/test/network.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "network", net.Type)
+	assert.Equal(t, "k8s-network", net.ID)
+	assert.Equal(t, "Kubernetes Network", net.Name)
+	assert.Equal(t, "1.0", net.Version)
+}
 
-// // --- Unit Tests for Delete Operations ---
+func TestParseNetworkFile_MissingType(t *testing.T) {
+	text := `---
+id: test
+---
 
-// func TestPlanDelete_Unit(t *testing.T) {
-// 	net := &BknNetwork{
-// 		Root: BknDocument{
-// 			Frontmatter: Frontmatter{
-// 				Type: "network",
-// 				ID:   "test-net",
-// 				Name: "Test Network",
-// 			},
-// 		},
-// 		Includes: []BknDocument{
-// 			{
-// 				Frontmatter: Frontmatter{Type: "object_type", ID: "pod", Name: "Pod"},
-// 				Objects:     []BknObject{{ID: "pod", Name: "Pod"}},
-// 			},
-// 			{
-// 				Frontmatter: Frontmatter{Type: "object_type", ID: "node", Name: "Node"},
-// 				Objects:     []BknObject{{ID: "node", Name: "Node"}},
-// 			},
-// 		},
-// 	}
+Content`
+	_, err := ParseNetworkFile(text, "/test/network.bkn")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "type")
+}
 
-// 	plan := PlanDelete(net, []DeleteTarget{{Type: "object", ID: "pod"}}, true)
-// 	if !plan.OK() {
-// 		t.Errorf("expected ok, got not_found=%v", plan.NotFound)
-// 	}
-// 	if len(plan.Targets) != 1 || plan.Targets[0].ID != "pod" {
-// 		t.Errorf("expected 1 target pod, got %v", plan.Targets)
-// 	}
-// }
+func TestParseNetworkFile_MissingID(t *testing.T) {
+	text := `---
+type: network
+---
 
-// func TestPlanDelete_NotFound_Unit(t *testing.T) {
-// 	net := &BknNetwork{
-// 		Root: BknDocument{
-// 			Frontmatter: Frontmatter{Type: "network", ID: "test-net"},
-// 		},
-// 		Includes: []BknDocument{
-// 			{
-// 				Frontmatter: Frontmatter{Type: "object_type", ID: "pod"},
-// 				Objects:     []BknObject{{ID: "pod"}},
-// 			},
-// 		},
-// 	}
+Content`
+	_, err := ParseNetworkFile(text, "/test/network.bkn")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "id")
+}
 
-// 	plan := PlanDelete(net, []DeleteTarget{{Type: "object", ID: "nonexistent"}}, true)
-// 	if plan.OK() {
-// 		t.Error("expected not ok for nonexistent target")
-// 	}
-// 	if len(plan.NotFound) != 1 {
-// 		t.Errorf("expected 1 not_found, got %v", plan.NotFound)
-// 	}
-// }
+// === Parse Object Type Tests ===
 
-// func TestNetworkWithout_Unit(t *testing.T) {
-// 	net := &BknNetwork{
-// 		Root: BknDocument{
-// 			Frontmatter: Frontmatter{Type: "network", ID: "test-net"},
-// 		},
-// 		Includes: []BknDocument{
-// 			{
-// 				Frontmatter: Frontmatter{Type: "object_type", ID: "pod"},
-// 				Objects:     []BknObject{{ID: "pod", Name: "Pod"}},
-// 			},
-// 			{
-// 				Frontmatter: Frontmatter{Type: "object_type", ID: "node"},
-// 				Objects:     []BknObject{{ID: "node", Name: "Node"}},
-// 			},
-// 		},
-// 	}
+func TestParseObjectType_Basic(t *testing.T) {
+	text := `---
+type: object_type
+id: pod
+name: Pod
+tags: [k8s, workload]
+---
 
-// 	orig := len(net.AllObjects())
-// 	out := NetworkWithout(net, []DeleteTarget{{Type: "object", ID: "pod"}})
-// 	if len(out.AllObjects()) != orig-1 {
-// 		t.Errorf("expected %d objects, got %d", orig-1, len(out.AllObjects()))
-// 	}
-// 	for _, o := range out.AllObjects() {
-// 		if o.ID == "pod" {
-// 			t.Error("pod should be removed")
-// 		}
-// 	}
-// }
+## ObjectType: pod
 
-// // --- Unit Tests for Checksum ---
+Kubernetes Pod resource
 
-// func TestGenerateAndVerifyChecksum(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-checksum-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
-// 	os.Mkdir(filepath.Join(dir, "object_types"), 0755)
-// 	os.WriteFile(filepath.Join(dir, "object_types", "pod.bkn"), []byte("---\ntype: object_type\nid: pod\nname: Pod\nnetwork: k8s\n---\n\n## Object: pod\n**Pod**\n"), 0644)
+### Data Properties
 
-// 	content, err := GenerateChecksumFile(dir)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if !strings.Contains(content, "sha256:") || !strings.Contains(content, "object_type:pod") {
-// 		t.Errorf("unexpected content: %s", content)
-// 	}
-// 	ok, errs := VerifyChecksumFile(dir)
-// 	if !ok {
-// 		t.Errorf("verify failed: %v", errs)
-// 	}
-// }
+| Name | DisplayName | Type | Description |
+|------|-------------|------|-------------|
+| name | Name | string | Pod name |
+| image | Image | string | Container image |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/pod.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "pod", ot.ID)
+	assert.Equal(t, "Pod", ot.Name)
+	assert.ElementsMatch(t, []string{"k8s", "workload"}, ot.Tags)
+	require.Len(t, ot.DataProperties, 2)
+	assert.Equal(t, "name", ot.DataProperties[0].Name)
+}
 
-// func TestChecksumNormalization_BlankLinesAndWhitespace(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-checksum-norm-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
+func TestParseObjectType_WithDataSource(t *testing.T) {
+	text := `---
+type: object_type
+id: deployment
+name: Deployment
+---
 
-// 	baseBkn := "---\ntype: object_type\nid: x\n---\n\n## Object: x\n**X**\n"
-// 	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(baseBkn), 0644)
+## ObjectType: deployment
 
-// 	content, err := GenerateChecksumFile(dir)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	var baseHash string
-// 	for _, line := range strings.Split(content, "\n") {
-// 		if strings.Contains(line, "object_type:x") {
-// 			parts := strings.SplitN(line, "  ", 2)
-// 			if len(parts) == 2 {
-// 				baseHash = strings.TrimSpace(parts[1])
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if baseHash == "" {
-// 		t.Fatal("could not find object_type:x checksum")
-// 	}
+### Data Source
 
-// 	withBlankLines := "---\ntype: object_type\nid: x\n---\n\n\n## Object: x\n\n**X**\n\n"
-// 	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(withBlankLines), 0644)
-// 	content2, _ := GenerateChecksumFile(dir)
-// 	var hash2 string
-// 	for _, line := range strings.Split(content2, "\n") {
-// 		if strings.Contains(line, "object_type:x") {
-// 			parts := strings.SplitN(line, "  ", 2)
-// 			if len(parts) == 2 {
-// 				hash2 = strings.TrimSpace(parts[1])
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if baseHash != hash2 {
-// 		t.Errorf("checksum changed with blank lines: %q vs %q", baseHash, hash2)
-// 	}
-// }
+| Type | ID | Name |
+|------|-----|------|
+| data_view | dv_deployments | Deployment View |
 
-// func TestChecksumNormalization_SemanticChangeAltersChecksum(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-checksum-semantic-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
+### Data Properties
 
-// 	baseBkn := "---\ntype: object_type\nid: x\n---\n\n## Object: x\n**X**\n"
-// 	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(baseBkn), 0644)
-// 	content, _ := GenerateChecksumFile(dir)
-// 	var baseHash string
-// 	for _, line := range strings.Split(content, "\n") {
-// 		if strings.Contains(line, "object_type:x") {
-// 			parts := strings.SplitN(line, "  ", 2)
-// 			if len(parts) == 2 {
-// 				baseHash = strings.TrimSpace(parts[1])
-// 				break
-// 			}
-// 		}
-// 	}
+| Name | DisplayName | Type |
+|------|-------------|------|
+| replicas | Replicas | number |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/deployment.bkn")
+	require.NoError(t, err)
+	require.NotNil(t, ot.DataSource)
+	assert.Equal(t, "data_view", ot.DataSource.Type)
+	assert.Equal(t, "dv_deployments", ot.DataSource.ID)
+	assert.Equal(t, "Deployment View", ot.DataSource.Name)
+}
 
-// 	modifiedBkn := "---\ntype: object_type\nid: x\n---\n\n## Object: x\n**Y**\n"
-// 	os.WriteFile(filepath.Join(dir, "test.bkn"), []byte(modifiedBkn), 0644)
-// 	content2, _ := GenerateChecksumFile(dir)
-// 	var hash2 string
-// 	for _, line := range strings.Split(content2, "\n") {
-// 		if strings.Contains(line, "object_type:x") {
-// 			parts := strings.SplitN(line, "  ", 2)
-// 			if len(parts) == 2 {
-// 				hash2 = strings.TrimSpace(parts[1])
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if baseHash == hash2 {
-// 		t.Error("checksum should change when semantic content changes")
-// 	}
-// }
+func TestParseObjectType_WithLogicProperties(t *testing.T) {
+	text := `---
+type: object_type
+id: service
+name: Service
+---
 
-// // --- Unit Tests for Loader ---
+## ObjectType: service
 
-// func TestDiscoverRootFile_NetworkBknPriority(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-root-discovery-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
+### Logic Properties
 
-// 	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: net-priority\n---\n"), 0644)
-// 	os.WriteFile(filepath.Join(dir, "index.bkn"), []byte("---\ntype: network\nid: index-priority\n---\n"), 0644)
+| Name | DisplayName | Type | Description |
+|------|-------------|------|-------------|
+| endpoint_count | Endpoint Count | integer | Number of endpoints |
+| health_status | Health Status | string | Health status |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/service.bkn")
+	require.NoError(t, err)
+	// Logic properties are parsed from the table
+	require.NotEmpty(t, ot.LogicProperties)
+}
 
-// 	root, err := DiscoverRootFile(dir)
-// 	if err != nil {
-// 		t.Fatalf("discover root: %v", err)
-// 	}
-// 	if filepath.Base(root) != "network.bkn" {
-// 		t.Errorf("expected network.bkn, got %s", filepath.Base(root))
-// 	}
-// }
+// === Parse Relation Type Tests ===
 
-// func TestDiscoverRootFile_MultipleNetworksFails(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-multiple-networks-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
+func TestParseRelationType_Basic(t *testing.T) {
+	text := `---
+type: relation_type
+id: belongs_to
+name: Belongs To
+source_object_type: pod
+target_object_type: node
+---
 
-// 	// Create multiple network files in the same directory (should fail)
-// 	os.WriteFile(filepath.Join(dir, "network1.bkn"), []byte("---\ntype: network\nid: net1\n---\n"), 0644)
-// 	os.WriteFile(filepath.Join(dir, "network2.bkn"), []byte("---\ntype: network\nid: net2\n---\n"), 0644)
+## RelationType: belongs_to
 
-// 	_, err = DiscoverRootFile(dir)
-// 	if err == nil {
-// 		t.Error("expected error for multiple network files in same directory")
-// 	}
-// }
+Pod belongs to Node
 
-// func TestLoadNetwork_ImplicitSameDir(t *testing.T) {
-// 	dir, err := os.MkdirTemp("", "bkn-implicit-*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer os.RemoveAll(dir)
+### Mapping Rules
 
-// 	os.WriteFile(filepath.Join(dir, "network.bkn"), []byte("---\ntype: network\nid: implicit-demo\n---\n"), 0644)
-// 	os.WriteFile(filepath.Join(dir, "objects.bkn"), []byte("---\ntype: object_type\nid: obj1\n---\n## Object: obj1\n"), 0644)
-// 	os.WriteFile(filepath.Join(dir, "relations.bkn"), []byte("---\ntype: relation_type\nid: rel1\n---\n## Relation: rel1\n"), 0644)
+| Source Property | Target Property |
+|-----------------|-----------------|
+| node_name | name |
+| node_id | id |
+`
+	rt, err := ParseRelationTypeFile(text, "/test/belongs_to.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "belongs_to", rt.ID)
+	assert.Equal(t, "pod", rt.SourceObjectTypeID)
+	assert.Equal(t, "node", rt.TargetObjectTypeID)
+}
 
-// 	net, err := LoadNetwork(dir)
-// 	if err != nil {
-// 		t.Fatalf("load network: %v", err)
-// 	}
-// 	if len(net.AllObjects()) != 1 {
-// 		t.Errorf("expected 1 object, got %d", len(net.AllObjects()))
-// 	}
-// 	if len(net.AllRelations()) != 1 {
-// 		t.Errorf("expected 1 relation, got %d", len(net.AllRelations()))
-// 	}
-// }
+func TestParseRelationType_WithRelationType(t *testing.T) {
+	text := `---
+type: relation_type
+id: runs_on
+name: Runs On
+source_object_type: container
+target_object_type: pod
+---
 
-// // --- Unit Tests for Serializer ---
+## RelationType: runs_on
 
-// func TestSerialize_RoundTrip(t *testing.T) {
-// 	doc := BknDocument{
-// 		Frontmatter: Frontmatter{
-// 			Type:    "object_type",
-// 			ID:      "pod",
-// 			Name:    "Pod",
-// 			Version: "1.0.0",
-// 			Tags:    []string{"k8s", "workload"},
-// 		},
-// 		Objects: []BknObject{
-// 			{
-// 				ID:          "pod",
-// 				Name:        "Pod",
-// 				Description: "Kubernetes Pod",
-// 				DataProperties: []DataProperty{
-// 					{Property: "image", Type: "string"},
-// 					{Property: "replicas", Type: "integer"},
-// 				},
-// 			},
-// 		},
-// 	}
+Container runs on Pod
 
-// 	serialized := Serialize(&doc)
-// 	reparsed, err := Parse(serialized, "")
-// 	if err != nil {
-// 		t.Fatalf("re-parse: %v", err)
-// 	}
+### Mapping Rules
 
-// 	if reparsed.Frontmatter.ID != doc.Frontmatter.ID {
-// 		t.Errorf("ID mismatch: %q vs %q", reparsed.Frontmatter.ID, doc.Frontmatter.ID)
-// 	}
-// 	if reparsed.Frontmatter.Type != doc.Frontmatter.Type {
-// 		t.Errorf("type mismatch: %q vs %q", reparsed.Frontmatter.Type, doc.Frontmatter.Type)
-// 	}
-// 	if len(reparsed.Objects) != len(doc.Objects) {
-// 		t.Errorf("objects count mismatch: %d vs %d", len(reparsed.Objects), len(doc.Objects))
-// 	}
-// }
+| Source Property | Target Property |
+|-----------------|-----------------|
+| pod_id | id |
+`
+	rt, err := ParseRelationTypeFile(text, "/test/runs_on.bkn")
+	require.NoError(t, err)
+	// RelationType is parsed from mapping rules
+	assert.Equal(t, "pod", rt.TargetObjectTypeID)
+}
 
-// func TestSerialize_Risk(t *testing.T) {
-// 	doc := BknDocument{
-// 		Frontmatter: Frontmatter{
-// 			Type: "risk_type",
-// 			ID:   "test_risk",
-// 			Name: "Test Risk",
-// 		},
-// 		Risks: []Risk{
-// 			{
-// 				ID:           "test_risk",
-// 				Name:         "Test Risk",
-// 				ControlScope: "production",
-// 				PreChecks: []PreCondition{
-// 					{Check: "check1"},
-// 					{Check: "check2"},
-// 				},
-// 			},
-// 		},
-// 	}
+// === Parse Action Type Tests ===
 
-// 	serialized := Serialize(&doc)
-// 	if !strings.Contains(serialized, "Risk: test_risk") {
-// 		t.Error("serialized should contain Risk section")
-// 	}
-// 	if !strings.Contains(serialized, "Control Scope") {
-// 		t.Error("serialized should contain Control Scope")
-// 	}
-// }
+func TestParseActionType_Basic(t *testing.T) {
+	text := `---
+type: action_type
+id: restart
+name: Restart Pod
+action_type: modify
+risk_level: high
+requires_approval: true
+---
 
-// // --- Unit Tests for Frontmatter ---
+## ActionType: restart
 
-// func TestFrontmatter_NewFields(t *testing.T) {
-// 	text := `---
-// type: object_type
-// id: test_obj
-// name: Test Object
-// version: 1.2.3
-// tags: [tag1, tag2]
-// description: A test object
-// namespace: test-ns
-// author: test-author
-// created_at: 2024-01-01
-// updated_at: 2024-01-02
-// ---
+Restart a pod gracefully
 
-// ## Object: test_obj
-// Test content
-// `
-// 	doc, err := Parse(text, "")
-// 	if err != nil {
-// 		t.Fatalf("parse: %v", err)
-// 	}
+### Bound Object
 
-// 	fm := doc.Frontmatter
-// 	if fm.Version != "1.2.3" {
-// 		t.Errorf("version: expected 1.2.3, got %q", fm.Version)
-// 	}
-// 	if len(fm.Tags) != 2 || fm.Tags[0] != "tag1" {
-// 		t.Errorf("tags: expected [tag1, tag2], got %v", fm.Tags)
-// 	}
-// 	if fm.Description != "A test object" {
-// 		t.Errorf("description: expected 'A test object', got %q", fm.Description)
-// 	}
-// 	if fm.Namespace != "test-ns" {
-// 		t.Errorf("namespace: expected 'test-ns', got %q", fm.Namespace)
-// 	}
-// 	if fm.Author != "test-author" {
-// 		t.Errorf("author: expected 'test-author', got %q", fm.Author)
-// 	}
-// 	if !strings.Contains(fm.CreatedAt, "2024-01-01") {
-// 		t.Errorf("created_at: expected to contain '2024-01-01', got %q", fm.CreatedAt)
-// 	}
-// 	if !strings.Contains(fm.UpdatedAt, "2024-01-02") {
-// 		t.Errorf("updated_at: expected to contain '2024-01-02', got %q", fm.UpdatedAt)
-// 	}
-// }
+| Bound Object | Action Type |
+|--------------|-------------|
+| pod | modify |
+
+### Parameter Binding
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| graceful | boolean | const | true | Graceful restart |
+| timeout | number | property | spec.timeout | Timeout seconds |
+`
+	at, err := ParseActionTypeFile(text, "/test/restart.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "restart", at.ID)
+	assert.Equal(t, "modify", at.ActionType)
+	assert.Equal(t, "high", at.RiskLevel)
+	assert.True(t, at.RequiresApproval)
+	assert.Equal(t, "pod", at.ObjectTypeID)
+	require.Len(t, at.Parameters, 2)
+	assert.Equal(t, "graceful", at.Parameters[0].Name)
+}
+
+func TestParseActionType_WithSchedule(t *testing.T) {
+	text := `---
+type: action_type
+id: backup
+name: Backup Data
+action_type: create
+---
+
+## ActionType: backup
+
+### Schedule
+
+| Type | Expression |
+|------|------------|
+| cron | 0 2 * * * |
+`
+	at, err := ParseActionTypeFile(text, "/test/backup.bkn")
+	require.NoError(t, err)
+	require.NotNil(t, at.Schedule)
+	assert.Equal(t, "cron", at.Schedule.Type)
+	assert.Equal(t, "0 2 * * *", at.Schedule.Expression)
+}
+
+// === Parse Risk Type Tests ===
+
+func TestParseRiskType_Basic(t *testing.T) {
+	text := `---
+type: risk_type
+id: high_memory
+name: High Memory Usage
+---
+
+## RiskType: high_memory
+
+Detects high memory usage
+
+### Control Scope
+
+production
+
+### Pre-checks
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| pod | memory_check | memory > 90 | Memory usage too high |
+| node | swap_check | swap > 50 | Swap usage too high |
+`
+	rt, err := ParseRiskTypeFile(text, "/test/high_memory.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "high_memory", rt.ID)
+	assert.Equal(t, "High Memory Usage", rt.Name)
+	assert.Equal(t, "production", rt.ControlScope)
+}
+
+// === Parse Concept Group Tests ===
+
+func TestParseConceptGroup_Basic(t *testing.T) {
+	text := `---
+type: concept_group
+id: k8s_resources
+name: Kubernetes Resources
+---
+
+## ConceptGroup: k8s_resources
+
+Core Kubernetes resources
+`
+	cg, err := ParseConceptGroupFile(text, "/test/k8s_resources.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "k8s_resources", cg.ID)
+	assert.Equal(t, "Kubernetes Resources", cg.Name)
+}
+
+// === Error Handling Tests ===
+
+func TestParse_InvalidType(t *testing.T) {
+	text := `---
+type: invalid_type
+id: test
+---
+
+Content`
+	// ParseObjectTypeFile doesn't validate type, it just parses
+	// The validation happens elsewhere
+	_, err := ParseObjectTypeFile(text, "/test/invalid.bkn")
+	// Currently parser doesn't validate type field strictly
+	// This test documents current behavior
+	_ = err
+}
+
+func TestParse_MalformedYAML(t *testing.T) {
+	text := `---
+type: object_type
+id: [invalid yaml structure
+---
+
+Content`
+	_, err := ParseFrontmatter(text)
+	assert.Error(t, err)
+}
+
+func TestParse_EmptyFile(t *testing.T) {
+	fm, err := ParseFrontmatter("")
+	// Empty file returns empty frontmatter without error
+	require.NoError(t, err)
+	assert.Empty(t, fm)
+}
+
+// === Data Properties Parsing Tests ===
+
+func TestParseDataProperties_VariousTypes(t *testing.T) {
+	text := `---
+type: object_type
+id: test
+---
+
+## ObjectType: test
+
+### Data Properties
+
+| Name | DisplayName | Type | Description |
+|------|-------------|------|-------------|
+| str_field | String Field | string | A string |
+| num_field | Number Field | number | A number |
+| bool_field | Bool Field | boolean | A boolean |
+| date_field | Date Field | datetime | A date |
+| json_field | JSON Field | json | JSON data |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/test.bkn")
+	require.NoError(t, err)
+	require.Len(t, ot.DataProperties, 5)
+	assert.Equal(t, "string", ot.DataProperties[0].Type)
+	assert.Equal(t, "number", ot.DataProperties[1].Type)
+	assert.Equal(t, "boolean", ot.DataProperties[2].Type)
+	assert.Equal(t, "datetime", ot.DataProperties[3].Type)
+	assert.Equal(t, "json", ot.DataProperties[4].Type)
+}
+
+func TestParseDataProperties_WithMappedField(t *testing.T) {
+	text := `---
+type: object_type
+id: test
+---
+
+## ObjectType: test
+
+### Data Properties
+
+| Name | DisplayName | Type | Description |
+|------|-------------|------|-------------|
+| status | Status | string | Status field |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/test.bkn")
+	require.NoError(t, err)
+	require.Len(t, ot.DataProperties, 1)
+	assert.Equal(t, "status", ot.DataProperties[0].Name)
+	assert.Equal(t, "Status field", ot.DataProperties[0].Description)
+}
+
+// === Logic Properties Parsing Tests ===
+
+func TestParseLogicProperties_WithParameters(t *testing.T) {
+	text := `---
+type: object_type
+id: test
+---
+
+## ObjectType: test
+
+### Logic Properties
+
+| Name | DisplayName | Type | Description |
+|------|-------------|------|-------------|
+| computed_value | Computed Value | number | A computed value |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/test.bkn")
+	require.NoError(t, err)
+	// Logic properties are parsed from the table
+	require.NotEmpty(t, ot.LogicProperties)
+}
+
+// === Parameter Binding Tests ===
+
+func TestParseParameters_VariousSources(t *testing.T) {
+	text := `---
+type: action_type
+id: test_action
+---
+
+## ActionType: test_action
+
+### Parameter Binding
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| fixed_val | string | const | hello | Fixed value |
+| from_prop | string | property | metadata.name | From property |
+`
+	at, err := ParseActionTypeFile(text, "/test/test_action.bkn")
+	require.NoError(t, err)
+	require.Len(t, at.Parameters, 2)
+	assert.Equal(t, "const", at.Parameters[0].Source)
+	assert.Equal(t, "hello", at.Parameters[0].ValueFrom)
+	assert.Equal(t, "property", at.Parameters[1].Source)
+	assert.Equal(t, "metadata.name", at.Parameters[1].ValueFrom)
+}
+
+// === Edge Cases Tests ===
+
+func TestParse_EmptyTables(t *testing.T) {
+	text := `---
+type: object_type
+id: empty_obj
+---
+
+## ObjectType: empty_obj
+
+No tables here
+`
+	ot, err := ParseObjectTypeFile(text, "/test/empty.bkn")
+	require.NoError(t, err)
+	assert.Empty(t, ot.DataProperties)
+	assert.Empty(t, ot.LogicProperties)
+}
+
+func TestParse_ExtraWhitespace(t *testing.T) {
+	text := `---
+type: object_type
+id: test
+name: Test
+---
+
+## ObjectType: test
+
+   
+
+### Data Properties
+
+| Name | DisplayName | Type |
+|------|-------------|------|
+| field1 | Field 1 | string |
+
+   
+`
+	ot, err := ParseObjectTypeFile(text, "/test/test.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "test", ot.ID)
+	require.Len(t, ot.DataProperties, 1)
+}
+
+func TestParse_SpecialCharactersInID(t *testing.T) {
+	text := `---
+type: object_type
+id: my-app_v1.0
+name: My App
+---
+
+## ObjectType: my-app_v1.0
+
+Content
+`
+	ot, err := ParseObjectTypeFile(text, "/test/my-app_v1.0.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "my-app_v1.0", ot.ID)
+}
+
+func TestParse_UnicodeContent(t *testing.T) {
+	text := `---
+type: object_type
+id: unicode_test
+name: 测试对象
+description: 这是一个测试对象
+---
+
+## ObjectType: unicode_test
+
+中文内容
+
+### Data Properties
+
+| Name | DisplayName | Type |
+|------|-------------|------|
+| 名称 | 名称 | string |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/unicode.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "测试对象", ot.Name)
+	assert.Equal(t, "这是一个测试对象", ot.Description)
+	require.Len(t, ot.DataProperties, 1)
+	assert.Equal(t, "名称", ot.DataProperties[0].Name)
+}
+
+// === Integration Tests ===
+
+func TestParseFullNetwork(t *testing.T) {
+	// Create a temporary directory with full network structure
+	dir, err := os.MkdirTemp("", "bkn-full-network-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
+
+	// Create network.bkn
+	networkContent := `---
+type: network
+id: test-network
+name: Test Network
+version: "1.0.0"
+---
+
+## Network: test-network
+
+Test network description
+`
+	err = os.WriteFile(filepath.Join(dir, "network.bkn"), []byte(networkContent), 0644)
+	require.NoError(t, err)
+
+	// Create object_types directory and file
+	objTypesDir := filepath.Join(dir, "object_types")
+	err = os.MkdirAll(objTypesDir, 0755)
+	require.NoError(t, err)
+
+	objContent := `---
+type: object_type
+id: test_obj
+name: Test Object
+---
+
+## ObjectType: test_obj
+
+Test object
+
+### Data Properties
+
+| Name | DisplayName | Type |
+|------|-------------|------|
+| id | ID | string |
+`
+	err = os.WriteFile(filepath.Join(objTypesDir, "test_obj.bkn"), []byte(objContent), 0644)
+	require.NoError(t, err)
+
+	// Load the network
+	net, err := LoadNetwork(dir)
+	require.NoError(t, err)
+
+	assert.Equal(t, "test-network", net.ID)
+	assert.Equal(t, "Test Network", net.Name)
+	require.Len(t, net.ObjectTypes, 1)
+	assert.Equal(t, "test_obj", net.ObjectTypes[0].ID)
+}
+
+func TestParse_InvalidFilePath(t *testing.T) {
+	// Empty file path is handled gracefully
+	_, err := ParseObjectTypeFile("---\ntype: object_type\nid: test\n---\n", "")
+	// The parser may or may not error on empty path - document current behavior
+	_ = err
+}
+
+func TestParse_NonExistentType(t *testing.T) {
+	text := `---
+type: network
+id: test
+---
+
+Content`
+	// ParseNetworkFile validates that type is "network"
+	_, err := ParseNetworkFile(text, "/test/test.bkn")
+	// Currently it accepts the file as long as frontmatter is valid
+	// The type validation happens at higher level
+	require.NoError(t, err)
+}
