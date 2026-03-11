@@ -10,6 +10,7 @@ import (
 
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
+var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
 var headingRE = regexp.MustCompile(`(?m)^#{1,2}\s+(.+)$`)
 var tableSepRE = regexp.MustCompile(`^\|?[\s:*-]+(\|[\s:*-]+)*\|?$`)
 var yamlBlockRE = regexp.MustCompile("(?s)```yaml\\s*\\n(.+?)```")
@@ -146,6 +147,26 @@ func parseDataProperties(sectionText string) []*DataProperty {
 }
 
 func parseLogicProperties(sectionText string) []*LogicProperty {
+	// Sub-section format: #### name + inline metadata + parameter table
+	subSections := extractSections(sectionText, "####")
+	if len(subSections) > 0 {
+		// Use ordered extraction to preserve sub-section order
+		matches := subSectionRE.FindAllStringSubmatchIndex(sectionText, -1)
+		var props []*LogicProperty
+		for i, m := range matches {
+			name := strings.TrimSpace(sectionText[m[2]:m[3]])
+			start := m[1]
+			end := len(sectionText)
+			if i+1 < len(matches) {
+				end = matches[i+1][0]
+			}
+			content := strings.TrimSpace(sectionText[start:end])
+			props = append(props, parseLogicPropertySubSection(name, content))
+		}
+		return props
+	}
+
+	// Flat table format
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	var props []*LogicProperty
 	for _, row := range rows {
@@ -157,6 +178,51 @@ func parseLogicProperties(sectionText string) []*LogicProperty {
 		})
 	}
 	return props
+}
+
+func parseLogicPropertySubSection(name, content string) *LogicProperty {
+	prop := &LogicProperty{Name: name}
+
+	for _, line := range strings.Split(content, "\n") {
+		matches := inlineMetaRE.FindStringSubmatch(strings.TrimSpace(line))
+		if len(matches) == 3 {
+			val := strings.TrimSpace(matches[2])
+			switch matches[1] {
+			case "Display":
+				prop.DisplayName = val
+			case "Type":
+				prop.Type = val
+			case "Source":
+				prop.DataSource = parseInlineSource(val)
+			case "Description":
+				prop.Description = val
+			}
+		}
+	}
+
+	// Parse parameter table
+	rows := parseTable(strings.Split(content, "\n"))
+	for _, row := range rows {
+		prop.Parameters = append(prop.Parameters, Parameter{
+			Name:        row["Parameter"],
+			Type:        row["Type"],
+			Source:      row["Source"],
+			ValueFrom:   row["Binding"],
+			Description: row["Description"],
+		})
+	}
+
+	return prop
+}
+
+// parseInlineSource parses "name (type)" format, e.g. "bom_tree_builder (operator)"
+func parseInlineSource(val string) *ResourceInfo {
+	if idx := strings.Index(val, "("); idx > 0 {
+		name := strings.TrimSpace(val[:idx])
+		typePart := strings.TrimSuffix(strings.TrimSpace(val[idx+1:]), ")")
+		return &ResourceInfo{ID: name, Name: name, Type: typePart}
+	}
+	return &ResourceInfo{ID: val, Name: val}
 }
 
 func parseKeys(sectionText string) (pks []string, dk string, ik string) {
@@ -256,7 +322,7 @@ func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
 			ID:             strVal(fmData, "id"),
 			Name:           strVal(fmData, "name"),
 			Tags:           strSliceVal(fmData, "tags"),
-			Description:    strVal(fmData, "description"),
+			Description:    extractBodyDescription(text),
 			Version:        strVal(fmData, "version"),
 			Branch:         strVal(fmData, "branch"),
 			BusinessDomain: strVal(fmData, "business_domain"),
@@ -279,7 +345,7 @@ func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error)
 			ID:          strVal(fmData, "id"),
 			Name:        strVal(fmData, "name"),
 			Tags:        strSliceVal(fmData, "tags"),
-			Description: strVal(fmData, "description"),
+			Description: extractBodyDescription(text),
 		},
 	}
 
@@ -372,7 +438,7 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 			ID:               strVal(fmData, "id"),
 			Name:             strVal(fmData, "name"),
 			Tags:             strSliceVal(fmData, "tags"),
-			Description:      strVal(fmData, "description"),
+			Description:      extractBodyDescription(text),
 			ActionType:       strVal(fmData, "action_type"),
 			Enabled:          parseBool(fmData, "enabled"),
 			RiskLevel:        strVal(fmData, "risk_level"),
@@ -550,7 +616,7 @@ func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
 			ID:          strVal(fmData, "id"),
 			Name:        strVal(fmData, "name"),
 			Tags:        strSliceVal(fmData, "tags"),
-			Description: strVal(fmData, "description"),
+			Description: extractBodyDescription(text),
 		},
 	}
 
@@ -606,7 +672,7 @@ func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, er
 			ID:          strVal(fmData, "id"),
 			Name:        strVal(fmData, "name"),
 			Tags:        strSliceVal(fmData, "tags"),
-			Description: strVal(fmData, "description"),
+			Description: extractBodyDescription(text),
 		},
 	}
 

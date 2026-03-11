@@ -106,7 +106,7 @@ func WriteNetworkToTar(doc *BknNetwork, w io.Writer) error {
 	return nil
 }
 
-// serializeFrontmatter serializes BknNetworkFrontmatter to YAML frontmatter string
+// serializeFrontmatter serializes BknNetworkFrontmatter to BKN format
 func serializeFrontmatter(fm BknNetworkFrontmatter) string {
 	var sb strings.Builder
 	sb.WriteString("---\n")
@@ -114,7 +114,6 @@ func serializeFrontmatter(fm BknNetworkFrontmatter) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", fm.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", fm.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(fm.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", fm.Description))
 
 	if fm.Version != "" {
 		sb.WriteString(fmt.Sprintf("version: %s\n", fm.Version))
@@ -125,7 +124,12 @@ func serializeFrontmatter(fm BknNetworkFrontmatter) string {
 	if fm.BusinessDomain != "" {
 		sb.WriteString(fmt.Sprintf("business_domain: %s\n", fm.BusinessDomain))
 	}
-	sb.WriteString("---\n")
+	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("# %s\n\n", fm.Name))
+	if fm.Description != "" {
+		sb.WriteString(fm.Description + "\n")
+	}
 	return sb.String()
 }
 
@@ -137,8 +141,12 @@ func serializeObjectType(ot *BknObjectType) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", ot.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", ot.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(ot.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", ot.Description))
 	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## ObjectType: %s\n\n", ot.Name))
+	if ot.Description != "" {
+		sb.WriteString(ot.Description + "\n\n")
+	}
 
 	// Data Source
 	sb.WriteString("### Data Source\n\n")
@@ -204,8 +212,12 @@ func serializeRelationType(rt *BknRelationType) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", rt.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", rt.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(rt.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", rt.Description))
 	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## RelationType: %s\n\n", rt.Name))
+	if rt.Description != "" {
+		sb.WriteString(rt.Description + "\n\n")
+	}
 
 	// Endpoint
 	sb.WriteString("### Endpoint\n\n")
@@ -227,12 +239,16 @@ func serializeActionType(at *BknActionType) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", at.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", at.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(at.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", at.Description))
 	sb.WriteString(fmt.Sprintf("action_type: %s\n", at.ActionType))
 	sb.WriteString(fmt.Sprintf("enabled: %v\n", at.Enabled))
 	sb.WriteString(fmt.Sprintf("risk_level: %s\n", at.RiskLevel))
 	sb.WriteString(fmt.Sprintf("requires_approval: %v\n", at.RequiresApproval))
 	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## ActionType: %s\n\n", at.Name))
+	if at.Description != "" {
+		sb.WriteString(at.Description + "\n\n")
+	}
 
 	// Bound Object
 	sb.WriteString("### Bound Object\n\n")
@@ -273,8 +289,12 @@ func serializeRiskType(rt *BknRiskType) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", rt.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", rt.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(rt.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", rt.Description))
 	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## RiskType: %s\n\n", rt.Name))
+	if rt.Description != "" {
+		sb.WriteString(rt.Description + "\n\n")
+	}
 
 	sb.WriteString("### Control Scope\n\n")
 	if rt.ControlScope != "" {
@@ -315,8 +335,12 @@ func serializeConceptGroup(cg *BknConceptGroup) string {
 	sb.WriteString(fmt.Sprintf("id: %s\n", cg.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", cg.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(cg.Tags, ", ")))
-	sb.WriteString(fmt.Sprintf("description: %s\n", cg.Description))
 	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## ConceptGroup: %s\n\n", cg.Name))
+	if cg.Description != "" {
+		sb.WriteString(cg.Description + "\n\n")
+	}
 
 	return sb.String()
 }

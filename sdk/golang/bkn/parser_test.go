@@ -469,6 +469,72 @@ id: test
 	require.NotEmpty(t, ot.LogicProperties)
 }
 
+func TestParseLogicProperties_SubSection(t *testing.T) {
+	text := `---
+type: object_type
+id: product
+name: 产品
+---
+
+## ObjectType: 产品
+
+存储企业生产的成品基本信息
+
+### Logic Properties
+
+#### product_bom
+
+- **Display**: product_bom
+- **Type**: operator
+- **Source**: bom_tree_builder (operator)
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| timeout | number | input | - |  |
+| cache | boolean | input | - |  |
+| knowledge_network_id | string | const | supplychain_hd0202 |  |
+`
+	ot, err := ParseObjectTypeFile(text, "/test/product.bkn")
+	require.NoError(t, err)
+	assert.Equal(t, "存储企业生产的成品基本信息", ot.Description)
+	require.Len(t, ot.LogicProperties, 1)
+
+	lp := ot.LogicProperties[0]
+	assert.Equal(t, "product_bom", lp.Name)
+	assert.Equal(t, "product_bom", lp.DisplayName)
+	assert.Equal(t, "operator", lp.Type)
+	require.NotNil(t, lp.DataSource)
+	assert.Equal(t, "bom_tree_builder", lp.DataSource.ID)
+	assert.Equal(t, "operator", lp.DataSource.Type)
+	require.Len(t, lp.Parameters, 3)
+	assert.Equal(t, "timeout", lp.Parameters[0].Name)
+	assert.Equal(t, "const", lp.Parameters[2].Source)
+	assert.Equal(t, "supplychain_hd0202", lp.Parameters[2].ValueFrom)
+}
+
+func TestParseLogicProperties_Empty(t *testing.T) {
+	text := `---
+type: object_type
+id: material
+name: 物料
+---
+
+## ObjectType: 物料
+
+物料基础信息
+
+### Logic Properties
+
+
+### Keys
+
+Primary Keys: material_code
+`
+	ot, err := ParseObjectTypeFile(text, "/test/material.bkn")
+	require.NoError(t, err)
+	assert.Empty(t, ot.LogicProperties)
+}
+
 // === Parameter Binding Tests ===
 
 func TestParseParameters_VariousSources(t *testing.T) {
@@ -559,12 +625,11 @@ func TestParse_UnicodeContent(t *testing.T) {
 type: object_type
 id: unicode_test
 name: 测试对象
-description: 这是一个测试对象
 ---
 
-## ObjectType: unicode_test
+## ObjectType: 测试对象
 
-中文内容
+这是一个测试对象
 
 ### Data Properties
 
