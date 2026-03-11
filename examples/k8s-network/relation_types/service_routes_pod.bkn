@@ -4,6 +4,8 @@ id: service_routes_pod
 name: Service路由Pod
 tags: [拓扑架构, 网络]
 description: Service 到 Pod 的流量路由关系。
+source_object_type: service
+target_object_type: pod
 ---
 
 ### Mapping Rules

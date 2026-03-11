@@ -14,16 +14,16 @@ description: Kubernetes 服务抽象层，提供稳定的访问入口。
 
 ### Data Properties
 
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| id | ID | int64 | | 主键ID | YES | | YES |
-| service_name | Service名称 | VARCHAR | not_null | Service名称 | | YES | YES |
-| service_namespace | 命名空间 | VARCHAR | | Service所属命名空间 | | | YES |
-| service_type | Service类型 | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service类型 | | | |
-| service_cluster_ip | Cluster IP | VARCHAR | | Cluster IP地址 | | | |
-| service_ports | 端口映射 | VARCHAR | | 服务端口映射 | | | |
-| service_selector | Pod选择器 | VARCHAR | | Pod选择器标签 | | | |
-| service_created_at | 创建时间 | TIMESTAMP | | Service创建时间 | | | |
+| Name | Display Name | Type | Description |
+|------|--------------|------|------------|
+| id | ID | INTEGER | 主键ID |
+| service_name | Service名称 | STRING | Service名称 |
+| service_namespace | 命名空间 | STRING | Service所属命名空间 |
+| service_type | Service类型 | STRING | Service类型(ClusterIP,NodePort,LoadBalancer) |
+| service_cluster_ip | Cluster IP | STRING | Cluster IP地址 |
+| service_ports | 端口映射 | STRING | 服务端口映射 |
+| service_selector | Pod选择器 | STRING | Pod选择器标签 |
+| service_created_at | 创建时间 | DATETIME | Service创建时间 |
 
 ### Logic Properties
 

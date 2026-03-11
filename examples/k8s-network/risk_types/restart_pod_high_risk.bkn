@@ -2,7 +2,7 @@
 type: risk_type
 id: restart_pod_high_risk
 name: Pod重启高风险管控
-Tags: []
+tags: []
 description: 对Pod重启操作的高风险管控策略
 ---
 

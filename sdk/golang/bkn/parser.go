@@ -10,31 +10,65 @@ import (
 
 // Column name aliases (Chinese -> English)
 var columnAliases = map[string]string{
-	"属性": "Property", "显示名": "Display Name", "显示名称": "Display Name",
-	"类型": "Type", "约束": "Constraint", "描述": "Description", "说明": "Description",
-	"主键": "Primary Key", "显示属性": "Display Key", "索引": "Index",
-	"数据来源": "Data Source", "名称": "Name",
-	"起点": "Source", "终点": "Target", "必须": "Required",
-	"起点属性": "Source Property", "终点属性": "Target Property",
-	"参数": "Parameter", "来源": "Source", "绑定": "Binding",
-	"工具": "Tool ID", "绑定对象": "Bound Object", "行动类型": "Action Type",
-	"对象": "Object", "检查": "Check", "条件": "Condition", "消息": "Message",
-	"表达式": "Expression", "索引配置": "Index Config",
+	"属性":   "Property",
+	"显示名":  "Display Name",
+	"显示名称": "Display Name",
+	"类型":   "Type",
+	"约束":   "Constraint",
+	"描述":   "Description",
+	"说明":   "Description",
+	"主键":   "Primary Key",
+	"显示属性": "Display Key",
+	"索引":   "Index",
+	"数据来源": "Data Source",
+	"名称":   "Name",
+	"起点":   "Source",
+	"终点":   "Target",
+	"必须":   "Required",
+	"起点属性": "Source Property",
+	"终点属性": "Target Property",
+	"参数":   "Parameter",
+	"来源":   "Source",
+	"绑定":   "Binding",
+	"工具":   "Tool ID",
+	"绑定对象": "Bound Object",
+	"行动类型": "Action Type",
+	"对象":   "Object",
+	"检查":   "Check",
+	"条件":   "Condition",
+	"消息":   "Message",
+	"表达式":  "Expression",
+	"索引配置": "Index Config",
 	"影响说明": "Impact Description",
-	"端点":   "Endpoint", "凭据引用": "Secret Ref",
+	"端点":   "Endpoint",
+	"凭据引用": "Secret Ref",
 }
 
 // Section name aliases
 var sectionAliases = map[string]string{
-	"数据来源": "Data Source", "数据属性": "Data Properties", "属性覆盖": "Property Override",
-	"逻辑属性": "Logic Properties", "业务语义": "Business Semantics",
-	"关联定义": "Endpoints", "映射规则": "Mapping Rules", "映射视图": "Mapping View",
-	"起点映射": "Source Mapping", "终点映射": "Target Mapping",
-	"绑定对象": "Bound Object", "触发条件": "Trigger Condition", "前置条件": "Pre-conditions",
-	"工具配置": "Tool Configuration", "参数绑定": "Parameter Binding",
-	"调度配置": "Schedule", "影响范围": "Scope of Impact", "执行说明": "Execution Description",
-	"管控范围": "Control Scope", "管控策略": "Control Policy",
-	"前置检查": "Pre-checks", "回滚方案": "Rollback Plan", "审计要求": "Audit Requirements",
+	"数据来源": "Data Source",
+	"数据属性": "Data Properties",
+	"属性覆盖": "Property Override",
+	"逻辑属性": "Logic Properties",
+	"业务语义": "Business Semantics",
+	"关联定义": "Endpoints",
+	"映射规则": "Mapping Rules",
+	"映射视图": "Mapping View",
+	"起点映射": "Source Mapping",
+	"终点映射": "Target Mapping",
+	"绑定对象": "Bound Object",
+	"触发条件": "Trigger Condition",
+	"前置条件": "Pre-conditions",
+	"工具配置": "Tool Configuration",
+	"参数绑定": "Parameter Binding",
+	"调度配置": "Schedule",
+	"影响范围": "Scope of Impact",
+	"执行说明": "Execution Description",
+	"管控范围": "Control Scope",
+	"管控策略": "Control Policy",
+	"前置检查": "Pre-checks",
+	"回滚方案": "Rollback Plan",
+	"审计要求": "Audit Requirements",
 }
 
 var definitionRE = regexp.MustCompile(`(?m)^##\s+(Object|Relation|Action|Risk):\s*(\S+)`)
@@ -227,14 +261,30 @@ func parseLogicProperties(sectionText string) []*LogicProperty {
 }
 
 func parseKeys(sectionText string) (pks []string, dk string, ik string) {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	if len(rows) == 0 {
-		return nil, "", ""
+	for _, line := range strings.Split(sectionText, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if after, ok := strings.CutPrefix(trimmed, "Primary Key:"); ok {
+			val := strings.TrimSpace(after)
+			if val != "" {
+				pks = strings.Split(val, ",")
+				for i := range pks {
+					pks[i] = strings.TrimSpace(pks[i])
+				}
+			}
+		} else if after, ok := strings.CutPrefix(trimmed, "Primary Keys:"); ok {
+			val := strings.TrimSpace(after)
+			if val != "" {
+				pks = strings.Split(val, ",")
+				for i := range pks {
+					pks[i] = strings.TrimSpace(pks[i])
+				}
+			}
+		} else if after, ok := strings.CutPrefix(trimmed, "Display Key:"); ok {
+			dk = strings.TrimSpace(after)
+		} else if after, ok := strings.CutPrefix(trimmed, "Incremental Key:"); ok {
+			ik = strings.TrimSpace(after)
+		}
 	}
-	r := rows[0]
-	pks = strings.Split(r["Primary Keys"], ",")
-	dk = r["Display Key"]
-	ik = r["Incremental Key"]
 	return pks, dk, ik
 }
 
@@ -571,6 +621,7 @@ func parseParameterBinding(sectionText string) []Parameter {
 	for _, row := range rows {
 		param := Parameter{
 			Name:        row["Parameter"],
+			Type:        row["Type"],
 			Source:      row["Source"],
 			ValueFrom:   row["Binding"],
 			Description: row["Description"],

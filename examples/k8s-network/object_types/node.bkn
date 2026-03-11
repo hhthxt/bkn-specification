@@ -14,9 +14,9 @@ description: Kubernetes 集群中的工作节点，承载 Pod 运行。
 
 ### Data Properties
 
-| Property | Display Name | Type | Description |
+| Name | Display Name | Type | Description |
 |----------|--------------|------|-------------|
-| id | ID | integer | 主键ID |
+| id | ID | INTEGER | 主键ID |
 | node_name | 节点名称 | STRING | 节点名称 |
 | node_status | 节点状态 | STRING | 节点状态 (Ready/NotReady) |
 | node_cpu_capacity | CPU容量 | STRING | CPU总容量（核心数） |
