@@ -122,37 +122,43 @@ func loadSubdirWithFS(fsys FileSystem, subdirPath, subdirName string, result *Bk
 		switch subdirName {
 		case "object_types":
 			obj, err := ParseObjectTypeFile(string(data), filePath)
-			if err == nil {
-				result.ObjectTypes = append(result.ObjectTypes, obj)
+			if err != nil {
+				return fmt.Errorf("parse %s: %w", name, err)
 			}
+			result.ObjectTypes = append(result.ObjectTypes, obj)
+
 		case "relation_types":
 			rel, err := ParseRelationTypeFile(string(data), filePath)
-			if err == nil {
-				result.RelationTypes = append(result.RelationTypes, rel)
+			if err != nil {
+				return fmt.Errorf("parse %s: %w", name, err)
 			}
+			result.RelationTypes = append(result.RelationTypes, rel)
+
 		case "action_types":
 			act, err := ParseActionTypeFile(string(data), filePath)
-			if err == nil {
-				result.ActionTypes = append(result.ActionTypes, act)
+			if err != nil {
+				return fmt.Errorf("parse %s: %w", name, err)
 			}
+			result.ActionTypes = append(result.ActionTypes, act)
+
 		case "risk_types":
 			ris, err := ParseRiskTypeFile(string(data), filePath)
-			if err == nil {
-				result.RiskTypes = append(result.RiskTypes, ris)
+			if err != nil {
+				return fmt.Errorf("parse %s: %w", name, err)
 			}
+			result.RiskTypes = append(result.RiskTypes, ris)
+
 		case "concept_groups":
 			// Concept groups use generic parsing for now
 			grp, err := ParseConceptGroupFile(string(data), filePath)
-			if err == nil {
-				result.ConceptGroups = append(result.ConceptGroups, grp)
+			if err != nil {
+				return fmt.Errorf("parse %s: %w", name, err)
 			}
+			result.ConceptGroups = append(result.ConceptGroups, grp)
+
 		default:
 			// Fallback to generic Parse for unknown subdirectories
 			return fmt.Errorf("unknown subdirectory type: %s", subdirName)
-		}
-
-		if err != nil {
-			return fmt.Errorf("parse %s: %w", name, err)
 		}
 	}
 

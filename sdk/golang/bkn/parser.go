@@ -343,6 +343,14 @@ func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
 		return nil, err
 	}
 
+	// Validate required fields
+	if strVal(fmData, "type") == "" {
+		return nil, fmt.Errorf("missing required field 'type' in network.bkn frontmatter")
+	}
+	if strVal(fmData, "id") == "" {
+		return nil, fmt.Errorf("missing required field 'id' in network.bkn frontmatter")
+	}
+
 	network := &BknNetwork{
 		BknNetworkFrontmatter: BknNetworkFrontmatter{
 			Type:           strVal(fmData, "type"),

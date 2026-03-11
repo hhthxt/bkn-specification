@@ -101,8 +101,10 @@ func validateChecksumInputsWithFS(fsys FileSystem, root string) error {
 			rel, _ := fsys.Rel(root, path)
 			return fmt.Errorf("checksum validation failed for %s: %w", rel, err)
 		}
-		if strings.EqualFold(strings.TrimSpace(data["type"].(string)), "network") {
-			networkPaths = append(networkPaths, path)
+		if typeVal, ok := data["type"].(string); ok {
+			if strings.EqualFold(strings.TrimSpace(typeVal), "network") {
+				networkPaths = append(networkPaths, path)
+			}
 		}
 		return nil
 	})
@@ -235,8 +237,13 @@ func computeBknChecksumWithFS(fsys FileSystem, path string) []string {
 	}
 
 	var results []string
-	typeVal := strings.TrimSpace(fm["type"].(string))
-	id := strings.TrimSpace(fm["id"].(string))
+	typeValRaw, typeOk := fm["type"].(string)
+	idRaw, idOk := fm["id"].(string)
+	if !typeOk || !idOk {
+		return nil
+	}
+	typeVal := strings.TrimSpace(typeValRaw)
+	id := strings.TrimSpace(idRaw)
 
 	// For network type, use "network" (no :id suffix per DESIGN.md)
 	if typeVal == "network" {
