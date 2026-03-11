@@ -6,13 +6,6 @@ tags: [供应链, 采购, 已审核]
 description: 发给供应商的正式采购订单。
 ---
 
-# Objects
-
-
-**采购订单** - 发给供应商的正式采购订单。
-
-- **Tags**: 已审核
-
 ### Data Source
 
 | Type | ID | Name |
@@ -21,12 +14,23 @@ description: 发给供应商的正式采购订单。
 
 ### Data Properties
 
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| billno | 采购订单单号 | VARCHAR | | 采购订单单号 | YES |  | YES |
-| biztime | 采购日期 | DATE | | 业务日期 |  |  | YES |
-| org_name | 购买组织 | VARCHAR | | 购买签订的主体 |  |  | YES |
-| billtype_name | 订单类型 | VARCHAR | | 生产项目采购订单、研发项目采购订单等等。 |  |  | YES |
-| supplier_number | 供应商编码 | VARCHAR | | 供应商编码 |  |  | YES |
-| supplier_name | 供应商名称 | VARCHAR | | 供应商名称 |  |  | YES |
-| operatorname | 执行采购人 | VARCHAR | |  执行采购的采购人员 |  |  | YES |
+| Name | Display Name | Type | Description |
+|----------|--------------|------|-------------|
+| billno | 采购订单单号 | string | 采购订单单号 |
+| biztime | 采购日期 | date | 业务日期 |
+| org_name | 购买组织 | string | 购买签订的主体 |
+| billtype_name | 订单类型 | string | 生产项目采购订单、研发项目采购订单等等。 |
+| supplier_number | 供应商编码 | string | 供应商编码 |
+| supplier_name | 供应商名称 | string | 供应商名称 |
+| operatorname | 执行采购人 | string | 执行采购的采购人员 |
+
+### Logic Properties
+
+### Keys
+Primary Key: billno
+Display Key:
+Incremental Key:
+
+### Business Semantics
+
+采购订单是向供应商发出的正式采购凭证。

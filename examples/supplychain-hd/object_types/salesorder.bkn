@@ -6,10 +6,6 @@ tags: [供应链, 销售, 已审核, 老数据]
 description: 客户销售订单信息。
 ---
 
-**销售订单** - 
-
-- **Tags**: 已审核, 老数据
-
 ### Data Source
 
 | Type | ID | Name |
@@ -18,14 +14,25 @@ description: 客户销售订单信息。
 
 ### Data Properties
 
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| contract_number | 合同编号 | VARCHAR | |  | YES | YES | YES |
-| signing_quantity | 签约数量 | int64 | |  | YES |  |  |
-| promised_delivery_date | 承诺交期时间 | DATE | |  |  |  |  |
-| product_category | 产品类别 | VARCHAR | |  |  |  | YES |
-| shipping_date | 交付时间 | DATE | |  |  |  |  |
-| shipping_quantity | 交付数量 | float64 | |  |  |  |  |
-| product_code | 产品编码 | VARCHAR | |  |  |  | YES |
-| product_name | 产品名称 | VARCHAR | |  | YES |  | YES |
-| signing_date | 签约时间 | DATE | |  |  |  |  |
+| Name | Display Name | Type | Description |
+|----------|--------------|------|-------------|
+| contract_number | 合同编号 | string |  |
+| signing_quantity | 签约数量 | integer |  |
+| promised_delivery_date | 承诺交期时间 | date |  |
+| product_category | 产品类别 | string |  |
+| shipping_date | 交付时间 | date |  |
+| shipping_quantity | 交付数量 | float |  |
+| product_code | 产品编码 | string |  |
+| product_name | 产品名称 | string |  |
+| signing_date | 签约时间 | date |  |
+
+### Logic Properties
+
+### Keys
+Primary Key: contract_number, signing_quantity
+Display Key:
+Incremental Key:
+
+### Business Semantics
+
+销售订单记录客户的产品订购信息，是需求预测的重要参考。

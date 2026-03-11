@@ -16,14 +16,14 @@ description: Kubernetes 服务抽象层，提供稳定的访问入口。
 
 | Name | Display Name | Type | Description |
 |------|--------------|------|------------|
-| id | ID | INTEGER | 主键ID |
-| service_name | Service名称 | STRING | Service名称 |
-| service_namespace | 命名空间 | STRING | Service所属命名空间 |
-| service_type | Service类型 | STRING | Service类型(ClusterIP,NodePort,LoadBalancer) |
-| service_cluster_ip | Cluster IP | STRING | Cluster IP地址 |
-| service_ports | 端口映射 | STRING | 服务端口映射 |
-| service_selector | Pod选择器 | STRING | Pod选择器标签 |
-| service_created_at | 创建时间 | DATETIME | Service创建时间 |
+| id | ID | integer | 主键ID |
+| service_name | Service名称 | string | Service名称 |
+| service_namespace | 命名空间 | string | Service所属命名空间 |
+| service_type | Service类型 | string | Service类型(ClusterIP,NodePort,LoadBalancer) |
+| service_cluster_ip | Cluster IP | string | Cluster IP地址 |
+| service_ports | 端口映射 | string | 服务端口映射 |
+| service_selector | Pod选择器 | string | Pod选择器标签 |
+| service_created_at | 创建时间 | datetime | Service创建时间 |
 
 ### Logic Properties
 

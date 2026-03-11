@@ -6,10 +6,6 @@ tags: [供应链, 采购, 已审核]
 description: 根据MRP生成的内部采购申请PR。
 ---
 
-**采购申请单** - 根据MRP生成的内部采购申请PR。
-
-- **Tags**: 已审核
-
 ### Data Source
 
 | Type | ID | Name |
@@ -18,15 +14,26 @@ description: 根据MRP生成的内部采购申请PR。
 
 ### Data Properties
 
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| id | 采购申请主键 | VARCHAR | | 采购申请主键 |  |  | YES |
-| billno | 采购申请单号 | VARCHAR | | 采购申请单号 |  | YES | YES |
-| biztime | 业务时间 | TIMESTAMP | | 业务时间 |  |  | YES |
-| billtype_name | 单据类型 | VARCHAR | | 单据类型（包含研发/生产等，目前仅考虑生产） |  |  | YES |
-| org_name | 组织名称 | VARCHAR | | 组织名称 |  |  | YES |
-| auditdate | 审核日期 | TIMESTAMP | | 审核日期 |  |  | YES |
-| entry_id | 采购申请明细主键 | VARCHAR | | 采购申请明细主键 | YES |  | YES |
-| material_number | 物料编码 | VARCHAR | | 物料编码 |  |  | YES |
-| material_name | 物料名称 | VARCHAR | | 物料名称 |  |  | YES |
-| qty | 数量 | decimal | | 数量 |  |  |  |
+| Name | Display Name | Type | Description |
+|----------|--------------|------|-------------|
+| id | 采购申请主键 | string | 采购申请主键 |
+| billno | 采购申请单号 | string | 采购申请单号 |
+| biztime | 业务时间 | date | 业务时间 |
+| billtype_name | 单据类型 | string | 单据类型（包含研发/生产等，目前仅考虑生产） |
+| org_name | 组织名称 | string | 组织名称 |
+| auditdate | 审核日期 | date | 审核日期 |
+| entry_id | 采购申请明细主键 | string | 采购申请明细主键 |
+| material_number | 物料编码 | string | 物料编码 |
+| material_name | 物料名称 | string | 物料名称 |
+| qty | 数量 | decimal | 数量 |
+
+### Logic Properties
+
+### Keys
+Primary Key: entry_id
+Display Key: billno
+Incremental Key:
+
+### Business Semantics
+
+采购申请单是根据MRP运算结果生成的内部采购申请。
