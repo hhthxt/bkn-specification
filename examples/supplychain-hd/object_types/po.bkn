@@ -3,14 +3,11 @@ type: object_type
 id: po
 name: 采购订单
 tags: [供应链, 采购, 已审核]
-description: 发给供应商的正式采购订单。
 ---
 
-### Data Source
+## ObjectType: 采购订单
 
-| Type | ID | Name |
-|------|-----|------|
-| data_view | 2017573348875202562 | erp_purchase_order |
+发给供应商的正式采购订单。
 
 ### Data Properties
 
@@ -27,10 +24,13 @@ description: 发给供应商的正式采购订单。
 ### Logic Properties
 
 ### Keys
-Primary Key: billno
-Display Key:
+
+Primary Keys: billno
+Display Key: billno
 Incremental Key:
 
-### Business Semantics
+### Data Source
 
-采购订单是向供应商发出的正式采购凭证。
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 2017573348875202562 | erp_purchase_order |

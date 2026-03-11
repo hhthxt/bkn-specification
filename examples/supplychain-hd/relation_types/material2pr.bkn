@@ -3,15 +3,19 @@ type: relation_type
 id: material2pr
 name: 物料关联采购申请单
 tags: [供应链, 关系, 已审核]
-description: 物料与采购申请单之间的关联关系。
-source_object_type: material
-target_object_type: pr
 ---
 
+## RelationType: 物料关联采购申请单
+
+物料与采购申请单之间的关联关系。
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| material | pr | direct |
 
 ### Mapping Rules
-
-type: direct
 
 | Source Property | Target Property |
 |-----------------|-----------------|

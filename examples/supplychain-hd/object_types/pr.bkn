@@ -3,14 +3,11 @@ type: object_type
 id: pr
 name: 采购申请单
 tags: [供应链, 采购, 已审核]
-description: 根据MRP生成的内部采购申请PR。
 ---
 
-### Data Source
+## ObjectType: 采购申请单
 
-| Type | ID | Name |
-|------|-----|------|
-| data_view | 2017573348833259522 | erp_purchase_request |
+根据MRP生成的内部采购申请PR。
 
 ### Data Properties
 
@@ -29,11 +26,15 @@ description: 根据MRP生成的内部采购申请PR。
 
 ### Logic Properties
 
+
 ### Keys
-Primary Key: entry_id
+
+Primary Keys: entry_id
 Display Key: billno
 Incremental Key:
 
-### Business Semantics
+### Data Source
 
-采购申请单是根据MRP运算结果生成的内部采购申请。
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 2017573348833259522 | erp_purchase_request |

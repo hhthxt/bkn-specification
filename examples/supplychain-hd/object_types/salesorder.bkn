@@ -3,14 +3,11 @@ type: object_type
 id: salesorder
 name: 销售订单
 tags: [供应链, 销售, 已审核, 老数据]
-description: 客户销售订单信息。
 ---
 
-### Data Source
+## ObjectType: 销售订单
 
-| Type | ID | Name |
-|------|-----|------|
-| data_view | ec2f0a5e-aa15-480a-9f00-e637760e90f0 | 订单信息_fixed |
+客户销售订单信息。
 
 ### Data Properties
 
@@ -28,11 +25,15 @@ description: 客户销售订单信息。
 
 ### Logic Properties
 
+
 ### Keys
-Primary Key: contract_number, signing_quantity
-Display Key:
+
+Primary Keys: contract_number
+Display Key: contract_number
 Incremental Key:
 
-### Business Semantics
+### Data Source
 
-销售订单记录客户的产品订购信息，是需求预测的重要参考。
+| Type | ID | Name |
+|------|-----|------|
+| data_view | ec2f0a5e-aa15-480a-9f00-e637760e90f0 | 订单信息_fixed |

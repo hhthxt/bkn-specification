@@ -3,14 +3,11 @@ type: object_type
 id: mrp
 name: 物料需求计划
 tags: [供应链, MRP, 已审核, 手工表]
-description: MRP运算产生的物料净需求建议。
 ---
 
-### Data Source
+## ObjectType: 物料需求计划
 
-| Type | ID | Name |
-|------|-----|------|
-| data_view | e2da0b80-a012-421e-870b-cc78bc863c1b | material_demand_plan |
+MRP运算产生的物料净需求建议。
 
 ### Data Properties
 
@@ -26,10 +23,13 @@ description: MRP运算产生的物料净需求建议。
 ### Logic Properties
 
 ### Keys
-Primary Key: finished_product_code, specification, main_material
+
+Primary Keys: finished_product_code, specification, main_material
 Display Key: component_name
 Incremental Key:
 
-### Business Semantics
+### Data Source
 
-物料需求计划通过MRP运算生成物料净需求建议，是采购和生产的依据。
+| Type | ID | Name |
+|------|-----|------|
+| data_view | e2da0b80-a012-421e-870b-cc78bc863c1b | material_demand_plan |
