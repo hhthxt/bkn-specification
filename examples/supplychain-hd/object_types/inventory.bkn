@@ -1,0 +1,32 @@
+---
+type: object_type
+id: inventory
+name: 库存
+tags: [供应链, 库存, 已审核]
+description: 实时记录物料在各仓库及仓位的现有库存量、库存状态及批次信息。
+---
+
+**库存** - 实时记录物料在各仓库及仓位的现有库存量、库存状态及批次信息。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 2017573348090867713 | erp_real_time_inventory |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| seq_no | 库存编号 | int64 | |  | YES |  |  |
+| available_inventory_qty | 可用库存数量 | decimal | | 可用库存数量 = 库存数量-预留库存数量 |  |  |  |
+| batch_master | 批号主档 | VARCHAR | | 一批物料的主档批号 |  |  | YES |
+| batch_no | 批号 | VARCHAR | | 一批物料的编号 |  |  | YES |
+| bin_location | 仓位 | VARCHAR | | 物料所在仓位 |  |  | YES |
+| expiry_date | 有效日期 | DATE | | 是否呆滞物料的关键字段，超过有效日期的可以视为呆滞物料。 |  |  |  |
+| inbound_date | 入库时间 | DATE | |  |  |  |  |
+| inventory_org | 库存所属组织 | VARCHAR | | 库存所属组织 |  |  | YES |
+| inventory_qty | 库存数量 | decimal | |  |  |  |  |
+| inventory_uom | 库存单位 | VARCHAR | | 个，套等单位。 |  |  | YES |

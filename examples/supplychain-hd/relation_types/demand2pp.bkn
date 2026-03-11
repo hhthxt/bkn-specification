@@ -1,0 +1,16 @@
+---
+type: relation_type
+id: demand2pp
+name: 需求预测关联产品需求计划
+tags: [供应链, 关系, 已审核]
+description: 需求预测与产品需求计划之间的关联关系。
+source_object_type: forecast
+target_object_type: pp
+---
+
+### Mapping Rules
+type: direct
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| product_code | product_code |

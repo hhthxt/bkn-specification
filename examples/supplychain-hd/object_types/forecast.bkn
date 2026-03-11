@@ -1,0 +1,27 @@
+---
+type: object_type
+id: forecast
+name: 需求预测
+tags: [供应链, 预测, 已审核, 模拟数据]
+description: 记录销售侧的月度需求预测数据，作为供应链计划（MRP）的输入源头。
+---
+
+**需求预测** - 记录销售侧的月度需求预测数据，作为供应链计划（MRP）的输入源头。
+
+- **Tags**: 已审核, 模拟数据
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 41aec56e-bcdb-4976-b947-257f6975c851 | 需求预测 |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| actual-sales | 月度实际销量 | float64 | |  |  |  |  |
+| product_code | 产品编码 | VARCHAR | |  | YES | YES | YES |
+| confirmed_order | 已确认订单 | int64 | |  | YES |  |  |
+| month | 预测月份 | DATE | | 以月度为单位的产品预测时间。 |  |  |  |
+| consensus_demand | 共识需求 | int64 | | 最终达成的共识需求 | YES |  |  |

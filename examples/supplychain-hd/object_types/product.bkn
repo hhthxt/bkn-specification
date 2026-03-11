@@ -1,0 +1,51 @@
+---
+type: object_type
+id: product
+name: 产品
+tags: [供应链, 产品, 已审核]
+description: 存储企业生产的成品基本信息，包括产品编码、名称。
+---
+
+**产品** - 存储企业生产的成品基本信息，包括产品编码、名称。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d606tgg8ubbiutnq84lg | HD_产品 |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| material_name | 产品名称 | VARCHAR | |  |  |  | YES |
+| material_number | 产品编码 | VARCHAR | | 产品编码，产品物料也是成品物料，所以产品编码也是物料编码，但是物料不一定是产品。 | YES | YES | YES |
+
+### Property Override
+
+| Property | Display Name | Index Config | Constraint | Description |
+|----------|--------------|--------------|------------|-------------|
+| material_name | 产品名称 | fulltext(standard) + vector(1951511856216674304) | |  |
+
+### Logic Properties
+
+#### product_bom
+
+- **Display**: product_bom
+- **Type**: operator
+- **Source**: bom_tree_builder (operator)
+
+| Parameter | Type | Source | Binding | Description |
+|-----------|------|--------|---------|-------------|
+| timeout | number | input | - |  |
+| authorization | string | const | <your_authorization_token> |  |
+| cache | boolean | input | - |  |
+| include_inventory | boolean | input | - |  |
+| include_substitutes | boolean | input | - |  |
+| knowledge_network_id | string | const | supplychain_hd0202 |  |
+| max_products | number | input | - |  |
+| product_codes | array | input | - |  |
+
+#### product_sales_history

@@ -1,0 +1,18 @@
+---
+type: relation_type
+id: product2inventory
+name: 产品关联库存
+tags: [供应链, 关系, 已审核]
+description: 产品与库存之间的关联关系。
+source_object_type: product
+target_object_type: inventory
+---
+
+
+### Mapping Rules
+
+type: direct
+
+| Source Property | Target Property |
+|-----------------|-----------------|
+| material_number | material_code |

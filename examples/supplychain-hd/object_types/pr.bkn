@@ -1,0 +1,32 @@
+---
+type: object_type
+id: pr
+name: 采购申请单
+tags: [供应链, 采购, 已审核]
+description: 根据MRP生成的内部采购申请PR。
+---
+
+**采购申请单** - 根据MRP生成的内部采购申请PR。
+
+- **Tags**: 已审核
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | 2017573348833259522 | erp_purchase_request |
+
+### Data Properties
+
+| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
+|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
+| id | 采购申请主键 | VARCHAR | | 采购申请主键 |  |  | YES |
+| billno | 采购申请单号 | VARCHAR | | 采购申请单号 |  | YES | YES |
+| biztime | 业务时间 | TIMESTAMP | | 业务时间 |  |  | YES |
+| billtype_name | 单据类型 | VARCHAR | | 单据类型（包含研发/生产等，目前仅考虑生产） |  |  | YES |
+| org_name | 组织名称 | VARCHAR | | 组织名称 |  |  | YES |
+| auditdate | 审核日期 | TIMESTAMP | | 审核日期 |  |  | YES |
+| entry_id | 采购申请明细主键 | VARCHAR | | 采购申请明细主键 | YES |  | YES |
+| material_number | 物料编码 | VARCHAR | | 物料编码 |  |  | YES |
+| material_name | 物料名称 | VARCHAR | | 物料名称 |  |  | YES |
+| qty | 数量 | decimal | | 数量 |  |  |  |
