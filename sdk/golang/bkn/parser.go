@@ -346,6 +346,7 @@ func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
 			Branch:         strVal(fmData, "branch"),
 			BusinessDomain: strVal(fmData, "business_domain"),
 		},
+		RawContent: text,
 	}
 
 	return network, nil
@@ -366,6 +367,7 @@ func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error)
 			Tags:        strSliceVal(fmData, "tags"),
 			Description: extractBodyDescription(text),
 		},
+		RawContent: text,
 	}
 
 	sections := extractSections(text, "###")
@@ -403,6 +405,7 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 			Tags:        strSliceVal(fmData, "tags"),
 			Description: extractBodyDescription(text),
 		},
+		RawContent: text,
 	}
 
 	sections := extractSections(text, "###")
@@ -463,6 +466,7 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 			RiskLevel:        strVal(fmData, "risk_level"),
 			RequiresApproval: parseBool(fmData, "requires_approval"),
 		},
+		RawContent: text,
 	}
 
 	sections := extractSections(text, "###")
@@ -637,6 +641,7 @@ func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
 			Tags:        strSliceVal(fmData, "tags"),
 			Description: extractBodyDescription(text),
 		},
+		RawContent: text,
 	}
 
 	sections := extractSections(text, "###")
@@ -693,6 +698,7 @@ func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, er
 			Tags:        strSliceVal(fmData, "tags"),
 			Description: extractBodyDescription(text),
 		},
+		RawContent: text,
 	}
 
 	sections := extractSections(text, "###")

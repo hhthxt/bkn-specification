@@ -16,6 +16,7 @@ type BknNetworkFrontmatter struct {
 // BknDocument is a parsed network.bkn file: frontmatter + body definitions.
 type BknNetwork struct {
 	BknNetworkFrontmatter
+	RawContent string
 
 	ObjectTypes   []*BknObjectType
 	RelationTypes []*BknRelationType
@@ -36,6 +37,7 @@ type BknObjectTypeFrontmatter struct {
 // BknObjectType represents an object type definition.
 type BknObjectType struct {
 	BknObjectTypeFrontmatter
+	RawContent string
 
 	DataSource      *ResourceInfo
 	DataProperties  []*DataProperty
@@ -106,6 +108,7 @@ type BknRelationTypeFrontmatter struct {
 // BknRelationType represents a relation type definition.
 type BknRelationType struct {
 	BknRelationTypeFrontmatter
+	RawContent string
 
 	// Endpoint
 	Endpoint     Endpoint
@@ -151,6 +154,7 @@ type BknActionTypeFrontmatter struct {
 // BknActionType represents an action type definition.
 type BknActionType struct {
 	BknActionTypeFrontmatter
+	RawContent string
 
 	// Bound Object
 	ObjectTypeID string
@@ -246,6 +250,7 @@ type BknRiskTypeFrontmatter struct {
 // BknRiskType represents a risk type definition.
 type BknRiskType struct {
 	BknRiskTypeFrontmatter
+	RawContent string
 
 	ControlScope      string
 	ControlPolicy     string
@@ -266,6 +271,7 @@ type BknConceptGroupFrontmatter struct {
 // BknConceptGroup represents a concept group definition.
 type BknConceptGroup struct {
 	BknConceptGroupFrontmatter
+	RawContent string
 
 	ObjectTypes []string
 }
