@@ -18,5 +18,5 @@ business_domain: supplychain
 
 ## Network Overview
 
-- **ObjectTypes** (object_types/): product、material、bom、inventory、salesorder、forecast、mps、mrp、pp、pr、po、supplier
-- **RelationTypes** (relation_types/): salesorder2product、product2inventory、product2bom、bom2material、material2inventory、material2pr、pr2po、po2material、po2supplier、mrp2material、pp2mps、pp2mrp、pp2product、demand2pp
+- **ObjectTypes** (object_types/): product, material, bom, inventory, salesorder, forecast, mps, mrp, pp, pr, po, supplier
+- **RelationTypes** (relation_types/): salesorder2product, product2inventory, product2bom, bom2material, material2inventory, material2pr, pr2po, po2material, po2supplier, mrp2material, pp2mps, pp2mrp, pp2product, demand2pp

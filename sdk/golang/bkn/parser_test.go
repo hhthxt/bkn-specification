@@ -436,15 +436,19 @@ id: test
 
 ### Data Properties
 
-| Name | DisplayName | Type | Description |
-|------|-------------|------|-------------|
-| status | Status | string | Status field |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| status | Status | string | Status field | status_code |
+| name | Name | string | Name field | full_name |
 `
 	ot, err := ParseObjectTypeFile(text, "/test/test.bkn")
 	require.NoError(t, err)
-	require.Len(t, ot.DataProperties, 1)
+	require.Len(t, ot.DataProperties, 2)
 	assert.Equal(t, "status", ot.DataProperties[0].Name)
 	assert.Equal(t, "Status field", ot.DataProperties[0].Description)
+	assert.Equal(t, "status_code", ot.DataProperties[0].MappedField)
+	assert.Equal(t, "name", ot.DataProperties[1].Name)
+	assert.Equal(t, "full_name", ot.DataProperties[1].MappedField)
 }
 
 // === Logic Properties Parsing Tests ===

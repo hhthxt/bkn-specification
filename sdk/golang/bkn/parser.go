@@ -11,26 +11,44 @@ import (
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
 var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
-var headingRE = regexp.MustCompile(`(?m)^#{1,2}\s+(.+)$`)
+var h1HeadingRE = regexp.MustCompile(`(?m)^#\s+(.+)$`)
+var h2HeadingRE = regexp.MustCompile(`(?m)^##\s+(.+)$`)
 var tableSepRE = regexp.MustCompile(`^\|?[\s:*-]+(\|[\s:*-]+)*\|?$`)
 var yamlBlockRE = regexp.MustCompile("(?s)```yaml\\s*\\n(.+?)```")
 
-// extractBodyDescription extracts the description text between the ## heading and the first ### section.
+// extractBodyDescription extracts the description text from the body.
+// For network files (with # heading): extracts between # and ##
+// For other files (with ## heading): extracts between ## and ###
 func extractBodyDescription(text string) string {
 	_, body := splitFrontmatter(text)
-	// Find the ## heading
-	loc := headingRE.FindStringIndex(body)
-	if loc == nil {
-		return ""
+
+	// Check if there's a # heading (H1) - network file format
+	h1Loc := h1HeadingRE.FindStringIndex(body)
+	if h1Loc != nil {
+		// Start after the # heading line
+		rest := body[h1Loc[1]:]
+		// Find the first ## section (H2) - this marks the end of description
+		secLoc := h2HeadingRE.FindStringIndex(rest)
+		if secLoc == nil {
+			return strings.TrimSpace(rest)
+		}
+		return strings.TrimSpace(rest[:secLoc[0]])
 	}
-	// Start after the ## heading line
-	rest := body[loc[1]:]
-	// Find the first ### section
-	secLoc := sectionRE.FindStringIndex(rest)
-	if secLoc == nil {
-		return strings.TrimSpace(rest)
+
+	// Check if there's a ## heading (H2) - object_type/relation_type etc. format
+	h2Loc := h2HeadingRE.FindStringIndex(body)
+	if h2Loc != nil {
+		// Start after the ## heading line
+		rest := body[h2Loc[1]:]
+		// Find the first ### section - this marks the end of description
+		secLoc := sectionRE.FindStringIndex(rest)
+		if secLoc == nil {
+			return strings.TrimSpace(rest)
+		}
+		return strings.TrimSpace(rest[:secLoc[0]])
 	}
-	return strings.TrimSpace(rest[:secLoc[0]])
+
+	return ""
 }
 
 func splitFrontmatter(text string) (fm string, body string) {
@@ -141,6 +159,7 @@ func parseDataProperties(sectionText string) []*DataProperty {
 			DisplayName: row["Display Name"],
 			Type:        row["Type"],
 			Description: row["Description"],
+			MappedField: row["Mapped Field"],
 		})
 	}
 	return props

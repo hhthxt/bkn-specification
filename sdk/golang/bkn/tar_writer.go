@@ -30,8 +30,8 @@ func WriteNetworkToTar(doc *BknNetwork, w io.Writer) error {
 	now := time.Now()
 	mfs := NewMemoryFileSystem()
 
-	// Write network.bkn (frontmatter only)
-	rootContent := serializeBknNetworkFrontmatter(doc.BknNetworkFrontmatter)
+	// Write network.bkn
+	rootContent := serializeBknNetwork(doc)
 	mfs.AddFile("network.bkn", []byte(rootContent))
 	if err := writeTarEntry(tw, "network.bkn", []byte(rootContent), now); err != nil {
 		return err
@@ -106,8 +106,9 @@ func WriteNetworkToTar(doc *BknNetwork, w io.Writer) error {
 	return nil
 }
 
-// serializeBknNetworkFrontmatter serializes BknNetworkFrontmatter to BKN format
-func serializeBknNetworkFrontmatter(fm BknNetworkFrontmatter) string {
+// serializeBknNetwork serializes BknNetwork to BKN format
+func serializeBknNetwork(doc *BknNetwork) string {
+	fm := doc.BknNetworkFrontmatter
 	var sb strings.Builder
 	sb.WriteString("---\n")
 	sb.WriteString("type: network\n")
@@ -130,6 +131,46 @@ func serializeBknNetworkFrontmatter(fm BknNetworkFrontmatter) string {
 	if fm.Description != "" {
 		sb.WriteString(fm.Description + "\n")
 	}
+
+	// Write Network Overview section
+	sb.WriteString("\n## Network Overview\n\n")
+
+	if len(doc.ObjectTypes) > 0 {
+		var names []string
+		for _, ot := range doc.ObjectTypes {
+			names = append(names, ot.ID)
+		}
+		sb.WriteString(fmt.Sprintf("- **ObjectTypes** (object_types/): %s\n", strings.Join(names, ", ")))
+	}
+	if len(doc.RelationTypes) > 0 {
+		var names []string
+		for _, rt := range doc.RelationTypes {
+			names = append(names, rt.ID)
+		}
+		sb.WriteString(fmt.Sprintf("- **RelationTypes** (relation_types/): %s\n", strings.Join(names, ", ")))
+	}
+	if len(doc.ActionTypes) > 0 {
+		var names []string
+		for _, at := range doc.ActionTypes {
+			names = append(names, at.ID)
+		}
+		sb.WriteString(fmt.Sprintf("- **ActionTypes** (action_types/): %s\n", strings.Join(names, ", ")))
+	}
+	if len(doc.RiskTypes) > 0 {
+		var names []string
+		for _, rt := range doc.RiskTypes {
+			names = append(names, rt.ID)
+		}
+		sb.WriteString(fmt.Sprintf("- **RiskTypes** (risk_types/): %s\n", strings.Join(names, ", ")))
+	}
+	if len(doc.ConceptGroups) > 0 {
+		var names []string
+		for _, cg := range doc.ConceptGroups {
+			names = append(names, cg.ID)
+		}
+		sb.WriteString(fmt.Sprintf("- **ConceptGroups** (concept_groups/): %s\n", strings.Join(names, ", ")))
+	}
+
 	return sb.String()
 }
 
@@ -160,12 +201,12 @@ func serializeObjectType(ot *BknObjectType) string {
 
 	// Data Properties
 	sb.WriteString("### Data Properties\n\n")
-	sb.WriteString("| Property | Display Name | Type | Description |\n")
-	sb.WriteString("|----------|--------------|------|-------------|\n")
+	sb.WriteString("| Name | Display Name | Type | Description | Mapped Field |\n")
+	sb.WriteString("|------|--------------|------|-------------|--------------|\n")
 	if len(ot.DataProperties) > 0 {
 		for _, dp := range ot.DataProperties {
-			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n",
-				dp.Name, dp.DisplayName, dp.Type, dp.Description))
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+				dp.Name, dp.DisplayName, dp.Type, dp.Description, dp.MappedField))
 		}
 	}
 	sb.WriteString("\n")

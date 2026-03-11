@@ -12,8 +12,8 @@ business_domain: {业务领域}
 
 ## Network Overview
 
-- **ObjectTypes** (object_types/): {object_id_1}、{object_id_2}
-- **RelationTypes** (relation_types/): {relation_id_1}、{relation_id_2}
+- **ObjectTypes** (object_types/): {object_id_1}, {object_id_2}
+- **RelationTypes** (relation_types/): {relation_id_1}, {relation_id_2}
 - **ActionTypes** (action_types/): {action_id_1}
 - **RiskTypes** (risk_types/): {risk_id_1}
 - **ConceptGroups** (concept_groups/): {group_id_1}
