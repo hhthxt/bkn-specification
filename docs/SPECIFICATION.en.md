@@ -1,7 +1,6 @@
 # BKN Language Specification
 
-Version: 1.0.0
-spec_version: 1.0.0
+Version: 2.0.0
 
 ## Overview
 
@@ -17,70 +16,63 @@ This document defines the complete syntax specification for BKN.
 |------|---------|
 | BKN | Business Knowledge Network |
 | knowledge_network | The overall collection of a business knowledge network |
-| object | Business object type (e.g., Pod/Node/Service) |
-| relation | Relationship type connecting two objects (e.g., belongs_to, routes_to) |
-| action | Operation definition on an object (can bind to tool or mcp) |
-| risk | Risk type; structured modeling of execution risk for actions and objects |
+| object_type | Business object type (e.g., Pod/Node/Service) |
+| relation_type | Relationship type connecting two object_types (e.g., belongs_to/routes_to) |
+| action_type | Operation definition on an object_type (can bind to tool or mcp) |
+| risk_type | Risk type; structured modeling of execution risk for actions and objects |
+| concept_group | Concept group; organizes related object types together |
 
 **Object Structure**
 
 | Term | Meaning |
 |------|---------|
-| data_view | Data view; the data source an object or relation maps to |
-| connection | Reusable data-source connection definition; multiple objects may reference the same connection |
-| data_properties | Object property definition table; declares field types, primary key, display key, etc. |
-| property_override | Property override; special configuration for inherited properties (index, constraint) |
+| data_view | Data view; the data source an object/relation maps to |
+| data_properties | Object property definition table; declares field name, type, description |
+| keys | Key definitions; declares primary key, display key, incremental key |
 | logic_properties | Logic properties; derived fields from external sources (metric / operator) |
-| primary_key | Primary key field; uniquely identifies an instance (marked YES in Data Properties) |
-| display_key | Display key field; used for UI display and search (marked YES in Data Properties) |
-| constraint | Property value constraint; declares valid ranges for instance data (e.g., `>= 0`, `in(...)`) |
-| metric | Logic property type: a measured value from an external data source |
-| operator | Logic property type: computed logic based on input parameters |
+| primary_key | Primary key field; uniquely identifies an instance (declared in Keys section) |
+| display_key | Display key field; used for UI display and search (declared in Keys section) |
+| metric | Logic property type: metric; measurement value obtained from external data sources |
+| operator | Logic property type: operator; computation logic based on input parameters |
 
 **Action Structure**
 
 | Term | Meaning |
 |------|---------|
 | trigger_condition | Trigger condition; defines when an action executes automatically |
-| pre-conditions | Pre-conditions; data checks that must pass before execution (blocks if unsatisfied) |
+| pre-conditions | Pre-conditions; data checks that must pass before execution (blocks execution if not met) |
 | tool | External tool bound to an action |
 | mcp | Model Context Protocol; MCP tool bound to an action |
-| schedule | Timing configuration (FIX_RATE or CRON) for periodic execution |
-| scope_of_impact | Scope of impact; declares objects affected by an action |
+| schedule | Schedule configuration (FIX_RATE or CRON) for periodic execution |
+| scope_of_impact | Scope of impact; declares which objects are affected by the action |
 
 **File Organization**
 
 | Term | Meaning |
 |------|---------|
-| frontmatter | YAML metadata block (wrapped in `---`) at the top of every .bkn file |
+| frontmatter | YAML metadata block (wrapped in `---`); header of each .bkn file |
 | network | File type `type: network`; top-level container for a complete knowledge network |
-| fragment | File type `type: fragment`; mixed snippet containing multiple object/relation/action definitions |
-| data | File type `type: data`; instance data file (recommended `.bknd` extension) |
-| connection | File type `type: connection`; reusable data-source connection definition (optional capability) |
-| namespace | Namespace; used for large-scale organization and avoiding ID conflicts |
-| spec_version | Specification version; identifies which BKN spec version a file conforms to |
 
-### Primitives (Canonical Section and Table Terms)
+### Primitives Table
 
-The table below uses a **unified heading hierarchy** that applies to all file types (network / fragment / object / relation / action / data).
+Section titles and table column names should use English as the canonical form. Parsers should support both English and Chinese for compatibility.
+
+The table below is organized by **unified heading level**, applicable to all BKN file types (network / object_type / relation_type / action_type / risk_type / concept_group).
 
 | Level | English (canonical) | Definition | Syntax |
 |:-----:|---------------------|------------|--------|
-| `#` | Objects | Section: all object definitions in this file | `# Objects` |
-| `#` | Relations | Section: all relation definitions | `# Relations` |
-| `#` | Actions | Section: all action definitions | `# Actions` |
-| `#` | Risks | Section: all risk definitions | `# Risks` |
-| `##` | Object | Individual object definition | `## Object: {id}` |
-| `##` | Relation | Individual relation definition | `## Relation: {id}` |
-| `##` | Action | Individual action definition | `## Action: {id}` |
-| `##` | Risk | Individual risk definition | `## Risk: {id}` |
-| `###` | Data Source | The data view or connection this object maps from | `### Data Source` |
-| `###` | Connection | Connection endpoint and auth reference (for type: connection) | `### Connection` |
-| `###` | Data Properties | Explicit list of fields (name, type, PK, index) | `### Data Properties` |
-| `###` | Property Override | Per-property overrides (e.g. index config) | `### Property Override` |
+| `#` | {Network Name} | Network title | `# {name}` |
+| `##` | Network Overview | Network topology overview | `## Network Overview` |
+| `##` | ObjectType | Individual object type definition | `## ObjectType: {name}` |
+| `##` | RelationType | Individual relation type definition | `## RelationType: {name}` |
+| `##` | ActionType | Individual action type definition | `## ActionType: {name}` |
+| `##` | RiskType | Individual risk type definition | `## RiskType: {name}` |
+| `##` | ConceptGroup | Concept group definition | `## ConceptGroup: {name}` |
+| `###` | Data Source | The data view this object maps from | `### Data Source` |
+| `###` | Data Properties | Explicit list of fields (name, type, description) | `### Data Properties` |
+| `###` | Keys | Primary key, display key, incremental key | `### Keys` |
 | `###` | Logic Properties | Derived fields: metric, operator | `### Logic Properties` |
-| `###` | Business Semantics | Human-readable meaning of the object/relation | `### Business Semantics` |
-| `###` | Endpoints | Relation endpoints: source, target, type | `### Endpoints` |
+| `###` | Endpoint | Relation endpoint: source, target, type | `### Endpoint` |
 | `###` | Mapping Rules | How source/target properties map | `### Mapping Rules` |
 | `###` | Mapping View | For data_view relations: the join view | `### Mapping View` |
 | `###` | Source Mapping | Map source object props to view | `### Source Mapping` |
@@ -92,22 +84,23 @@ The table below uses a **unified heading hierarchy** that applies to all file ty
 | `###` | Parameter Binding | param name, source, binding | `### Parameter Binding` |
 | `###` | Schedule | FIX_RATE or CRON | `### Schedule` |
 | `###` | Scope of Impact | What objects are affected | `### Scope of Impact` |
+| `###` | Object Types | Object types in a concept group | `### Object Types` |
+| `###` | Control Scope | Risk control scope | `### Control Scope` |
+| `###` | Control Policy | Risk control policy | `### Control Policy` |
+| `###` | Pre-checks | Risk pre-checks | `### Pre-checks` |
+| `###` | Rollback Plan | Risk rollback plan | `### Rollback Plan` |
+| `###` | Audit Requirements | Risk audit requirements | `### Audit Requirements` |
+| `###` | Execution Description | Detailed execution flow for action | `### Execution Description` |
 | `####` | {property_name} | Individual logic property sub-section | `#### {name}` |
-| — | Primary Key | Field that uniquely identifies an instance | Data Properties table column |
-| — | Display Key | Field used for UI label / search display | Data Properties table column |
-| — | Action Type | add \| modify \| delete | table column |
 
-Table column names (canonical): Type, ID, Name, Property, Display Name, Type, Constraint, Primary Key, Display Key, Index, Index Config, Description; Source, Target, Required, Min, Max; Source Property, Target Property; Parameter, Type, Source, Binding, Description; Bound Object, Action Type; Object, Check, Condition, Message; Object, Impact Description.
+Canonical table column names: Name, Display Name, Type, Description, Mapped Field; ID, Name; Source, Target; Source Property, Target Property, View Property; Parameter, Type, Source, Binding, Description; Bound Object, Action Type; Object, Check, Condition, Message; Object, Impact Description; Expression. Parsers should also accept Chinese column names.
 
 ## File Format
 
-### File Extension
+### File Extensions
 
-- `.bkn` — BKN schema/definition file (recommended)
-- `.bknd` — BKN data file (instance data, recommended)
-- `.md` — Compatible carrier; runtime supports it; content must satisfy BKN frontmatter/type/structure constraints
-
-**`.md` compatibility mode**: BKN content may be saved as `.md` for cross-platform documentation and collaboration. At runtime, `.md` files follow the same parse and validation path as `.bkn`/`.bknd`; missing frontmatter, `type`, or invalid structure will fail immediately. Recommended: use `.bkn` for schema, `.bknd` for data; use `.md` when coexisting with generic Markdown tooling.
+- `.bkn` - BKN definition file (schema)
+- `.csv` - Instance data file (not part of BKN schema, standard CSV format)
 
 ### File Encoding
 
@@ -115,7 +108,7 @@ Table column names (canonical): Type, ID, Name, Property, Display Name, Type, Co
 
 ### Basic Structure
 
-Every BKN file consists of two parts:
+Each BKN file consists of two parts:
 
 1. **YAML Frontmatter**: File metadata
 2. **Markdown Body**: Knowledge network definition content
@@ -125,543 +118,278 @@ Every BKN file consists of two parts:
 type: network
 id: example-network
 name: Example Network
-version: 1.0.0
+tags: [example]
 ---
 
-# Network Title
+# Example Network
 
 Network description...
 
-## Object: object_id
+## Network Overview
 
-Object definition...
-
-## Relation: relation_id
-
-Relation definition...
-
-## Action: action_id
-
-Action definition...
+...
 ```
 
 ---
 
 ## Frontmatter Specification
 
-### Engineering Control Fields (Recommended)
-
-To support scalable collaboration, approval, and audit, use the following fields in definition files:
-
-| Field | Applicable type | Description |
-|-------|-----------------|-------------|
-| `spec_version` | all | Specification version used by this file (inherits document spec_version by default) |
-| `namespace` | object/relation/action/fragment | Namespace/package name for large-scale organization and conflict avoidance (e.g., `platform.k8s`) |
-| `owner` | object/relation/action/fragment | Owner/team (for audit and approval routing) |
-| `enabled` | action | Whether enabled (default `false` recommended; import does not imply enablement) |
-| `risk_level` | action | Risk level (`low|medium|high` for approval and release strategy) |
-| `requires_approval` | action | Whether approval is required to enable/execute |
-
 ### File Types (type)
 
 | type | Description | Purpose |
 |------|-------------|---------|
-| `network` | Full knowledge network | Network file containing multiple definitions |
-| `object` | Single object definition | Standalone object file, directly importable |
-| `relation` | Single relation definition | Standalone relation file, directly importable |
-| `action` | Single action definition | Standalone action file, directly importable |
-| `fragment` | Mixed fragment | Contains multiple types of partial definitions |
-| `risk` | Single risk definition | Standalone risk file, directly importable |
-| `data` | Data file | Carries instance rows for object/relation definitions (recommended `.bknd`) |
-| `connection` | Connection definition | Reusable data-source connection (optional; multiple objects may reference the same connection) |
-| `connection` | Connection definition | Reusable data-source connection (optional; multiple objects may reference the same connection) |
+| `network` | Complete knowledge network | Top-level network container file |
+| `object_type` | Single object type definition | Standalone object type file, can be imported directly |
+| `relation_type` | Single relation type definition | Standalone relation type file, can be imported directly |
+| `action_type` | Single action type definition | Standalone action type file, can be imported directly |
+| `risk_type` | Single risk type definition | Standalone risk type file, can be imported directly |
+| `concept_group` | Concept group | Organizes related object types together |
 
 ### Network File (type: network)
 
 ```yaml
 ---
-type: network                    # Full knowledge network
+type: network                    # Complete knowledge network
 id: string                       # Network ID, unique identifier
 name: string                     # Network display name
-version: string                  # Version (semver)
 tags: [string]                   # Optional, tag list
-description: string              # Optional, network description
-includes: [string]               # Optional, referenced files
+business_domain: string          # Optional, business domain
 ---
 ```
 
-### Single Object File (type: object)
+Description is placed in the body, after the `# {name}` heading.
+
+### Object Type File (type: object_type)
 
 ```yaml
 ---
-type: object                     # Single object definition
+type: object_type                # Object type definition
 id: string                       # Object ID, unique identifier
 name: string                     # Object display name
-version: string                  # Optional, version
-network: string                  # Network ID (recommended required for import determinism)
-namespace: string                # Optional, namespace/package
-owner: string                    # Optional, owner/team
 tags: [string]                   # Optional, tag list
 ---
 ```
 
-### Single Relation File (type: relation)
+### Relation Type File (type: relation_type)
 
 ```yaml
 ---
-type: relation                   # Single relation definition
+type: relation_type              # Relation type definition
 id: string                       # Relation ID, unique identifier
 name: string                     # Relation display name
-version: string                  # Optional, version
-network: string                  # Network ID (recommended required for import determinism)
-namespace: string                # Optional, namespace/package
-owner: string                    # Optional, owner/team
+tags: [string]                   # Optional, tag list
 ---
 ```
 
-### Single Action File (type: action)
+### Action Type File (type: action_type)
 
 ```yaml
 ---
-type: action                     # Single action definition
+type: action_type                # Action type definition
 id: string                       # Action ID, unique identifier
 name: string                     # Action display name
-action_type: add | modify | delete  # Action type
-version: string                  # Optional, version
-network: string                  # Network ID (recommended required for import determinism)
-namespace: string                # Optional, namespace/package
-owner: string                    # Optional, owner/team
+tags: [string]                   # Optional, tag list
+action_type: add | modify | delete | query  # Optional, action type
 enabled: boolean                 # Optional, whether enabled (default false recommended)
 risk_level: low | medium | high  # Optional, static risk level
-requires_approval: boolean       # Optional, whether approval required
+requires_approval: boolean       # Optional, whether approval is required
 ---
 ```
 
-> **Dynamic risk property**: The Action runtime property `risk` (values `allow` | `not_allow` | `unknown`) is computed by the built-in or a user-provided risk evaluation function from the current scenario and knowledge tagged with `__risk__`; it is not declared in this frontmatter. When no rules match or evaluation fails, returns `unknown`; the execution layer handles per business policy.
-
-### Single Connection File (type: connection) (Optional)
+### Risk Type File (type: risk_type)
 
 ```yaml
 ---
-type: connection                 # Reusable data-source connection definition
-id: string                       # Connection ID, unique identifier
-name: string                     # Connection display name
-network: string                 # Network ID
----
-```
-
-Connection is an **optional capability** for multiple objects to share the same data-source connection. The file must include a `### Connection` section declaring endpoint and auth reference. **Do not store plaintext credentials in BKN files**; use only `secret_ref` or environment variable references.
-
-### Mixed Fragment (type: fragment)
-
-```yaml
----
-type: fragment                   # Mixed fragment
-id: string                       # Fragment ID
-name: string                     # Fragment name
-version: string                  # Optional, version
-network: string                  # Target network ID (recommended required for import determinism)
-namespace: string                # Optional, namespace/package
-owner: string                    # Optional, owner/team
----
-```
-
-### Single Risk File (type: risk)
-
-```yaml
----
-type: risk                       # Single risk definition
+type: risk_type                  # Risk type definition
 id: string                       # Risk type ID, unique identifier
-name: string                     # Risk display name
-version: string                  # Optional, version
-network: string                  # Network ID (recommended required)
-namespace: string                # Optional, namespace/package
-owner: string                    # Optional, owner/team
+name: string                     # Risk type display name
+tags: [string]                   # Optional, tag list
 ---
 ```
 
----
-
-## Data Files (`.bknd` / `type: data`)
-
-`.bknd` files use the same Markdown syntax as `.bkn`, but the body carries instance rows instead of object/relation/action definitions.
-
-### Frontmatter
+### Concept Group File (type: concept_group)
 
 ```yaml
 ---
-type: data
-network: recoverable-network
-object: scenario            # mutually exclusive with relation
-source: PFMEA模板.xlsx      # optional data provenance
+type: concept_group              # Concept group
+id: string                       # Group ID, unique identifier
+name: string                     # Group display name
+tags: [string]                   # Optional, tag list
 ---
 ```
 
-- `type` must be `data`
-- `object` or `relation` must be set (mutually exclusive), pointing to an ID defined in `.bkn`
-- `network` is recommended for consistency with schema files
-- `source` is optional provenance metadata
-
-### Body
-
-Use one heading (`#` or `##`) plus one GFM table. Table headers should align with target object Data Properties (or relation mapping fields).
-
-```markdown
-# scenario
-
-| scenario_id | name | category | primary_object | description |
-|-------------|------|----------|----------------|-------------|
-| ops-rm-rf | rm -rf 删除备份存储 | integrity | backup_system | 直接销毁备份数据 |
-```
-
-### Constraints
-
-- Column names should align with schema definitions to avoid implicit fields
-- A single `type: data` file should contain one table for better versioning and auditing
-
-### Data Source and Editability
-
-An object's Data Source determines whether its data may be written to `.bknd`:
-
-| Data Source Type | Data Source | `.bknd` Allowed |
-|------------------|-------------|-----------------|
-| `data_view` | External system (ERP, DB, API) | **No**; data is maintained by the external system, `.bknd` does not apply |
-| `connection` | External system via connection definition | **No**; data is provided by the external system, `.bknd` does not apply |
-| `bknd` | BKN-native data | **Yes**; `.bknd` is the data source, readable and writable |
-| No Data Source | Platform default | Platform-dependent |
-
-- When an Object's Data Source is `data_view` or `connection`, do not create `.bknd` files for that object; data is provided by the external system.
-- When an Object's Data Source is `bknd`, data is stored in `.bknd` files and is editable and versionable.
-
 ---
 
-## Object Definition Specification
+## Object Type Definition
 
 ### Syntax
 
 ```markdown
-## Object: {object_id}
+## ObjectType: {name}
 
-**{Display Name}** - {Brief description}
-
-- **Tags**: {tag1}, {tag2}     (optional, definition-level tags)
-- **Owner**: {owner}           (optional, owner/team)
-
-### Data Source
-
-| Type | ID | Name |
-|------|-----|------|
-| data_view | {view_id} | {view_name} |
-| connection | {connection_id} | {display_name} |
-| bknd | {object_id} | {display_name} |
-
-- `data_view`: Data from external system; do not maintain via `.bknd`
-- `connection`: Connect via reusable connection definition; multiple objects may reference the same connection_id
-- `bknd`: BKN-native data; carried by `.bknd` files, editable
+{description}
 
 ### Data Properties
 
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| {prop} | {name} | {type} | | {desc} | YES | | YES |
-| {prop} | {name} | {type} | | {desc} | | YES | |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| {prop} | {display_name} | {type} | {desc} | {mapped_field} |
 
-- `Primary Key`: Property marked `YES` uniquely identifies an instance; at least one required
-- `Display Key`: Property marked `YES` is used for UI display and search; at least one required
-- `Constraint` column is optional; declares valid value ranges for instance data. Leave empty for no constraint. See "Constraint Column Syntax" below for details
+### Keys
 
-### Property Override
-
-(Optional) Declare only properties needing special configuration
-
-| Property | Display Name | Index Config | Constraint | Description |
-|----------|--------------|--------------|------------|-------------|
-| ... | ... | ... | ... | ... |
-
-#### Index Config Syntax
-
-The `Index Config` column supports a combined syntax; multiple index types are joined with ` + `. Optional parameters may be passed in parentheses:
-
-| Type | Syntax | Description |
-|------|--------|-------------|
-| keyword | `keyword` | Basic keyword index |
-| keyword | `keyword(max_len)` | Keyword index with ignore_above_len |
-| fulltext | `fulltext` | Full-text index, default analyzer |
-| fulltext | `fulltext(analyzer)` | Full-text index with specific analyzer (e.g. standard, ik_max_word) |
-| vector | `vector` | Vector index, default model |
-| vector | `vector(model_id)` | Vector index with specified embedding model ID |
-
-Example: `keyword(1024) + fulltext(standard) + vector(1951511856216674304)`
+Primary Keys: {key_name}
+Display Key: {key_name}
+Incremental Key: {key_name}
 
 ### Logic Properties
 
 #### {property_name}
 
+- **Display**: {display_name}
 - **Type**: metric | operator
 - **Source**: {source_id} ({source_type})
 - **Description**: {description}
 
 | Parameter | Type | Source | Binding | Description |
 |-----------|------|--------|---------|-------------|
-| ... | string | property | {property_name} | Bind from object property |
+| ... | string | property | {property_name} | Bound from object property |
 | ... | array | input | - | Runtime user input |
 | ... | string | const | {value} | Constant value |
-```
-
-- `Type`: Parameter data type (e.g. string, number, boolean, array)
-- `Source`: Value source — `property` (object property) / `input` (user input) / `const` (constant)
-- `Binding`: When Source is property, the property name; when const, the constant value; when input, `-`
-
-### Definition-Level Metadata
-
-In the header of a `## Object:` or `## Relation:` definition (before `### Data Source` or `### Endpoints`), optional inline metadata lines may be used:
-
-- **Tags**: Tag list for this definition (comma-separated), for categorization, filtering, and audit
-- **Owner**: Owner or team, for approval routing and audit
-
-In fragment or network files, multiple objects or relations may each have different tags and owner.
-
-### Risk-Related Definitions
-
-- **Reserved tag**: **`__risk__`** is a built-in reserved tag used only for objects and relations that participate in the built-in risk assessment. **Users must not use `__risk__` for custom purposes**, to avoid conflicting with built-in behavior.
-- Add `- **Tags**: __risk__` in the definition header of objects and relations that participate in the built-in risk evaluation. AI applications and the built-in evaluator use this tag to identify risk-related definitions.
-- Actions have a **runtime/computed property** `risk` (see Action definition section), with values `allow` | `not_allow` | `unknown`, computed by the built-in or a user-provided risk evaluation function from the current scenario and data tagged with `__risk__`; it is **not written in BKN files**. When no rules match or evaluation fails, returns `unknown`; the execution layer handles per business policy.
-
-**Openness**: Users may define **their own risk-like classes** (using **non-reserved** tags, e.g. `compliance`, `audit`) and **their own risk evaluation functions**; the built-in `__risk__` and default evaluator are one optional implementation and do not preclude extension or replacement.
-
-### Field Reference
-
-| Field | Required | Description |
-|-------|:--------:|-------------|
-| {object_id} | YES | Object unique ID, lowercase letters, digits, underscores |
-| {display_name} | YES | Human-readable name |
-| Data Source | NO | Mapped data view; managed by the platform automatically when omitted |
-| Data Properties | YES | Property definitions; must mark Primary Key and Display Key |
-| Property Override | NO | Properties needing special configuration (index, constraints) |
-| Logic Properties | NO | Extended properties such as metrics, operators |
-
-### Data Types
-
-The `Type` column in Data Properties tables uses the following standard types. Type names are case-insensitive; the canonical forms below are recommended.
-
-| Type | Description | JSON Mapping | SQL Mapping |
-|------|-------------|-------------|-------------|
-| int32 | 32-bit signed integer | number | INT / INTEGER |
-| int64 | 64-bit signed integer | number | BIGINT |
-| integer | Generic integer (precision unspecified) | number | Platform-dependent (typically int64) |
-| float32 | 32-bit floating point | number | FLOAT / REAL |
-| float64 | 64-bit floating point | number | DOUBLE / DOUBLE PRECISION |
-| float | Generic floating point (precision unspecified) | number | Platform-dependent (typically float64) |
-| decimal(p,s) | Exact decimal; p = precision, s = scale | string / number | DECIMAL(p,s) / NUMERIC(p,s) |
-| decimal | Generic exact decimal (precision unspecified) | string / number | Platform-dependent |
-| bool | Boolean | boolean | BOOLEAN |
-| VARCHAR | Variable-length string | string | VARCHAR / TEXT |
-| TEXT | Long text | string | TEXT / CLOB |
-| DATE | Date (no time) | string (ISO 8601) | DATE |
-| TIME | Time (no date) | string (ISO 8601) | TIME |
-| TIMESTAMP | Date and time (with timezone) | string (ISO 8601) | TIMESTAMP |
-| JSON | JSON structured data | object / array | JSON / JSONB |
-| BINARY | Binary data | string (base64) | BLOB / BYTEA |
-
-> When the data source uses a type not listed above, the source-native type name may be used directly (e.g. `ARRAY<VARCHAR>`). Parsers should pass through unrecognized types as-is.
-
-### Configuration Modes
-
-#### Mode 1: Mapping + Minimal Properties
-
-Map to view, declare only primary key and display key:
-
-```markdown
-## Object: node
-
-**Node**
 
 ### Data Source
-
-| Type | ID |
-|------|-----|
-| data_view | view_123 |
-
-### Data Properties
-
-| Property | Primary Key | Display Key |
-|----------|:-----------:|:-----------:|
-| id | YES | |
-| node_name | | YES |
-```
-
-#### Mode 2: Mapping + Property Override
-
-Map to view, declare keys and configure properties needing special treatment:
-
-```markdown
-## Object: pod
-
-**Pod Instance**
-
-### Data Source
-
-| Type | ID |
-|------|-----|
-| data_view | view_456 |
-
-### Data Properties
-
-| Property | Primary Key | Display Key |
-|----------|:-----------:|:-----------:|
-| id | YES | |
-| pod_name | | YES |
-
-### Property Override
-
-| Property | Index Config | Constraint | Description |
-|----------|--------------|------------|-------------|
-| pod_status | fulltext(standard) + vector | in(Running,Pending,Failed,Unknown) | Full-text and semantic search |
-```
-
-#### Mode 3: Full Definition
-
-Declare all properties explicitly (with types, constraints, indexes):
-
-```markdown
-## Object: service
-
-**Service**
-
-### Data Source
-
-| Type | ID |
-|------|-----|
-| data_view | view_789 |
-
-### Data Properties
-
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| id | ID | int64 | | Primary key | YES | | YES |
-| service_name | Name | VARCHAR | not_null | Service name | | YES | YES |
-| service_type | Service Type | VARCHAR | in(ClusterIP,NodePort,LoadBalancer) | Service type | | | |
-```
-
----
-
-## Connection Definition (Optional)
-
-Connection is an **optional capability** for multiple objects to share the same data-source connection. When multiple Objects or Relations point to the same external system (e.g., same database or API), define a `type: connection` file and reference it in Data Source via `connection | {connection_id}`.
-
-### Syntax
-
-```markdown
-## Connection: {connection_id}
-
-**{display_name}** - {brief_description}
-
-### Connection
-
-| Type | Endpoint | Secret Ref |
-|------|----------|------------|
-| {conn_type} | {endpoint_url} | {secret_ref} |
-```
-
-- `Type`: Connection type (e.g., `postgres`, `mysql`, `rest`, `grpc`), resolved by platform or runtime
-- `Endpoint`: Connection endpoint (URL, host:port, etc.) without credentials
-- `Secret Ref`: Credential reference; **do not store plaintext passwords in BKN files**; use environment variable names (e.g., `DB_PASSWORD`) or platform Secret IDs (e.g., `secret:db_creds`)
-
-### Reference
-
-In Object or Relation `### Data Source` table:
 
 | Type | ID | Name |
 |------|-----|------|
-| connection | {connection_id} | {display_name} |
+| data_view | {view_id} | {view_name} |
+```
 
-Multiple objects may reference the same `connection_id` to share the connection definition. If a referenced `connection_id` does not exist, import or load should fail with an error.
+- `Type`: Parameter data type, e.g., string, number, boolean, array
+- `Source`: Value source — `property` (object property) / `input` (user input) / `const` (constant)
+- `Binding`: Property name when Source is property, constant value when const, `-` when input
 
-### Compatibility
+### Field Reference
 
-- Connection is an **optional capability**; no `type: connection` files are required when not used
-- Existing networks (using only `data_view` or `bknd`) parse and run unchanged
-- No migration required; `connection` is an additive extension
+| Field | Required | Description |
+|-------|:--------:|-------------|
+| {name} | YES | Object type display name |
+| Data Properties | YES | Property definition table |
+| Keys | YES | Primary key, display key declaration |
+| Logic Properties | NO | Metric, operator, and other extended properties |
+| Data Source | NO | Mapped data view; managed by platform if not set |
+
+### Data Types
+
+The `Type` column in Data Properties uses the following standard types. Type names are case-insensitive; the canonical forms below are recommended.
+
+| Type | Description | JSON Mapping | SQL Mapping |
+|------|-------------|--------------|-------------|
+| string | String | string | VARCHAR / TEXT |
+| integer | Integer | number | INT / BIGINT |
+| float | Floating point number | number | FLOAT / DOUBLE |
+| decimal | Exact decimal number | string / number | DECIMAL / NUMERIC |
+| boolean | Boolean | boolean | BOOLEAN |
+| date | Date (no time) | string (ISO 8601) | DATE |
+| time | Time (no date) | string (ISO 8601) | TIME |
+| datetime | Date and time | string (ISO 8601) | TIMESTAMP |
+| text | Long text | string | TEXT / CLOB |
+| json | JSON structured data | object / array | JSON / JSONB |
+| binary | Binary data | string (base64) | BLOB / BYTEA |
 
 ---
 
-## Relation Definition Specification
+## Relation Type Definition
 
 ### Syntax
 
 ```markdown
-## Relation: {relation_id}
+## RelationType: {name}
 
-**{Display Name}** - {Brief description}
+{description}
 
-- **Tags**: {tag1}, {tag2}     (optional, definition-level tags)
-- **Owner**: {owner}           (optional, owner/team)
+### Endpoint
 
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| {source} | {target} | direct \| data_view | YES \| NO | 0 | - |
-
-- `Required`: YES/NO, whether at least one relation must exist (from Source side)
-- `Min`: Minimum relation count, default 0
-- `Max`: Maximum relation count, `-` means unlimited
-- Required / Min / Max are optional columns; omit to apply no constraint
+| Source | Target | Type |
+|--------|--------|------|
+| {source_object_type_id} | {target_object_type_id} | direct or data_view |
 
 ### Mapping Rules
 
+(When Type is direct)
+
 | Source Property | Target Property |
-|-----------------|-----------------|
+|------------------|-----------------|
 | {source_prop} | {target_prop} |
 
-### Business Semantics
+### Mapping View
 
-(Optional) Description of relation business meaning...
+(When Type is data_view)
+
+| Type | ID |
+|------|-----|
+| data_view | {view_id} |
+
+### Source Mapping
+
+| Source Property | View Property |
+|-----------------|----------------|
+| {source_prop} | {view_prop} |
+
+### Target Mapping
+
+| View Property | Target Property |
+|---------------|-----------------|
+| {view_prop} | {target_prop} |
 ```
 
 ### Field Reference
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| {relation_id} | YES | Relation unique identifier |
-| Source | YES | Source object ID |
-| Target | YES | Target object ID |
+| {name} | YES | Relation type display name |
+| Endpoint | YES | Relation endpoint definition (Source, Target, Type) |
+| Source | YES | Source object type ID |
+| Target | YES | Target object type ID |
 | Type | YES | `direct` (direct mapping) or `data_view` (view mapping) |
-| Mapping Rules | YES | Property mapping relationship |
-| Required | NO | Whether at least one relation must exist (from Source side) |
-| Min | NO | Minimum relation count |
-| Max | NO | Maximum relation count, `-` means unlimited |
+| Mapping Rules | YES | Property mapping relationships |
 
 ### Relation Types
 
 #### Direct Mapping (direct)
 
-Associate via property value matching:
+Establishes relationships through property value matching:
 
 ```markdown
-## Relation: pod_belongs_node
+## RelationType: Pod belongs to Node
 
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| pod | node | direct | YES | 1 | 1 |
+The ownership relationship between a Pod instance and its Node.
 
-Each Pod must belong to exactly one Node.
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| pod | node | direct |
 
 ### Mapping Rules
 
 | Source Property | Target Property |
-|-----------------|-----------------|
+|------------------|-----------------|
 | pod_node_name | node_name |
 ```
 
 #### View Mapping (data_view)
 
-Associate via intermediate view:
+Establishes relationships through an intermediate view:
 
 ```markdown
-## Relation: user_likes_post
+## RelationType: User likes Post
 
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| user | post | data_view | NO | 0 | - |
+The like relationship between users and posts.
+
+### Endpoint
+
+| Source | Target | Type |
+|--------|--------|------|
+| user | post | data_view |
 
 ### Mapping View
 
@@ -672,7 +400,7 @@ Associate via intermediate view:
 ### Source Mapping
 
 | Source Property | View Property |
-|-----------------|---------------|
+|-----------------|----------------|
 | user_id | uid |
 
 ### Target Mapping
@@ -684,63 +412,69 @@ Associate via intermediate view:
 
 ---
 
-## Action Definition Specification
+## Action Type Definition
 
 ### Syntax
 
 ```markdown
-## Action: {action_id}
+## ActionType: {name}
 
-**{Display Name}** - {Brief description}
+{description}
+
+### Bound Object
 
 | Bound Object | Action Type |
-|--------------|--------------|
-| {object_id} | add | modify | delete |
+|--------------|-------------|
+| {object_type_id} | add or modify or delete |
 
 ### Trigger Condition
 
 ```yaml
-field: {property_name}
-operation: == | != | > | < | >= | <= | in | not_in | exist | not_exist
-value: {value}
+condition:
+  object_type_id: {object_type_id}
+  field: {property_name}
+  operation: == | != | > | < | >= | <= | in | not_in | exist | not_exist
+  value: {value}
 ```
 
 ### Pre-conditions
 
-(Optional) Data conditions required before execution; if not satisfied, action is blocked
+(optional) Data pre-conditions before execution; blocks action if not met
 
 | Object | Check | Condition | Message |
 |--------|-------|-----------|---------|
-| {object_id} | relation:{relation_id} | exist | Violation message |
-| {object_id} | property:{property_name} | {op} {value} | Violation message |
+| {object_type_id} | relation:{relation_id} | exist | Violation message |
+| {object_type_id} | property:{property_name} | {op} {value} | Violation message |
 
-- `Check`: `property:{name}` or `relation:{id}`, specifies what to check
-- `Condition`: Reuses Trigger Condition operator syntax
-- Trigger determines "when to run"; Pre-conditions determine "whether execution is allowed"
+### Scope of Impact
+
+| Object | Impact Description |
+|--------|--------------------|
+| {object_type_id} | {impact description} |
 
 ### Tool Configuration
 
-| Type | Tool ID |
-|------|--------|
-| tool | {tool_id} |
+| Type | Toolbox ID | Tool ID |
+|------|------------|---------|
+| tool | {toolbox_id} | {tool_id} |
 
 or
 
-| Type | MCP |
-|------|-----|
-| mcp | {mcp_id}/{tool_name} |
+| Type | MCP ID | Tool Name |
+|------|--------|-----------|
+| mcp | {mcp_id} | {tool_name} |
 
 ### Parameter Binding
 
 | Parameter | Type | Source | Binding | Description |
 |-----------|------|--------|---------|-------------|
-| {param_name} | string | property | {property_name} | {description} |
-| {param_name} | string | input | - | {description} |
-| {param_name} | string | const | {value} | {description} |
+| {param_name} | {type} | property | {property_name} | {description} |
+| {param_name} | {type} | input | - | {description} |
+| {param_name} | {type} | const | {value} | {description} |
 
 ### Schedule
 
-(Optional)
+(optional)
 
 | Type | Expression |
 |------|------------|
@@ -749,101 +483,40 @@ or
 
 ### Execution Description
 
-(Optional) Detailed execution flow...
+(optional) Detailed execution flow...
 ```
-
-### Governance Requirements (Strongly Recommended)
-
-Action definitions connect to execution surface (tool/mcp). For stability and security, explicitly document the following in each Action and enforce through governance:
-
-1. **Trigger**: When to trigger (manual/scheduled/conditional), whether conditions are reproducible
-2. **Scope of impact**: Which objects, scope boundary, expected side effects
-3. **Permissions and prerequisites**: Who can import/enable/execute, approval requirements, required credentials
-4. **Rollback / failure strategy**: Failure handling, retry policy, circuit breaker/rate limit, reversibility
-
-> Recommended practice: Import does not imply enablement; enablement and execution require separate permissions and audit logs, traceable to the corresponding BKN definition version.
 
 ### Field Reference
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| {action_id} | YES | Action unique identifier |
-| Bound Object | YES | Target object ID |
+| {name} | YES | Action type display name |
+| Bound Object | YES | Target object type ID |
 | Action Type | YES | `add` / `modify` / `delete` |
-| Trigger Condition | NO | Conditions for automatic trigger |
-| Pre-conditions | NO | Data conditions required before execution |
+| Trigger Condition | NO | Automatic trigger condition |
+| Pre-conditions | NO | Data pre-conditions before execution |
+| Scope of Impact | NO | Impact scope declaration |
 | Tool Configuration | YES | Tool or MCP to execute |
 | Parameter Binding | YES | Parameter source configuration |
 | Schedule | NO | Scheduled execution configuration |
-| risk (computed) | - | Runtime property: `allow` \| `not_allow` \| `unknown`, computed by built-in or user-provided evaluator from scenario and data tagged with `__risk__`; not written in BKN. When no rules match or evaluation fails, returns `unknown` |
 
 ### Trigger Condition Operators
 
-These operators apply to Trigger Condition, Pre-conditions, and the Constraint column in Data Properties / Property Override tables:
+The following operators apply to Trigger Condition and Pre-conditions:
 
 | Operator | Description | Example |
 |----------|-------------|---------|
-| == | Equal | `value: Running` |
-| != | Not equal | `value: Running` |
+| == | Equal to | `value: Running` |
+| != | Not equal to | `value: Running` |
 | > | Greater than | `value: 100` |
 | < | Less than | `value: 100` |
-| >= | Greater than or equal | `value: 100` |
-| <= | Less than or equal | `value: 100` |
-| in | In set | `value: [A, B, C]` |
-| not_in | Not in set | `value: [A, B, C]` |
+| >= | Greater than or equal to | `value: 100` |
+| <= | Less than or equal to | `value: 100` |
+| in | Contained in | `value: [A, B, C]` |
+| not_in | Not contained in | `value: [A, B, C]` |
 | exist | Exists | (no value needed) |
 | not_exist | Does not exist | (no value needed) |
-| range | In range | `value: [0, 100]` |
-| not_null | Not null | (no value needed, constraint-specific) |
-| regex | Regex match | `value: "^[a-z]+$"` (constraint-specific) |
-
-### Constraint Column Syntax
-
-The `Constraint` column appears in the **Data Properties** and **Property Override** tables within an Object definition. It declares valid value ranges that instance data must satisfy. The column is optional; an empty cell means no constraint.
-
-#### Format
-
-Each constraint is written in a single table cell using the format **`operator`**, **`operator(args)`**, or **`operator value`**.
-
-| Category | Syntax | Meaning | Applicable Types | Example |
-|----------|--------|---------|------------------|---------|
-| Comparison | `== value` | Equal to fixed value | Numeric, String | `== 1` |
-| Comparison | `!= value` | Not equal to fixed value | Numeric, String | `!= 0` |
-| Comparison | `> value` | Greater than | Numeric | `> 0` |
-| Comparison | `< value` | Less than | Numeric | `< 1000` |
-| Comparison | `>= value` | Greater than or equal | Numeric | `>= 0` |
-| Comparison | `<= value` | Less than or equal | Numeric | `<= 100` |
-| Range | `range(min,max)` | Closed interval [min, max] | Numeric | `range(0,100)` |
-| Enumeration | `in(v1,v2,…)` | Value must be one of the list | String, Numeric | `in(Running,Pending,Failed)` |
-| Enumeration | `not_in(v1,v2,…)` | Value must not be in the list | String, Numeric | `not_in(Deleted,Archived)` |
-| Existence | `not_null` | Value must not be null | Any | `not_null` |
-| Existence | `exist` | Property must exist | Any | `exist` |
-| Existence | `not_exist` | Property must not exist | Any | `not_exist` |
-| Pattern | `regex:pattern` | Value must match regex | String | `regex:^[a-z0-9_]+$` |
-
-#### Combining Constraints
-
-When a property requires multiple constraints, separate them with `; ` (semicolon + space):
-
-```
-not_null; >= 0
-not_null; regex:^[a-z_]+$
->= 0; <= 100
-not_null; in(ClusterIP,NodePort,LoadBalancer)
-```
-
-Combined constraints use **logical AND** — all constraints must be satisfied simultaneously.
-
-#### Full Example
-
-| Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index |
-|----------|--------------|------|------------|-------------|:-----------:|:-----------:|:-----:|
-| id | ID | int64 | not_null | Primary key | YES | | YES |
-| name | Name | VARCHAR | not_null; regex:^[a-z0-9_]+$ | Unique identifier | | YES | YES |
-| quantity | Quantity | int32 | >= 0 | No negatives allowed | | | |
-| status | Status | VARCHAR | in(Active,Inactive,Archived) | Enum values | | | YES |
-| score | Score | float64 | range(0,100) | Percentage | | | |
-| priority | Priority | int32 | not_null; range(1,5) | Level 1–5 | | | |
+| range | Within range | `value: [0, 100]` |
 
 ### Parameter Sources
 
@@ -855,68 +528,82 @@ Combined constraints use **logical AND** — all constraints must be satisfied s
 
 ---
 
-## Risk Definition Specification
+## Risk Type Definition
 
-Risk is the fourth basic type, for structured modeling of execution risk for actions and objects. Risk is independent of Action; Action's `risk_level` declares "how dangerous," Risk declares "how to control."
+Risk types (RiskType) provide structured modeling of execution risk for action types and object types. Risk types are independent types, not sub-fields of action types; ActionType's `risk_level` declares "how dangerous", while RiskType declares "how to manage".
 
 ### Syntax
 
 ```markdown
-## Risk: {risk_id}
+## RiskType: {name}
 
-**{Display Name}** - {Brief description}
+{description}
 
 ### Control Scope
 
-| Controlled Object | Controlled Action | Risk Level |
-|-------------------|-------------------|------------|
-| {object_id} | {action_id} | low | medium | high |
+{Description of control scope}
 
-### Control Strategy
+### Control Policy
 
-| Condition | Strategy |
-|-----------|----------|
-| {condition_description} | {strategy_description} |
+- {Policy description 1}
+- {Policy description 2}
 
 ### Pre-checks
 
-(Optional)
+(optional)
 
-| Check Item | Type | Description |
-|------------|------|-------------|
-| {check_name} | permission | {description} |
-| {check_name} | simulation | {description} |
-| {check_name} | approval | {description} |
-| {check_name} | precondition | {description} |
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| {object_type_id} | {check_type} | {condition} | {message} |
 
 ### Rollback Plan
 
-(Optional) Recovery strategy for failures or misoperations...
+1. {Rollback step 1}
+2. {Rollback step 2}
 
 ### Audit Requirements
 
-(Optional) Audit logs, alert notifications...
+- {Audit requirement 1}
+- {Audit requirement 2}
 ```
 
-### Field Summary
+### Field Reference
 
 | Field | Required | Description |
 |-------|:--------:|-------------|
-| risk_id | YES | Unique risk type ID, lowercase letters, digits, underscores |
-| Display Name | YES | Human-readable name |
-| Control Scope | YES | Associated object/action types and risk levels |
-| Control Strategy | YES | Condition-based control rules (at least one) |
-| Pre-checks | NO | Pre-execution check list |
+| {name} | YES | Risk type display name |
+| Control Scope | YES | Control scope description |
+| Control Policy | YES | Control policies (at least one) |
+| Pre-checks | NO | Pre-execution check items |
 | Rollback Plan | NO | Failure recovery strategy |
-| Audit Requirements | NO | Audit log and alert configuration |
+| Audit Requirements | NO | Audit logging and alerting configuration |
 
-### Risk Levels
+---
 
-| Level | Meaning | Default Control |
-|-------|---------|-----------------|
-| `low` | Read-only or no-side-effect operations | No approval, direct execution |
-| `medium` | Side effects but reversible | Recommend confirmation, audit log |
-| `high` | Irreversible or high-impact | Approval + action simulation + full audit required |
+## Concept Group Definition
+
+Concept groups (ConceptGroup) organize related object types together for better understanding and management.
+
+### Syntax
+
+```markdown
+## ConceptGroup: {name}
+
+{description}
+
+### Object Types
+
+| ID | Name | Description |
+|----|------|-------------|
+| {object_type_id} | {name} | {description} |
+```
+
+### Field Reference
+
+| Field | Required | Description |
+|-------|:--------:|-------------|
+| {name} | YES | Group display name |
+| Object Types | YES | List of included object types |
 
 ---
 
@@ -932,7 +619,7 @@ Use standard Markdown tables:
 | Val1 | Val2 | Val3 |
 ```
 
-Center alignment (for booleans):
+Center alignment (for boolean values):
 
 ```markdown
 | Col1 | Col2 |
@@ -942,7 +629,7 @@ Center alignment (for booleans):
 
 ### YAML Code Blocks
 
-For complex structures (e.g., conditional expressions):
+Used for complex structures (e.g., condition expressions):
 
 ```markdown
 ```yaml
@@ -960,7 +647,7 @@ condition:
 
 ### Mermaid Diagrams
 
-For visualizing relations:
+Used for visualizing relationships:
 
 ```markdown
 ```mermaid
@@ -970,177 +657,120 @@ graph LR
 `` `
 ```
 
-### Blockquote
+### Block Quotes
 
-For key information:
+Used for highlighting key information:
 
 ```markdown
-> **Note**: This object requires an approval workflow
+> **Note**: This object change requires an approval workflow
 ```
 
 ### Heading Levels
 
 Heading levels are consistent across all file types:
 
-- `#` - Document/group heading (for example network title, or `# Objects` / `# Relations` / `# Actions` / `# Risks`)
-- `##` - Definition heading (`## Object:` / `## Relation:` / `## Action:` / `## Risk:`)
-- `###` - In-definition sections (Data Source, Data Properties, Mapping Rules, Trigger Condition, etc.)
-- `####` - Sub-items (for example logic property names)
+- `#` - Network title (`# {Network Name}`)
+- `##` - Type definition (`## ObjectType:` / `## RelationType:` / `## ActionType:` / `## RiskType:` / `## ConceptGroup:`) or network overview (`## Network Overview`)
+- `###` - Sections within definitions (Data Properties, Keys, Endpoint, Mapping Rules, Trigger Condition, etc.)
+- `####` - Sub-items (e.g., logic property names)
 
-> Rule: There is no longer a “single-file level shift”; all definitions use the hierarchy above.
 ---
 
 ## File Organization
 
 ### Root File Discovery and Directory Loading
 
-When a **directory** is passed as the network entry (e.g. `validate network <dir>`, `load_network(dir)`), the SDK/CLI discovers the root file in this order:
+When a **directory** is passed as the network entry point (e.g., `validate network <dir>`, `load_network(dir)`), the SDK/CLI discovers the root file as follows:
 
-1. `network.bkn` (recommended)
-2. `network.md`
-3. `index.bkn` (compatible)
-4. `index.md`
-5. If none of the above exist and exactly one `type: network` file is in the directory, use that file
-6. Otherwise report "root file ambiguous or not found"
+1. `network.bkn`
+2. If not found, report error "root file does not exist"
 
-**Default input when no includes**: When the root file is `type: network` and has no `includes` declared, all files in the same directory that parse as valid BKN (`.bkn`, `.bknd`, `.md`) are treated as the same network input; only the same directory is scanned, not subdirectories. If the root declares `includes`, loading follows `includes` exactly with no implicit directory discovery. This rule applies only to `type: network`, not `fragment`.
+### Directory Structure
 
-### Pattern 1: Single File (Small Networks)
-
-All definitions in one `.bkn` file:
-
-```markdown
----
-type: network
-id: my-network
----
-
-# My Network
-
-## Object: object1
-...
-
-## Object: object2
-...
-
-## Relation: rel1
-...
-
-## Action: action1
-...
-```
-
-### Pattern 2: Split by Type (Medium Networks)
-
-Use `network.bkn` or `index.bkn` to reference other files (recommend `network.bkn`):
-
-```markdown
----
-type: network
-id: my-network
-includes:
-  - objects.bkn
-  - relations.bkn
-  - actions.bkn
----
-
-# My Network
-
-Network description...
-```
-
-### Pattern 3: One Definition per File (Large Networks, Recommended)
-
-Each object, relation, action, and risk in its own file. Two orchestration entry points are supported:
-
-**Pattern A: SKILL.md orchestration** (Agent Skill standard)
+Each object/relation/action/risk is defined in its own file.
 
 ```
 {business_dir}/
-├── SKILL.md                     # agentskills.io standard entry; network topology, index, usage guide
-├── network.bkn                  # recommended root file (index.bkn also compatible)
-├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
-├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
-│   └── erp_db.bkn               # type: connection
-├── objects/
-│   ├── material.bkn             # type: object
-│   └── inventory.bkn           # type: object
-├── relations/
-│   └── material_to_inventory.bkn # type: relation
-├── actions/
-│   ├── check_inventory.bkn      # type: action
-│   └── adjust_inventory.bkn    # type: action
-├── risks/
-│   └── inventory_adjustment_risk.bkn  # type: risk
-└── data/                        # optional, .bknd instance data
-    └── scenario.bknd
+├── SKILL.md                     # agentskills.io standard entry point, contains network topology, index, usage guide
+├── network.bkn                  # Network root file
+├── checksum.txt                 # Optional, directory-level consistency check (generated by SDK generate_checksum_file)
+├── object_types/
+│   ├── material.bkn             # type: object_type
+│   └── inventory.bkn            # type: object_type
+├── relation_types/
+│   └── material_to_inventory.bkn # type: relation_type
+├── action_types/
+│   ├── check_inventory.bkn      # type: action_type
+│   └── adjust_inventory.bkn     # type: action_type
+├── risk_types/
+│   └── inventory_adjustment_risk.bkn  # type: risk_type
+├── concept_groups/
+│   └── supply_chain.bkn         # type: concept_group
+└── data/                        # Optional, .csv instance data
+    └── scenario.csv
 ```
+
+### Data Files (CSV)
+
+Instance data uses standard CSV format, not part of the BKN schema definition, and does not contain YAML frontmatter.
+
+- File extension: `.csv`
+- Encoding: UTF-8 (BOM recommended for Excel compatibility)
+- Column names should match the `Name` column of the target object_type's Data Properties
+- Each CSV file should contain data for only one object type, for easier versioning and auditing
+- CSV files are placed in the `data/` directory
 
 ### SKILL.md and BKN Compatibility
 
-`SKILL.md` is the Agent Skill entry file defined by agentskills.io, used alongside BKN's directory organization:
+`SKILL.md` is the Agent Skill entry file defined by agentskills.io, used complementarily with BKN's directory organization:
 
-- **SKILL.md owns responsibility**: describes Skill capabilities, script entry points, workflows, templates, and output rules for AI Agents.
-- **network.bkn / index.bkn owns structure**: declares network topology and file orchestration via `type: network` frontmatter and `includes`.
-- **Not interchangeable**: SKILL.md is not a BKN root file. `load_network` and `validate network` read `network.bkn` (or `index.bkn`), not `SKILL.md`.
-- **Co-existence recommended**: Place both `SKILL.md` (Agent entry) and `network.bkn` (SDK/CLI entry) in the same directory; each serves its own purpose.
-- **Checksum inclusion**: `SKILL.md` is included in `checksum generate` (hashed after full-text normalization), ensuring Skill description changes are auditable.
-- **Directory validation compatible**: `validate network <dir>` and `load_network(dir)` work correctly in Skill directories — they auto-discover `network.bkn` (or fall back to `index.bkn`); `SKILL.md` does not interfere with network loading.
+- **SKILL.md manages responsibilities**: Describes the Skill's capabilities, script entry points, workflows, templates, and output rules for AI Agent interpretation.
+- **network.bkn manages structure**: Declares network metadata via frontmatter `type: network`; SDK/CLI automatically discovers BKN files in the same directory.
+- **Not interchangeable**: SKILL.md is not a BKN root file. SDK/CLI's `load_network` and `validate network` read `network.bkn`, not `SKILL.md`.
+- **Co-existence recommended**: Place both `SKILL.md` (Agent entry) and `network.bkn` (SDK/CLI entry) in the directory, each serving its own purpose.
+- **Checksum inclusion**: `SKILL.md` is included in `checksum generate` hash computation (normalized full text hash), ensuring Skill description changes are auditable.
+- **Directory validation compatibility**: `validate network <dir>` and `load_network(dir)` work normally in Skill directories — automatically discovering `network.bkn`. SKILL.md does not affect network loading.
 
-**Pattern B: network.bkn / index.bkn orchestration** (recommend `network.bkn`; `index.bkn` compatible)
-
-```
-{business_dir}/
-├── network.bkn                  # recommended: type: network, network entry (priority over index.bkn)
-├── index.bkn                    # compatible: type: network or fragment, used when network.bkn absent
-├── checksum.txt                 # optional; directory-level consistency check (SDK generate_checksum_file)
-├── connections/                 # optional; type: connection definitions (when multiple objects share a data source)
-│   └── k8s_api.bkn              # type: connection
-├── objects/
-│   ├── pod.bkn                  # type: object
-│   ├── node.bkn                 # type: object
-│   └── service.bkn              # type: object
-├── relations/
-│   ├── pod_belongs_node.bkn     # type: relation
-│   └── service_routes_pod.bkn   # type: relation
-├── actions/
-│   ├── restart_pod.bkn          # type: action
-│   └── cordon_node.bkn          # type: action
-├── risks/
-│   └── pod_restart_risk.bkn     # type: risk
-└── data/                        # optional, .bknd instance data
-```
-
-Directory names (`objects/`, `relations/`, `actions/`, `risks/`, `connections/`, `data/`) are conventions; the file `type` field is the authoritative definition type.
-
-**Single object file example** (`pod.bkn`):
+**Object Type File Example** (`pod.bkn`):
 
 ```markdown
 ---
-type: object
+type: object_type
 id: pod
 name: Pod Instance
-network: k8s-network
+tags: [topology, container, Kubernetes]
 ---
 
-## Object: pod
+## ObjectType: Pod Instance
 
-**Pod Instance**
+The smallest deployable unit in Kubernetes, a collection of one or more containers.
 
-Minimal deployable unit in Kubernetes.
+### Data Properties
 
-## Data Source
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | ID | integer | Primary key ID | id |
+| pod_name | Pod Name | string | Pod name | pod_name |
+| pod_status | Pod Status | string | Pod status (Running/Pending/Failed) | pod_status |
+| pod_node_name | Node | string | Node name where Pod resides | pod_node_name |
+| pod_namespace | Namespace | string | Pod namespace | pod_namespace |
+| pod_ip | Pod IP | string | Pod IP address | pod_ip |
+| pod_created_at | Created At | datetime | Pod creation time | pod_created_at |
 
-| Type | ID |
-|------|-----|
-| data_view | view_123 |
+### Logic Properties
 
-## Data Properties
 
-| Property | Primary Key | Display Key |
-|----------|:-----------:|:-----------:|
-| id | YES | |
-| pod_name | | YES |
+### Keys
+
+Primary Keys: id
+Display Key: pod_name
+Incremental Key:
+
+### Data Source
+
+| Type | ID | Name |
+|------|-----|------|
+| data_view | d2mio43q6gt6p380dis0 | pod_info_view |
 ```
 
 ---
@@ -1149,192 +779,146 @@ Minimal deployable unit in Kubernetes.
 
 BKN supports dynamically importing any `.bkn` file into an existing knowledge network.
 
-### Importer Capability Requirements (for Engineering Control)
+### Importer Capability Requirements
 
-Implement a **BKN Importer** that converts BKN files into system changes with these capabilities (all required):
+It is recommended to implement a **BKN Importer** that converts BKN files into system changes, providing the following capabilities (all required):
 
 | Capability | Description | Purpose |
 |------------|-------------|---------|
-| `validate` | Structure/table/YAML block validation, reference integrity, parameter binding check | Prevent errors from entering the system |
+| `validate` | Structure/table/YAML block validation, referential integrity check, parameter binding validation | Prevent errors from entering the system |
 | `diff` | Compute change set (add/update/delete) and impact scope | Make changes explainable and auditable |
-| `dry_run` | Execute validate + diff without applying | Pre-deployment rehearsal |
-| `apply` | Execute changes (per deterministic semantics and conflict strategy) | Controlled execution |
-| `export` | Export knowledge network state to BKN (round-trip capable) | Prevent drift, rollback, reproducibility |
+| `dry_run` | Execute validate + diff without persisting | Pre-deployment rehearsal |
+| `apply` | Persist changes (with deterministic semantics and conflict strategy) | Controlled execution |
+| `export` | Export live knowledge network state as BKN (round-trip capable) | Prevent drift, enable rollback and reproducibility |
 
 > Requirement: All import operations must record audit information (operator, timestamp, input file fingerprint, change set, result).
 
-### Import Determinism (Required)
+### Import Determinism (Must Be Guaranteed)
 
-For multi-user collaboration and replay, import semantics must be **deterministic**:
+To ensure multi-user collaboration and replayability, import semantics must be **deterministic**:
 
-- Same set of input files (ignoring filesystem order) yields same result
-- Repeated import of the same file yields same result (idempotent)
-- Conflicts must be explainable: either fail explicitly (fail-fast) or follow a defined rule (e.g., last-wins); no implicit merging
+- Same set of input files (regardless of filesystem order) produce the same result
+- Repeated import of the same file produces the same result (idempotent)
+- Conflicts are explainable: either fail-fast explicitly, or follow clear rules (e.g., last-wins); no "implicit merging"
 
 ### Unique Key and Scope
 
-The unique key for each definition is recommended as:
+The suggested unique key for each definition:
 
 - `key = (network_id, type, id)`
 
-Where `network_id` comes from:
-
-- Prefer frontmatter `network`
-- If missing, use import target network (import command parameter or `type: network` `id`)
+Where `network_id` is determined by the import target network (import command parameter or `type: network`'s `id`).
 
 ### Update Semantics (replace vs merge)
 
-**Replace (full overwrite)** is recommended by default:
+Default recommendation is **replace (whole-section overwrite)**:
 
-- When `key` already exists, replace the old definition with the imported definition
-- **Missing field does not mean delete**: Only means the field is not in this definition; deletion should be performed via the SDK/CLI delete API, not via BKN files
+- When a `key` already exists, the definition in the import file entirely replaces the old definition
+- **Missing fields do not mean deletion**: They only mean "this field is not in the current definition"; deleting elements should be done via SDK/CLI's explicit delete API, not through BKN files
 
-If needed, **merge-by-section** may be supported under control, with:
+If needed, controlled **merge-by-section** can be supported, but must satisfy:
 
-- Merge limited to additive sections (e.g., Property Override, Logic Properties)
-- Conflicts must be controllable: fail-fast or last-wins for same-name logic properties/field configs (configurable)
-- Merge strategy must be explicitly configured in the importer and recorded in audit logs
+- Only allow merging for a few "additive sections" (e.g., `property overrides`, `logic properties`)
+- Conflicts must be controllable: same-name logic properties/field configurations should fail-fast or last-wins (configurable)
+- Merge strategy must be explicitly configured in the importer and recorded in the import audit log
 
 ### Conflict and Priority
 
-When the same `key` is declared by multiple files in one import batch:
+When the same `key` is declared by multiple files in a single import batch:
 
-- Default: **fail-fast** (recommended for stability)
-- Optional: Explicit priority ordering (e.g., command-line order or `priority` field); otherwise not recommended
+- Default: **fail-fast** (recommended, ensures stability)
+- Optional: Sort by explicit priority (e.g., command-line order or `priority` field), otherwise not recommended
 
 ### Import Behavior
 
 | Scenario | Behavior |
 |----------|----------|
 | ID does not exist | Create new definition |
-| ID exists | Update definition (overwrite) |
-| Delete element | Performed via SDK/CLI delete API explicitly, not via BKN files |
+| ID already exists | Update definition (overwrite) |
+| Delete element | Execute explicitly via SDK/CLI delete API, not through BKN files |
 
 ### Import Examples
 
-**Scenario: Add new object to existing network**
+**Scenario: Adding a new object type to an existing network**
 
 Create `deployment.bkn`:
 
 ```markdown
 ---
-type: object
+type: object_type
 id: deployment
 name: Deployment
-network: k8s-network
+tags: [k8s]
 ---
 
-## Object: deployment
-
-**Deployment**
+## ObjectType: Deployment
 
 Kubernetes deployment controller.
 
-## Data Source
+### Data Properties
 
-| Type | ID |
-|------|-----|
-| data_view | deployment_view |
+| Name | Display Name | Type | Description | Mapped Field |
+|------|--------------|------|-------------|--------------|
+| id | ID | integer | Unique identifier | id |
+| deployment_name | Deployment Name | string | Deployment name | deployment_name |
 
-## Data Properties
+### Logic Properties
 
-| Property | Primary Key | Display Key |
-|----------|:-----------:|:-----------:|
-| id | YES | |
-| deployment_name | | YES |
-```
 
-After import, `k8s-network` will include the new `deployment` object.
+### Keys
 
-**Scenario: Update existing object**
-
-Create a file with the same ID; import will overwrite:
-
-```markdown
----
-type: object
-id: pod
-name: Pod Instance (Updated)
-network: k8s-network
----
-
-## Object: pod
-
-**Pod Instance (Updated)**
-
-Updated definition...
-```
-
-**Scenario: Batch import (fragment)**
-
-```markdown
----
-type: fragment
-id: monitoring-extension
-name: Monitoring Extension
-network: k8s-network
----
-
-# Monitoring Extension
-
-Add monitoring-related objects and actions.
-
-## Object: alert
-
-**Alert**
+Primary Keys: id
+Display Key: deployment_name
+Incremental Key:
 
 ### Data Source
 
-| Type | ID |
-|------|-----|
-| data_view | alert_view |
+| Type | ID | Name |
+|------|-----|------|
+| data_view | deployment_view | Deployment View |
+```
 
-### Data Properties
+After import, the network will contain the new `deployment` object type.
 
-| Property | Primary Key | Display Key |
-|----------|:-----------:|:-----------:|
-| id | YES | |
-| alert_name | | YES |
+**Scenario: Updating an existing object type**
 
+Create a file with the same ID; import will automatically overwrite:
+
+```markdown
+---
+type: object_type
+id: pod
+name: Pod Instance (Updated)
+tags: [topology, container, Kubernetes]
 ---
 
-## Action: send_alert
+## ObjectType: Pod Instance (Updated)
 
-**Send Alert**
-
-| Bound Object | Action Type |
-|--------------|-------------|
-| alert | add |
-
-### Tool Configuration
-
-| Type | Tool ID |
-|------|---------|
-| tool | alert_sender |
+Updated definition...
 ```
 
 ---
 
 ## No-Patch Update Model
 
-BKN uses a **no-patch update model**: definition files are for add and modify only; deletion is performed explicitly via the SDK/CLI API.
+BKN uses a **no-patch update model**: definition files are used only for adding and modifying; deletion is performed explicitly via SDK/CLI API.
 
 ### Definition File Import (add/modify)
 
-- When importing a single `.bkn` or `.bknd` file, perform **upsert** (add or overwrite) by `(network, type, id)`
-- To modify: edit the corresponding definition file and re-import to overwrite
-- Missing fields do not mean delete: they only indicate the field is not in this definition
+- When importing a single `.bkn` file, **upsert** (create or overwrite) is performed by `(network, type, id)`
+- Modify: Edit the corresponding definition file and re-import to overwrite
+- Missing fields do not mean deletion: They only mean "this field is not in the current definition"
 
 ### Deleting Elements
 
-- Deletion should be performed explicitly via the **SDK/CLI delete API**, not via BKN files
-- Delete operations require: explicit parameters, auditability, dry-run support, and batch delete
+- Deletion should be performed explicitly via **SDK/CLI's delete API**, not through BKN files
+- Delete operations require: explicit parameters, auditability, support for dry-run and batch deletion
 
-### Edit Workflow
+### Editing Workflow
 
-1. **Add**: Create `.bkn` file and import
-2. **Modify**: Edit `.bkn` file and re-import
-3. **Delete**: Call the SDK/CLI delete API
+1. **Add**: Create a `.bkn` file, import
+2. **Modify**: Edit the `.bkn` file, re-import
+3. **Delete**: Call SDK/CLI's delete interface
 
 ---
 
@@ -1342,35 +926,33 @@ BKN uses a **no-patch update model**: definition files are for add and modify on
 
 ### Naming Conventions
 
-- **ID**: Lowercase letters, digits, underscores (e.g., `pod_belongs_node`)
-- **Display name**: Concise and clear (e.g., "Pod belongs to Node")
-- **Tags**: Use a consistent tag system
+- **ID**: Lowercase letters, numbers, underscores, e.g., `pod_belongs_node`
+- **Display Name**: Concise and clear, e.g., "Pod belongs to Node"
+- **Tags**: Use a unified tagging system
 
 ### Document Structure
 
-1. Put network description at the beginning
-2. Use mermaid diagrams for overall topology
+1. Place network description at the beginning of the file
+2. Use mermaid diagrams to show overall topology
 3. Object definitions first, then relations and actions
-4. Group related definitions together
+4. Keep related definitions together
 
-### Simplicity
+### Simplicity Principle
 
-- Prefer full mapping mode
-- Declare property overrides only when needed
 - Avoid duplicate information
+- Each definition file should have a single responsibility
 
 ### Readability
 
 - Use tables for structured data
-- Add business semantics
-- Use mermaid diagrams when helpful
+- Add business semantic descriptions
+- Use mermaid diagrams when necessary
 
 ---
 
 ## References
 
-- [Architecture Design](./ARCHITECTURE.md)
+- [Architecture](./ARCHITECTURE.md)
 - Examples:
-  - [Single-file mode](../examples/k8s-topology.bkn) — All definitions in one file
-  - [Split by type](../examples/k8s-network/) — Objects, relations, actions in separate files
-  - [One definition per file](../examples/k8s-modular/) — Each definition in its own file (recommended for large-scale use)
+  - [K8s Network](../examples/k8s-network/) - Kubernetes topology knowledge network
+  - [Supply Chain Network](../examples/supplychain-hd/) - Supply chain business knowledge network
