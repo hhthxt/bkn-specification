@@ -267,11 +267,11 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 					Type:             "action_type",
 					ID:               "restart",
 					Name:             "Restart Pod",
-					ActionType:       "modify",
 					RiskLevel:        "high",
 					RequiresApproval: true,
 				},
-				ObjectTypeID: "pod",
+				BoundObject: "pod",
+				ActionType:  "modify",
 				Parameters: []Parameter{
 					{Name: "graceful", Type: "boolean", Source: "const", Value: true},
 				},
@@ -314,7 +314,7 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 	assert.Equal(t, "modify", loaded.ActionTypes[0].ActionType)
 	assert.Equal(t, "high", loaded.ActionTypes[0].RiskLevel)
 	assert.True(t, loaded.ActionTypes[0].RequiresApproval)
-	assert.Equal(t, "pod", loaded.ActionTypes[0].ObjectTypeID)
+	assert.Equal(t, "pod", loaded.ActionTypes[0].BoundObject)
 }
 
 // === Round Trip Tests ===
@@ -361,12 +361,12 @@ func TestRoundTrip_NetworkWithAllTypes(t *testing.T) {
 		ActionTypes: []*BknActionType{
 			{
 				BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-					Type:       "action_type",
-					ID:         "act1",
-					Name:       "Action 1",
-					ActionType: "create",
+					Type: "action_type",
+					ID:   "act1",
+					Name: "Action 1",
 				},
-				ObjectTypeID: "obj1",
+				BoundObject: "obj1",
+				ActionType:  "create",
 			},
 		},
 	}

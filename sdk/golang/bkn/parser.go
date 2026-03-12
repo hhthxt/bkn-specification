@@ -1,3 +1,8 @@
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
+
 package bkn
 
 import (
@@ -461,7 +466,6 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 			Name:             strVal(fmData, "name"),
 			Tags:             strSliceVal(fmData, "tags"),
 			Description:      extractBodyDescription(text),
-			ActionType:       strVal(fmData, "action_type"),
 			Enabled:          parseBool(fmData, "enabled"),
 			RiskLevel:        strVal(fmData, "risk_level"),
 			RequiresApproval: parseBool(fmData, "requires_approval"),
@@ -472,7 +476,10 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	sections := extractSections(text, "###")
 
 	if s, ok := sections["Bound Object"]; ok {
-		act.ObjectTypeID, act.BoundObject = parseBoundObject(s)
+		act.BoundObject, act.ActionType = parseBoundObject(s)
+	}
+	if s, ok := sections["Affect Object"]; ok {
+		act.AffectObject = parseAffectObject(s)
 	}
 	if s, ok := sections["Trigger Condition"]; ok {
 		act.TriggerCondition = parseTriggerCondition(s)
@@ -512,13 +519,23 @@ func parseBool(m map[string]any, key string) bool {
 }
 
 // parseBoundObject parses the bound object section.
-func parseBoundObject(sectionText string) (objectTypeID, boundObject string) {
+func parseBoundObject(sectionText string) (boundObject, actionType string) {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
 		return "", ""
 	}
 	r := rows[0]
 	return r["Bound Object"], r["Action Type"]
+}
+
+// parseAffectObject parses the affect object section.
+func parseAffectObject(sectionText string) (affectObject string) {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return ""
+	}
+	r := rows[0]
+	return r["Affect Object"]
 }
 
 // parseTriggerCondition parses the trigger condition from YAML code block.

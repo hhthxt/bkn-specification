@@ -189,7 +189,6 @@ type: action_type                # Action type definition
 id: string                       # Action ID, unique identifier
 name: string                     # Action display name
 tags: [string]                   # Optional, tag list
-action_type: add | modify | delete | query  # Optional, action type
 enabled: boolean                 # Optional, whether enabled (default false recommended)
 risk_level: low | medium | high  # Optional, static risk level
 requires_approval: boolean       # Optional, whether approval is required

@@ -1,3 +1,8 @@
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
+
 package bkn
 
 import "io/fs"
@@ -14,11 +19,11 @@ const (
 
 // DiffEntry represents a single definition's diff result.
 type DiffEntry struct {
-	Type         string     // "object_type", "relation_type", "action_type", "risk_type"
-	ID           string
-	Action       DiffAction
-	OldChecksum  string // empty for create
-	NewChecksum  string // empty for delete
+	Type        string // "object_type", "relation_type", "action_type", "risk_type"
+	ID          string
+	Action      DiffAction
+	OldChecksum string // empty for create
+	NewChecksum string // empty for delete
 }
 
 // DiffResult holds the complete diff between two network states.
@@ -176,7 +181,7 @@ func indexOf(s string, c byte) int {
 }
 
 func trimSpace(s string) string {
-	return s[firstNonSpace(s):lastNonSpace(s)+1]
+	return s[firstNonSpace(s) : lastNonSpace(s)+1]
 }
 
 func firstNonSpace(s string) int {

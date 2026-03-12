@@ -1,3 +1,8 @@
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
+
 package bkn
 
 // BknNetworkFrontmatter is YAML frontmatter metadata for a .bkn file.
@@ -145,7 +150,6 @@ type BknActionTypeFrontmatter struct {
 	Tags        []string `yaml:"tags"`
 	Description string   `yaml:"description"`
 
-	ActionType       string `yaml:"action_type"`
 	Enabled          bool   `yaml:"enabled"`
 	RiskLevel        string `yaml:"risk_level"`
 	RequiresApproval bool   `yaml:"requires_approval"`
@@ -157,8 +161,9 @@ type BknActionType struct {
 	RawContent string
 
 	// Bound Object
-	ObjectTypeID string
 	BoundObject  string
+	ActionType   string
+	AffectObject string
 
 	// Trigger Condition
 	TriggerCondition *CondCfg
@@ -169,7 +174,6 @@ type BknActionType struct {
 
 	// Scope of Impact
 	ScopeOfImpact []*ImpactEntry
-	Affect        *ActionAffect
 
 	// Tool Configuration
 	ToolConfig   *ToolConfiguration
@@ -219,12 +223,6 @@ type ToolConfiguration struct {
 type Schedule struct {
 	Type       string // FIX_RATE, CRON, etc.
 	Expression string
-}
-
-// ActionAffect represents action affect.
-type ActionAffect struct {
-	ObjectTypeID string
-	Description  string
 }
 
 // ActionSource represents action source.

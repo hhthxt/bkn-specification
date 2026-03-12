@@ -469,14 +469,13 @@ func verifyActionTypes(t *testing.T, original, result []*bkn.BknActionType) {
 		assert.Equal(t, orig.Name, at.Name, "action %s: Name mismatch", at.ID)
 		assert.Equal(t, orig.Description, at.Description, "action %s: Description mismatch", at.ID)
 		assert.ElementsMatch(t, orig.Tags, at.Tags, "action %s: Tags mismatch", at.ID)
-		assert.Equal(t, orig.ActionType, at.ActionType, "action %s: ActionType mismatch", at.ID)
 		assert.Equal(t, orig.Enabled, at.Enabled, "action %s: Enabled mismatch", at.ID)
 		assert.Equal(t, orig.RiskLevel, at.RiskLevel, "action %s: RiskLevel mismatch", at.ID)
 		assert.Equal(t, orig.RequiresApproval, at.RequiresApproval, "action %s: RequiresApproval mismatch", at.ID)
 
 		// Compare Bound Object
-		assert.Equal(t, orig.ObjectTypeID, at.ObjectTypeID, "action %s: ObjectTypeID mismatch", at.ID)
 		assert.Equal(t, orig.BoundObject, at.BoundObject, "action %s: BoundObject mismatch", at.ID)
+		assert.Equal(t, orig.ActionType, at.ActionType, "action %s: ActionType mismatch", at.ID)
 
 		// Compare Parameters count
 		assert.Equal(t, len(orig.Parameters), len(at.Parameters), "action %s: Parameters count mismatch", at.ID)

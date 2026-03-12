@@ -255,7 +255,6 @@ func TestParseActionType_Basic(t *testing.T) {
 type: action_type
 id: restart
 name: Restart Pod
-action_type: modify
 risk_level: high
 requires_approval: true
 ---
@@ -280,10 +279,10 @@ Restart a pod gracefully
 	at, err := ParseActionTypeFile(text, "/test/restart.bkn")
 	require.NoError(t, err)
 	assert.Equal(t, "restart", at.ID)
-	assert.Equal(t, "modify", at.ActionType)
 	assert.Equal(t, "high", at.RiskLevel)
 	assert.True(t, at.RequiresApproval)
-	assert.Equal(t, "pod", at.ObjectTypeID)
+	assert.Equal(t, "pod", at.BoundObject)
+	assert.Equal(t, "modify", at.ActionType)
 	require.Len(t, at.Parameters, 2)
 	assert.Equal(t, "graceful", at.Parameters[0].Name)
 }
@@ -293,7 +292,6 @@ func TestParseActionType_WithSchedule(t *testing.T) {
 type: action_type
 id: backup
 name: Backup Data
-action_type: create
 ---
 
 ## ActionType: backup

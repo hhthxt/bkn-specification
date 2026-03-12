@@ -17,6 +17,7 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 | pod_name | Pod名称 | string | Pod名称 | pod_name |
 | pod_status | Pod状态 | string | Pod状态 (Running/Pending/Failed) | pod_status |
 | pod_node_name | 所在节点 | string | Pod所在节点名称 | pod_node_name |
+| pod_service_name | 所在服务 | string | Pod所在服务名称 | pod_service_name |
 | pod_namespace | 命名空间 | string | Pod所属命名空间 | pod_namespace |
 | pod_ip | Pod IP | string | Pod IP地址 | pod_ip |
 | pod_created_at | 创建时间 | datetime | Pod创建时间 | pod_created_at |

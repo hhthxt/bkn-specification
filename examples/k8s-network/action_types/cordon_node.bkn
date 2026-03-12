@@ -3,7 +3,6 @@ type: action_type
 id: cordon_node
 name: 隔离节点
 tags: [运维操作, 节点管理]
-action_type: modify
 enabled: false
 risk_level: high
 requires_approval: true
@@ -18,6 +17,11 @@ requires_approval: true
 | Bound Object | Action Type |
 |--------------|-------------|
 | node | modify |
+
+### Affect Object
+
+| Affect Object | 
+|---------------|-------------|
 
 ### Trigger Condition
 

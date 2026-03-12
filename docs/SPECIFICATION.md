@@ -189,7 +189,6 @@ type: action_type                # 行动类型定义
 id: string                       # 行动ID，唯一标识
 name: string                     # 行动显示名称
 tags: [string]                   # 可选，标签列表
-action_type: add | modify | delete | query  # 可选，行动类型
 enabled: boolean                 # 可选，是否启用（建议默认 false）
 risk_level: low | medium | high  # 可选，静态风险等级
 requires_approval: boolean       # 可选，是否需要审批
@@ -426,6 +425,14 @@ Pod 实例与其所属 Node 的归属关系。
 | Bound Object | Action Type |
 |--------------|-------------|
 | {object_type_id} | add 或 modify 或 delete |
+
+### Affect Object
+
+(optional) 影响的对象类型 ID，用于声明行动对哪些对象有影响。
+
+| Affect Object |
+|---------------|
+| {affect_type_id} |
 
 ### Trigger Condition
 

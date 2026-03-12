@@ -171,11 +171,12 @@ classDiagram
     class Action {
         +String id
         +String name
-        +String action_type
-        +String object_type_id
         +Boolean enabled
         +String risk_level
         +Boolean requires_approval
+        +String action_type
+        +String bound_object
+        +String affect_object
         +Condition condition
         +List~PreCondition~ pre_conditions
         +ActionSource action_source
