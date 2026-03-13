@@ -1,5 +1,9 @@
 {
   "files.associations": {
     "*.bkn": "markdown"
-  }
+  },
+  "go.testFlags": [
+    "-v",
+    "-gcflags=all=-l",
+  ]
 }

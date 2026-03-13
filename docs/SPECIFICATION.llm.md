@@ -2,20 +2,20 @@
 
 你负责生成符合 BKN 格式的 Markdown，供业务知识网络建模使用。
 
-## 文件扩展名与载体
+## 文件扩展名
 
-- `.bkn` / `.bknd`：推荐扩展名
-- `.md`：兼容载体，可用 `.md` 保存；内容必须满足 BKN frontmatter、`type` 及结构约束，否则加载时报错
+- `.bkn`：BKN 定义文件（schema）
+- `.csv`：实例数据文件（标准 CSV 格式，不含 frontmatter，不属于 BKN schema）
 
 ## 根文件与目录加载
 
-- **根文件命名**：推荐 `network.bkn` 作为网络入口；`index.bkn` 兼容，优先级低于 `network.bkn`
-- **目录输入**：`validate network <dir>`、`load_network(dir)` 等支持传入目录，自动发现根文件（顺序：network.bkn > network.md > index.bkn > index.md）
-- **无 includes**：当根文件为 `type: network` 且未声明 `includes` 时，同目录下所有 BKN 文件视为同一网络输入；有 `includes` 则按 `includes` 加载
+- **根文件**：`network.bkn`，唯一入口
+- **目录输入**：`validate network <dir>`、`load_network(dir)` 等支持传入目录，自动发现 `network.bkn`；若不存在则报错
+- SDK/CLI 自动发现同目录下的 BKN 文件，无需 `includes` 声明
 
 ## 文件结构
 
-每个 BKN 文件（`.bkn` / `.bknd` / `.md`）由两部分组成：
+每个 `.bkn` 文件由两部分组成：
 1. **YAML Frontmatter**（元数据，以 `---` 包裹）
 2. **Markdown Body**（定义内容）
 
@@ -23,104 +23,209 @@
 
 | type | 说明 |
 |------|------|
-| object | 单个对象定义 |
-| relation | 单个关系定义 |
-| action | 单个行动定义 |
-| risk | 单个风险定义 |
-| network | 含多个定义的网络文件 |
-| fragment | 混合片段 |
-| data | 数据文件，承载 object/relation 的实例数据行（建议 `.bknd`） |
-| connection | 可复用的数据源连接定义（可选；多对象共享同一数据源时使用） |
+| `network` | 完整知识网络顶层容器 |
+| `object_type` | 单个对象类型定义 |
+| `relation_type` | 单个关系类型定义 |
+| `action_type` | 单个行动类型定义 |
+| `risk_type` | 单个风险类型定义 |
+| `concept_group` | 概念分组 |
 
-## 对象 (Object)
+## 目录结构
+
+```
+{business_dir}/
+├── SKILL.md                     # agentskills.io 标准入口
+├── network.bkn                  # 网络根文件
+├── object_types/
+│   └── {object}.bkn
+├── relation_types/
+│   └── {relation}.bkn
+├── action_types/
+│   └── {action}.bkn
+├── risk_types/
+│   └── {risk}.bkn
+├── concept_groups/
+│   └── {group}.bkn
+└── data/                        # 可选，.csv 实例数据
+    └── {object}.csv
+```
+
+## 网络 (Network)
 
 ```yaml
 ---
-type: object
-id: {object_id}        # 小写+下划线
+type: network
+id: {network_id}
 name: {显示名称}
-network: {network_id}
+tags: [tag1, tag2]               # 可选
+business_domain: {domain}        # 可选
 ---
 ```
 
-正文结构（与 network/fragment 内嵌定义保持一致）：
-- `## Object: {object_id}`
-- `**{显示名称}**` + 简短描述
-- （可选）定义级元数据：`- **Tags**: tag1, tag2`、`- **Owner**: owner`
-- `### Data Source`：表格，列 Type | ID | Name，行 data_view | {view_id} | {view_name}、connection | {connection_id} | {display_name} 或 bknd | {object_id} | {display_name}。仅当 Data Source 为 `bknd` 时可为该对象创建 `.bknd` 数据文件；`data_view` 或 `connection` 时不可用 `.bknd`
-- `### Data Properties`（必须）：表格，列 Property | Display Name | Type | Constraint | Description | Primary Key | Display Key | Index
-  - 至少标记一个 `Primary Key: YES`（主键）和一个 `Display Key: YES`（展示键）
-  - 最简形式可只含 Property | Primary Key | Display Key 三列
-- Type 列标准类型：int32, int64, integer, float32, float64, float, decimal(p,s), decimal, bool, VARCHAR, TEXT, DATE, TIME, TIMESTAMP, JSON, BINARY；不在列表中的类型透传
-- `### Property Override`（可选）：表格，列 Property | Display Name | Index Config | Constraint | Description
-  - Index Config 语法：`keyword`、`keyword(max_len)`、`fulltext`、`fulltext(analyzer)`、`vector`、`vector(model_id)`，可组合如 `keyword(1024) + fulltext(standard) + vector(model_id)`
-- Constraint 列语法：`operator` / `operator(args)` / `operator value`；多条用 `; ` 组合（AND）
-  - 比较：`== v`、`!= v`、`> v`、`< v`、`>= v`、`<= v`
-  - 范围：`range(min,max)`
-  - 枚举：`in(v1,v2,...)`、`not_in(v1,v2,...)`
-  - 存在性：`not_null`、`exist`、`not_exist`
-  - 正则：`regex:pattern`
-  - 示例：`not_null; >= 0`、`in(Running,Pending,Failed)`、`regex:^[a-z0-9_]+$`
-- `### Logic Properties`（可选）：`#### {property_name}`，含 Type/Source/Description、Parameter 表；Parameter 表列为 Parameter | Type | Source | Binding | Description
-- `### Business Semantics`（可选）：业务说明
+正文：
+- `# {显示名称}` + 描述
+- `## Network Overview`：网络概览（对象/关系/行动列表）
 
-## 关系 (Relation)
+## 对象类型 (ObjectType)
 
 ```yaml
 ---
-type: relation
+type: object_type
+id: {object_id}                  # 小写+下划线
+name: {显示名称}
+tags: [tag1, tag2]               # 可选
+---
+```
+
+正文结构：
+- `## ObjectType: {显示名称}` + 简短描述
+- `### Data Properties`（必须）：表格，列 Name | Display Name | Type | Description | Mapped Field
+- `### Keys`（必须）：
+  - `Primary Keys: {key_name}`（至少一个）
+  - `Display Key: {key_name}`（一个）
+  - `Incremental Key: {key_name}`（可选，可为空）
+- `### Logic Properties`（可选）：`#### {property_name}`，含 Display/Type/Source/Description，以及 Parameter 表（列 Parameter | Type | Source | Binding | Description）
+  - Source 值：`property`（对象属性）/ `input`（用户输入）/ `const`（常量）
+  - Binding：Source 为 property 时填属性名，const 时填常量值，input 时填 `-`
+- `### Data Source`（可选）：表格，列 Type | ID | Name，行 `data_view | {view_id} | {view_name}`
+
+### 数据类型
+
+Type 列标准类型（大小写不敏感）：
+
+| 类型 | 说明 |
+|------|------|
+| string | 字符串 |
+| integer | 整数 |
+| float | 浮点数 |
+| decimal | 精确十进制数 |
+| boolean | 布尔值 |
+| date | 日期（无时间） |
+| time | 时间（无日期） |
+| datetime | 日期时间 |
+| text | 长文本 |
+| json | JSON 结构数据 |
+| binary | 二进制数据 |
+
+不在列表中的类型透传。
+
+## 关系类型 (RelationType)
+
+```yaml
+---
+type: relation_type
 id: {relation_id}
 name: {显示名称}
-network: {network_id}
+tags: [tag1, tag2]               # 可选
 ---
 ```
 
 正文：
-- `## Relation: {relation_id}`
-- `**{显示名称}**` + 简短描述
-- （可选）定义级元数据：`- **Tags**: tag1, tag2`、`- **Owner**: owner`
-- `### Endpoints`：表格 Source | Target | Type（direct 或 data_view），可选列 Required | Min | Max（基数约束）
-- `### Mapping Rules`：表格 Source Property | Target Property
-- `data_view` 类型时还需 `### Mapping View`、`### Source Mapping`、`### Target Mapping`
+- `## RelationType: {显示名称}` + 简短描述
+- `### Endpoint`（必须）：表格 Source | Target | Type（`direct` 或 `data_view`）
+- **direct 类型**时：
+  - `### Mapping Rules`：表格 Source Property | Target Property
+- **data_view 类型**时：
+  - `### Mapping View`：表格 Type | ID
+  - `### Source Mapping`：表格 Source Property | View Property
+  - `### Target Mapping`：表格 View Property | Target Property
 
-## 行动 (Action)
+## 行动类型 (ActionType)
 
 ```yaml
 ---
-type: action
+type: action_type
 id: {action_id}
 name: {显示名称}
-network: {network_id}
-action_type: add | modify | delete
+tags: [tag1, tag2]               # 可选
+enabled: boolean                 # 可选，建议默认 false
+risk_level: low | medium | high  # 可选
+requires_approval: boolean       # 可选
 ---
 ```
 
 正文：
-- `## Action: {action_id}`
-- `**{显示名称}**` + 简短描述
-- `### Bound Object`：表格 Bound Object | Action Type
-- `### Trigger Condition`：YAML 块，含 field、operation、value（field 为属性名，operation 为 ==/!=/>/</>=/<=/in/not_in/exist/not_exist，value 为比较值）
-- `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message，Check 为 property:{name} 或 relation:{id}
-- `### Tool Configuration`（必须）：Type | Tool ID 或 Type | MCP。tool 时列 Type | Tool ID；mcp 时列 Type | MCP
-- `### Parameter Binding`（必须）：Parameter | Type | Source | Binding | Description，Source 为 property/input/const
-- `### Scope of Impact`（可选）：Object | Impact Description
+- `## ActionType: {显示名称}` + 简短描述
+- `### Bound Object`（必须）：表格 Bound Object | Action Type（`add` 或 `modify` 或 `delete`）
+- `### Affect Object`（可选）：表格 Affect Object
+- `### Trigger Condition`（可选）：YAML 代码块，格式：
+  ```yaml
+  condition:
+    object_type_id: {object_type_id}
+    field: {property_name}
+    operation: == | != | > | < | >= | <= | in | not_in | exist | not_exist
+    value: {value}
+  ```
+- `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message
+  - Check 格式：`relation:{relation_id}` 或 `property:{property_name}`
+- `### Scope of Impact`（可选）：表格 Object | Impact Description
+- `### Tool Configuration`（必须）：
+  - tool 类型：表格 Type | Toolbox ID | Tool ID
+  - mcp 类型：表格 Type | MCP ID | Tool Name
+- `### Parameter Binding`（必须）：表格 Parameter | Type | Source | Binding | Description
+  - Source 值：`property` / `input` / `const`
+- `### Schedule`（可选）：表格 Type | Expression（`FIX_RATE` 或 `CRON`）
+- `### Execution Description`（可选）：编号列表描述执行流程
 
-## 风险 (Risk)
+### 触发条件操作符
 
-风险定义独立于 action。正文结构：`## Risk: {risk_id}`、`### 管控范围`、`### 管控策略`、`### 前置检查`（可选）、`### 回滚方案`（可选）、`### 审计要求`（可选）。
+| 操作符 | 说明 |
+|--------|------|
+| == | 等于 |
+| != | 不等于 |
+| > / < / >= / <= | 比较 |
+| in / not_in | 包含于/不包含于 |
+| exist / not_exist | 存在/不存在 |
+| range | 范围内 |
 
-## 连接定义 (type: connection)（可选）
+## 风险类型 (RiskType)
 
-当多个对象共享同一数据源连接时，可定义 `type: connection` 文件。正文结构：`## Connection: {connection_id}`、`### Connection` 表格（列 Type | Endpoint | Secret Ref）。**不得**在 BKN 中写入明文凭据，仅使用 `secret_ref` 或环境变量引用。Object 的 Data Source 可写 `connection | {connection_id}` 引用该连接。
+```yaml
+---
+type: risk_type
+id: {risk_id}
+name: {显示名称}
+tags: [tag1, tag2]               # 可选
+---
+```
 
-## 数据文件 (type: data / .bknd)
+正文：
+- `## RiskType: {显示名称}` + 简短描述
+- `### Control Scope`（必须）：管控范围描述文字
+- `### Control Policy`（必须）：策略要点列表（至少一条）
+- `### Pre-checks`（可选）：表格 Object | Check | Condition | Message
+- `### Rollback Plan`（可选）：编号列表描述回滚步骤
+- `### Audit Requirements`（可选）：审计要求列表
 
-仅当 Object 的 Data Source 为 `bknd` 时，可为该对象创建 `.bknd` 数据文件。Data Source 为 `data_view` 或 `connection` 的对象数据来自外部系统，**不要**为其生成 `.bknd`。Frontmatter 示例：`type: data`、`network`、`object` 或 `relation`（二选一）。正文为标题 + 一个表格，列名与目标 object 的 Data Properties 一致。
+## 概念分组 (ConceptGroup)
+
+```yaml
+---
+type: concept_group
+id: {group_id}
+name: {显示名称}
+tags: [tag1, tag2]               # 可选
+---
+```
+
+正文：
+- `## ConceptGroup: {显示名称}` + 简短描述
+- `### Object Types`（必须）：表格 ID | Name | Description
+
+## 数据文件 (CSV)
+
+实例数据使用标准 CSV 格式，不含 YAML frontmatter。
+
+- 列名与目标 object_type 的 Data Properties `Name` 列一致
+- 每个 CSV 文件只包含一个对象类型的数据
+- 放置在 `data/` 目录下
+- **不要**生成含 `type: data` frontmatter 的数据文件
 
 ## 更新与删除（无 patch 模型）
 
 - 定义文件导入 = add/modify（upsert）；修改即编辑文件后重新导入
-- 删除元素通过 SDK/CLI delete API 执行，不通过 BKN 文件；**不要生成 type: delete 或 type: patch 文件**
+- 删除元素通过 SDK/CLI delete API 执行，不通过 BKN 文件
+- **不要生成 type: delete 或 type: patch 文件**
 
 ## 输出规则（必须遵守）
 
@@ -129,4 +234,11 @@ action_type: add | modify | delete
 3. **引用已存在的 ID**：object/relation 引用时，使用项目中已有的 id
 4. **表格格式**：按上述列名严格对齐
 5. **命名**：ID 使用小写字母、数字、下划线；显示名和描述用中文（除非另有要求）
-6. **必填字段**：type、id、name、network；Object 需 Data Source 和 Primary Key/Display Key；Relation 需 Endpoints 和 Mapping Rules；Action 需 Bound Object、Trigger Condition、Tool Configuration 和 Parameter Binding
+6. **必填字段**：
+   - 所有类型：type、id、name
+   - ObjectType：Data Properties、Keys（Primary Keys + Display Key）
+   - RelationType：Endpoint、Mapping Rules（或 Mapping View + Source/Target Mapping）
+   - ActionType：Bound Object、Tool Configuration、Parameter Binding
+   - RiskType：Control Scope、Control Policy
+   - ConceptGroup：Object Types
+7. **标题层级**：`#` 网络标题、`##` 类型定义、`###` 定义内 section、`####` 子项（逻辑属性名）

@@ -1,112 +1,202 @@
+// Copyright The kweaver.ai Authors.
+//
+// Licensed under the Apache License, Version 2.0.
+// See the LICENSE file in the project root for details.
+
 package bkn
 
-// Frontmatter is YAML frontmatter metadata for a .bkn/.bknd file.
-type Frontmatter struct {
-	Type             string   `yaml:"type"`
-	ID               string   `yaml:"id"`
-	Name             string   `yaml:"name"`
-	Version          string   `yaml:"version"`
-	Tags             []string `yaml:"tags"`
-	Description      string   `yaml:"description"`
-	Includes         []string `yaml:"includes"`
-	Network          string   `yaml:"network"`
-	Namespace        string   `yaml:"namespace"`
-	Owner            string   `yaml:"owner"`
-	SpecVersion      string   `yaml:"spec_version"`
-	Enabled          *bool    `yaml:"enabled"`
-	RiskLevel        string   `yaml:"risk_level"`
-	RequiresApproval *bool    `yaml:"requires_approval"`
-	Object           string   `yaml:"object"`
-	Relation         string   `yaml:"relation"`
-	Source           string   `yaml:"source"`
-	Extra            map[string]any
+// BknNetworkFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknNetworkFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
+
+	Version        string `yaml:"version"`
+	Branch         string `yaml:"branch"`
+	BusinessDomain string `yaml:"business_domain"`
 }
 
-// DataSource is a ### Data Source table row.
-type DataSource struct {
+// BknDocument is a parsed network.bkn file: frontmatter + body definitions.
+type BknNetwork struct {
+	BknNetworkFrontmatter
+	RawContent string
+
+	ObjectTypes   []*BknObjectType
+	RelationTypes []*BknRelationType
+	ActionTypes   []*BknActionType
+	RiskTypes     []*BknRiskType
+	ConceptGroups []*BknConceptGroup
+}
+
+// BknObjectTypeFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknObjectTypeFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
+}
+
+// BknObjectType represents an object type definition.
+type BknObjectType struct {
+	BknObjectTypeFrontmatter
+	RawContent string
+
+	DataSource      *ResourceInfo
+	DataProperties  []*DataProperty
+	LogicProperties []*LogicProperty
+
+	// Keys section
+	PrimaryKeys    []string
+	DisplayKey     string
+	IncrementalKey string
+}
+
+// ResourceInfo represents a data source reference.
+type ResourceInfo struct {
 	Type string
 	ID   string
 	Name string
 }
 
-// ConnectionConfig is a ### Connection table row (type: connection).
-type ConnectionConfig struct {
-	ConnType  string
-	Endpoint  string
-	SecretRef string
-}
-
-// Connection is a ## Connection: {id} block (optional capability).
-type Connection struct {
-	ID          string
-	Name        string
-	Description string
-	Config      *ConnectionConfig
-}
-
 // DataProperty is a ### Data Properties table row.
 type DataProperty struct {
-	Property    string
+	Name        string
 	DisplayName string
 	Type        string
-	Constraint  string
 	Description string
-	PrimaryKey  bool
-	DisplayKey  bool
-	Index       bool
+	MappedField string
 }
 
-// PropertyOverride is a ### Property Override table row.
-type PropertyOverride struct {
-	Property    string
-	DisplayName string
-	IndexConfig string
-	Constraint  string
-	Description string
-}
-
-// LogicPropertyParameter is a parameter row inside a Logic Property sub-section.
-type LogicPropertyParameter struct {
-	Parameter   string
-	Type        string
-	Source      string
-	Binding     string
-	Description string
-}
-
-// LogicProperty is a #### {property_name} under ### Logic Properties.
+// LogicProperty represents a logic property definition.
 type LogicProperty struct {
 	Name        string
-	LPType      string // metric | operator
-	Source      string
-	SourceType  string
+	DisplayName string
+	Type        string
 	Description string
-	Parameters  []LogicPropertyParameter
+
+	DataSource   *ResourceInfo
+	Parameters   []Parameter
+	AnalysisDims []Field
 }
 
-// Endpoint is a ### Endpoints table row (relations).
+type Field struct {
+	Name        string
+	Type        string
+	DisplayName string
+	Description string
+}
+
+// Parameter represents a parameter binding.
+type Parameter struct {
+	Name        string
+	Type        string
+	Source      string // property, const, etc.
+	Operation   string
+	ValueFrom   string
+	Value       any
+	IfSystemGen bool
+	Description string
+}
+
+// BknRelationTypeFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknRelationTypeFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
+}
+
+// BknRelationType represents a relation type definition.
+type BknRelationType struct {
+	BknRelationTypeFrontmatter
+	RawContent string
+
+	// Endpoint
+	Endpoint     Endpoint
+	MappingRules any
+}
+
 type Endpoint struct {
-	Source   string
-	Target   string
-	Type     string // direct | data_view
-	Required string
-	Min      string
-	Max      string
+	Source string
+	Target string
+	Type   string // direct | data_view
 }
 
-// MappingRule is a ### Mapping Rules table row.
+// MappingRule represents a property mapping between source and target.
 type MappingRule struct {
 	SourceProperty string
 	TargetProperty string
 }
 
-// ToolConfig is a ### Tool Configuration table row.
-type ToolConfig struct {
-	Type   string // tool | mcp
-	ToolID string
+// DirectMappingRule represents a direct mapping rule.
+type DirectMappingRule []MappingRule
+
+// InDirectMappingRule represents a non-direct mapping rule.
+type InDirectMappingRule struct {
+	BackingDataSource  *ResourceInfo
+	SourceMappingRules []MappingRule
+	TargetMappingRules []MappingRule
 }
 
-// PreCondition is a ### Pre-conditions table row.
+// BknActionTypeFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknActionTypeFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
+
+	Enabled          bool   `yaml:"enabled"`
+	RiskLevel        string `yaml:"risk_level"`
+	RequiresApproval bool   `yaml:"requires_approval"`
+}
+
+// BknActionType represents an action type definition.
+type BknActionType struct {
+	BknActionTypeFrontmatter
+	RawContent string
+
+	// Bound Object
+	BoundObject  string
+	ActionType   string
+	AffectObject string
+
+	// Trigger Condition
+	TriggerCondition *CondCfg
+	Condition        *CondCfg
+
+	// Pre-conditions
+	PreConditions []*PreCondition
+
+	// Scope of Impact
+	ScopeOfImpact []*ImpactEntry
+
+	// Tool Configuration
+	ToolConfig   *ToolConfiguration
+	ActionSource ActionSource
+
+	// Parameter Binding
+	Parameters []Parameter
+
+	// Schedule
+	Schedule *Schedule
+}
+
+// CondCfg represents a condition configuration.
+type CondCfg struct {
+	ObjectTypeID string     `yaml:"object_type_id"`
+	Field        string     `yaml:"field"`
+	Operation    string     `yaml:"operation"`
+	SubConds     []*CondCfg `yaml:"sub_conds"`
+	ValueFrom    string     `yaml:"value_from"`
+	Value        any        `yaml:"value"`
+}
+
+// PreCondition represents a pre-condition check.
 type PreCondition struct {
 	Object    string
 	Check     string
@@ -114,181 +204,72 @@ type PreCondition struct {
 	Message   string
 }
 
-// Schedule is a ### Schedule table row.
-type Schedule struct {
-	Type       string // FIX_RATE | CRON
-	Expression string
-}
-
-// BknObject is a ## Object: {id} block.
-type BknObject struct {
-	ID                string
-	Name              string
-	Description       string
-	Tags              []string
-	Owner             string
-	DataSource        *DataSource
-	DataProperties    []DataProperty
-	PropertyOverrides []PropertyOverride
-	LogicProperties   []LogicProperty
-	BusinessSemantics string
-}
-
-// Relation is a ## Relation: {id} block.
-type Relation struct {
-	ID                string
-	Name              string
-	Description       string
-	Tags              []string
-	Owner             string
-	Endpoints         []Endpoint
-	MappingRules      []MappingRule
-	BusinessSemantics string
-}
-
-// Action is a ## Action: {id} block.
-type Action struct {
-	ID                   string
-	Name                 string
-	Description          string
-	BoundObject          string
-	ActionType           string
-	TriggerCondition     string
-	PreConditions        []PreCondition
-	ToolConfig           *ToolConfig
-	ParameterBinding     []map[string]string
-	Schedule             *Schedule
-	ScopeOfImpact        []map[string]string
-	ExecutionDescription string
-	Risk                 string // Runtime/computed; not read from BKN
-}
-
-// RiskScope is a ### Control Scope table row.
-type RiskScope struct {
-	ControlledObject string
-	ControlledAction string
-	RiskLevel        string
-}
-
-// RiskStrategy is a ### Control Strategy table row.
-type RiskStrategy struct {
-	Condition string
-	Strategy  string
-}
-
-// RiskPreCheck is a ### Pre-checks table row.
-type RiskPreCheck struct {
-	CheckItem   string
-	Type        string
+// ImpactEntry represents a scope of impact entry.
+type ImpactEntry struct {
+	Object      string
 	Description string
 }
 
-// Risk is a ## Risk: {id} block.
-type Risk struct {
-	ID                string
-	Name              string
-	Description       string
-	ControlScope      []RiskScope
-	ControlStrategies []RiskStrategy
-	PreChecks         []RiskPreCheck
+// ToolConfiguration represents tool configuration.
+type ToolConfiguration struct {
+	Type     string // tool, mcp, etc.
+	BoxID    string
+	ToolID   string
+	McpID    string
+	ToolName string
+}
+
+// Schedule represents an action schedule.
+type Schedule struct {
+	Type       string // FIX_RATE, CRON, etc.
+	Expression string
+}
+
+// ActionSource represents action source.
+type ActionSource struct {
+	Type string
+	// type 为 tool
+	BoxID  string
+	ToolID string
+	// type 为 mcp
+	McpID    string
+	ToolName string
+}
+
+// BknRiskTypeFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknRiskTypeFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
+}
+
+// BknRiskType represents a risk type definition.
+type BknRiskType struct {
+	BknRiskTypeFrontmatter
+	RawContent string
+
+	ControlScope      string
+	ControlPolicy     string
+	PreChecks         []*CondCfg
 	RollbackPlan      string
 	AuditRequirements string
 }
 
-// DataTable is a data table parsed from a .bknd (type: data) document.
-type DataTable struct {
-	ObjectOrRelation string
-	IsRelation       bool
-	Columns          []string
-	Rows             []map[string]string
-	SourcePath       string
-	Network          string
+// BknConceptGroupFrontmatter is YAML frontmatter metadata for a .bkn file.
+type BknConceptGroupFrontmatter struct {
+	Type        string   `yaml:"type"`
+	ID          string   `yaml:"id"`
+	Name        string   `yaml:"name"`
+	Tags        []string `yaml:"tags"`
+	Description string   `yaml:"description"`
 }
 
-// BknDocument is a parsed .bkn/.bknd file: frontmatter + body definitions/data tables.
-type BknDocument struct {
-	Frontmatter Frontmatter
-	Objects     []BknObject
-	Relations   []Relation
-	Actions     []Action
-	Risks       []Risk
-	Connections []Connection
-	DataTables  []DataTable
-	SourcePath  string
-}
+// BknConceptGroup represents a concept group definition.
+type BknConceptGroup struct {
+	BknConceptGroupFrontmatter
+	RawContent string
 
-// BknNetwork is an aggregated network: root document + all included documents.
-type BknNetwork struct {
-	Root     BknDocument
-	Includes []BknDocument
-}
-
-// AllObjects returns all objects from root and included documents.
-func (n *BknNetwork) AllObjects() []BknObject {
-	var out []BknObject
-	out = append(out, n.Root.Objects...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Objects...)
-	}
-	return out
-}
-
-// AllRelations returns all relations from root and included documents.
-func (n *BknNetwork) AllRelations() []Relation {
-	var out []Relation
-	out = append(out, n.Root.Relations...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Relations...)
-	}
-	return out
-}
-
-// AllActions returns all actions from root and included documents.
-func (n *BknNetwork) AllActions() []Action {
-	var out []Action
-	out = append(out, n.Root.Actions...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Actions...)
-	}
-	return out
-}
-
-// AllRisks returns all risks from root and included documents.
-func (n *BknNetwork) AllRisks() []Risk {
-	var out []Risk
-	out = append(out, n.Root.Risks...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Risks...)
-	}
-	return out
-}
-
-// AllDataTables returns all data tables from root and included documents.
-func (n *BknNetwork) AllDataTables() []DataTable {
-	var out []DataTable
-	out = append(out, n.Root.DataTables...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.DataTables...)
-	}
-	return out
-}
-
-// AllConnections returns all connections from root and included documents.
-func (n *BknNetwork) AllConnections() []Connection {
-	var out []Connection
-	out = append(out, n.Root.Connections...)
-	for _, doc := range n.Includes {
-		out = append(out, doc.Connections...)
-	}
-	return out
-}
-
-// GetConnection returns connection by id, or nil if not found.
-func (n *BknNetwork) GetConnection(connectionID string) *Connection {
-	for _, c := range n.AllConnections() {
-		if c.ID == connectionID {
-			return &c
-		}
-	}
-	return nil
+	ObjectTypes []string
 }

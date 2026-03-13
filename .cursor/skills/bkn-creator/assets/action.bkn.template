@@ -7,7 +7,6 @@ spec_version: 1.0.0
 network: {network_id}
 namespace: {namespace}
 owner: {owner}
-action_type: add | modify | delete
 # 治理字段：enabled=false 默认不可执行；risk_level=high 或 requires_approval=true 需审批/dry-run
 enabled: false
 risk_level: low | medium | high

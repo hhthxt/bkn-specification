@@ -107,7 +107,6 @@ type: action
 id: {action_id}
 name: {显示名称}
 network: {network_id}
-action_type: add | modify | delete
 # 治理字段（可选）
 enabled: false          # 是否启用，默认 false；导入不等于启用
 risk_level: low | medium | high
@@ -130,6 +129,7 @@ requires_approval: true  # 是否需要审批才能启用/执行
 - `## Action: {action_id}`
 - `**{显示名称}**` + 简短描述
 - `### Bound Object`：表格 Bound Object | Action Type
+- `### Affect Object`（可选）：表格 Affect Object
 - `### Trigger Condition`：YAML 块，含 condition.object_type_id、field、operation、value
 - `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message，Check 为 property:{name} 或 relation:{id}
 - `### Tool Configuration`（可选）：Type | Toolbox ID | Tool ID

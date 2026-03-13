@@ -1,0 +1,35 @@
+---
+type: risk_type
+id: {risk_id}
+name: {风险名称}
+tags: [{标签1}, {标签2}]
+---
+
+## RiskType: {风险名称}
+
+{详细描述}
+
+### Control Scope
+
+{管控范围描述}
+
+### Control Policy
+
+- {策略1}
+- {策略2}
+
+### Pre-checks
+
+| Object | Check | Condition | Message |
+|--------|-------|-----------|---------|
+| {object_id} | {check_field} | {condition} | {违反说明} |
+
+### Rollback Plan
+
+1. {回滚步骤1}
+2. {回滚步骤2}
+
+### Audit Requirements
+
+- {审计要求1}
+- {审计要求2}
