@@ -1,7 +1,6 @@
 # BKN Directory Checksum
-# generated: 2026-03-11T07:40:32Z
+# generated: 2026-03-13T02:38:39Z
 SKILL.md  sha256:d88bd5ba972bca41
-network  sha256:5868a166af0c69b1
 object_type:bom  sha256:4f082f545618ad30
 object_type:forecast  sha256:5fd5d7d2d4009cda
 object_type:inventory  sha256:840a8d0747eb5da6
