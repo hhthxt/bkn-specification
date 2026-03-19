@@ -4,11 +4,19 @@
 #   for the @kweaver-ai scope (npmjs.com → Access Tokens).
 #
 # Requires npm org @kweaver-ai to exist and grant publish rights to the token.
+#
+# Manual run: optional input dry_run — build and test only; no npm publish (uses npm pack --dry-run).
 
 name: Publish npm
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build/test only; do not publish to npm"
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - "npm-v*"
@@ -19,7 +27,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish to npmjs
+    name: npm package
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,7 +47,12 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Publish (dry-run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: npm pack --dry-run
+
       - name: Publish
+        if: ${{ !((github.event_name == 'workflow_dispatch') && (inputs.dry_run == true)) }}
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
