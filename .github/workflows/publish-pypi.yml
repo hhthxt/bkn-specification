@@ -1,10 +1,6 @@
-# Publish Python sdist + wheel to PyPI (Trusted Publishing / OIDC).
+# Publish Python sdist + wheel to PyPI.
 #
-# Configure PyPI: Project "kweaver-bkn" → Settings → Publishing → pending publisher
-#   GitHub: owner kweaver-ai, repo bkn-specification, workflow: publish-pypi.yml
-# (Optional) Add a GitHub Environment to the job and register it on PyPI Trusted Publishing.
-#
-# Token fallback: set secret PYPI_API_TOKEN and uncomment user/password under Publish to PyPI.
+# Secret: PYPI_API_TOKEN — PyPI API token with "Upload packages" scope (pypi.org → Account → API tokens).
 #
 # Manual run: optional input dry_run — build sdist/wheel only, do not upload.
 
@@ -29,9 +25,6 @@ jobs:
   publish:
     name: PyPI package
     runs-on: ubuntu-latest
-    # Optional: add GitHub Environment "pypi" for approval rules; if you use it, register the same name on PyPI Trusted Publishing.
-    permissions:
-      id-token: write
     defaults:
       run:
         working-directory: sdk/python
@@ -58,6 +51,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: sdk/python/dist/
-          # Uncomment for classic API token instead of OIDC:
-          # user: __token__
-          # password: ${{ secrets.PYPI_API_TOKEN }}
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
