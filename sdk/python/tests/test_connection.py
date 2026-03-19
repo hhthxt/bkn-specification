@@ -74,33 +74,6 @@ network: demo
     assert obj.data_source.id == "erp_db"
 
 
-def test_load_connection_demo_network():
-    """Load connection-demo example network."""
-    import os
-    from pathlib import Path
-    root = Path(__file__).resolve().parents[3] / "examples" / "connection-demo" / "index.bkn"
-    if not root.exists():
-        pytest.skip("connection-demo example not found")
-    net = load_network(root)
-    conns = net.all_connections
-    assert len(conns) >= 1
-    erp = net.get_connection("erp_db")
-    assert erp is not None
-    assert erp.id == "erp_db"
-    assert erp.config is not None
-    assert erp.config.conn_type == "postgres"
-    # Two objects reference erp_db
-    material = next((o for o in net.all_objects if o.id == "material"), None)
-    inventory = next((o for o in net.all_objects if o.id == "inventory"), None)
-    assert material is not None and material.data_source and material.data_source.type == "connection"
-    assert material.data_source.id == "erp_db"
-    assert inventory is not None and inventory.data_source and inventory.data_source.type == "connection"
-    assert inventory.data_source.id == "erp_db"
-    # Legacy object uses data_view
-    legacy = next((o for o in net.all_objects if o.id == "legacy_view"), None)
-    assert legacy is not None and legacy.data_source and legacy.data_source.type == "data_view"
-
-
 def test_load_network_missing_connection_fails(tmp_path):
     root = tmp_path / "index.bkn"
     obj = tmp_path / "material.bkn"

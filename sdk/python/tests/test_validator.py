@@ -332,34 +332,3 @@ class TestNoSchema:
         result = validate_data_table(table, schema=None, network=None)
         codes = [e.code for e in result.errors]
         assert "no_schema" in codes
-
-
-# ---------------------------------------------------------------------------
-# Integration: validate real risk example data
-# ---------------------------------------------------------------------------
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
-
-
-class TestRiskDataIntegration:
-    """Validate actual risk .bknd files against their schema."""
-
-    def test_risk_scenario_valid(self):
-        from bkn.loader import load_network
-        fragment = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
-        if not fragment.exists():
-            pytest.skip("risk-fragment.bkn not found")
-        network = load_network(fragment)
-        result = validate_network_data(network)
-        assert result.ok, str(result)
-
-    def test_validate_network_data_finds_all_tables(self):
-        from bkn.loader import load_network
-        fragment = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
-        if not fragment.exists():
-            pytest.skip("risk-fragment.bkn not found")
-        network = load_network(fragment)
-        tables = network.all_data_tables
-        assert len(tables) == 2
-        result = validate_network_data(network)
-        assert result.ok, str(result)

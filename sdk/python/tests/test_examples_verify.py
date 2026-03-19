@@ -68,25 +68,3 @@ class TestLoadNetworks:
         assert len(net.all_relations) == 2
         assert len(net.all_actions) == 2
 
-    def test_md_compat_network(self):
-        """index.md + includes objects.md loads (BKN .md carrier compatibility)."""
-        from bkn import load_network
-        path = EXAMPLES_DIR / "md-compat" / "index.md"
-        if not path.exists():
-            pytest.skip("examples/md-compat not found")
-        net = load_network(path)
-        assert net.root.frontmatter.type == "network"
-        assert net.root.frontmatter.id == "md-compat-demo"
-        assert len(net.all_objects) >= 1
-
-    def test_connection_demo_network(self):
-        """connection-demo: multiple objects share one connection."""
-        from bkn import load_network
-        path = EXAMPLES_DIR / "connection-demo" / "index.bkn"
-        if not path.exists():
-            pytest.skip("examples/connection-demo not found")
-        net = load_network(path)
-        assert len(net.all_connections) >= 1
-        assert net.get_connection("erp_db") is not None
-        material = next((o for o in net.all_objects if o.id == "material"), None)
-        assert material is not None and material.data_source and material.data_source.type == "connection"

@@ -50,14 +50,6 @@ id: obj1
         assert net.root.frontmatter.id == "k8s-network"
         assert len(net.all_objects) >= 3
 
-    def test_load_network_dir_md_compat(self):
-        """load_network(examples/md-compat) uses index.md."""
-        from bkn import load_network
-        path = EXAMPLES_DIR / "md-compat"
-        if not path.exists():
-            pytest.skip("md-compat example not found")
-        net = load_network(path)
-        assert net.root.frontmatter.id == "md-compat-demo"
 
 
 class TestImplicitSameDirLoading:

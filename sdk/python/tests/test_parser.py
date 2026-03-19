@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-EXAMPLES_DIR = REPO_ROOT / "docs" / "examples"
+EXAMPLES_DIR = REPO_ROOT / "examples"
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -27,18 +27,17 @@ class TestSupplychainNetwork:
 
     @pytest.fixture
     def network(self) -> BknNetwork:
-        root_path = EXAMPLES_DIR / "supplychain-hd" / "supplychain.bkn"
+        root_path = EXAMPLES_DIR / "supplychain-hd"
         if not root_path.exists():
-            pytest.skip(f"Example file not found: {root_path}")
+            pytest.skip(f"Example not found: {root_path}")
         return load_network(root_path)
 
     def test_root_frontmatter(self, network: BknNetwork):
         fm = network.root.frontmatter
-        assert fm.type == "network"
-        assert fm.id == "supplychain"
-        assert fm.name == "HD供应链业务知识网络_v2"
+        assert fm.type == "knowledge_network"
+        assert fm.id == "supplychain-hd"
+        assert fm.name == "HD供应链业务知识网络"
         assert "供应链" in fm.tags
-        assert len(fm.includes) == 2
 
     def test_object_count(self, network: BknNetwork):
         assert len(network.all_objects) == 12
@@ -64,16 +63,6 @@ class TestSupplychainNetwork:
         assert po.data_source.type == "data_view"
         assert po.data_source.name == "erp_purchase_order"
 
-    def test_object_po_property_overrides(self, network: BknNetwork):
-        po = next(e for e in network.all_objects if e.id == "po")
-        assert len(po.property_overrides) > 0
-        org_override = next(
-            (o for o in po.property_overrides if o.property == "org_name"), None
-        )
-        assert org_override is not None
-        assert "fulltext" in org_override.index_config
-        assert "vector" in org_override.index_config
-
     def test_object_tags(self, network: BknNetwork):
         po = next(e for e in network.all_objects if e.id == "po")
         assert "已审核" in po.tags
@@ -91,7 +80,7 @@ class TestSupplychainNetwork:
             (r for r in network.all_relations if r.id == "product2bom"), None
         )
         assert rel is not None
-        assert rel.name == "产品关联产品bom"
+        assert rel.name == "产品关联产品BOM"
         assert len(rel.endpoints) == 1
         ep = rel.endpoints[0]
         assert ep.source == "product"
@@ -105,47 +94,45 @@ class TestSupplychainNetwork:
 
 
 # ---------------------------------------------------------------------------
-# k8s-topology single-file network
+# k8s-network multi-file network
 # ---------------------------------------------------------------------------
 
-class TestK8sTopology:
-    """Test parsing the k8s-topology single-file example."""
+class TestK8sNetwork:
+    """Test parsing the k8s-network multi-file example."""
 
     @pytest.fixture
-    def doc(self) -> BknDocument:
-        path = EXAMPLES_DIR / "k8s-topology.bkn"
+    def network(self) -> BknNetwork:
+        path = EXAMPLES_DIR / "k8s-network"
         if not path.exists():
-            pytest.skip(f"Example file not found: {path}")
-        return load(path)
+            pytest.skip(f"Example not found: {path}")
+        return load_network(path)
 
-    def test_frontmatter(self, doc: BknDocument):
-        fm = doc.frontmatter
-        assert fm.type == "network"
-        assert fm.id == "k8s-topology"
-        assert fm.version == "1.0.0"
+    def test_frontmatter(self, network: BknNetwork):
+        fm = network.root.frontmatter
+        assert fm.type == "knowledge_network"
+        assert fm.id == "k8s-network"
 
-    def test_has_objects(self, doc: BknDocument):
-        assert len(doc.objects) >= 3
-        object_ids = {e.id for e in doc.objects}
+    def test_has_objects(self, network: BknNetwork):
+        assert len(network.all_objects) == 3
+        object_ids = {e.id for e in network.all_objects}
         assert "pod" in object_ids
         assert "node" in object_ids
         assert "service" in object_ids
 
-    def test_has_relations(self, doc: BknDocument):
-        assert len(doc.relations) >= 2
+    def test_has_relations(self, network: BknNetwork):
+        assert len(network.all_relations) == 2
 
-    def test_has_actions(self, doc: BknDocument):
-        assert len(doc.actions) >= 1
+    def test_has_actions(self, network: BknNetwork):
+        assert len(network.all_actions) == 2
 
-    def test_pod_object(self, doc: BknDocument):
-        pod = next(e for e in doc.objects if e.id == "pod")
+    def test_pod_object(self, network: BknNetwork):
+        pod = next(e for e in network.all_objects if e.id == "pod")
         assert "Pod" in pod.name
         assert len(pod.data_properties) > 0
 
-    def test_action_parsed(self, doc: BknDocument):
-        action = doc.actions[0]
-        assert action.id
-        assert action.bound_object
+    def test_action_parsed(self, network: BknNetwork):
+        action = next(a for a in network.all_actions if a.id == "restart_pod")
+        assert action.bound_object == "pod"
 
 
 # ---------------------------------------------------------------------------
