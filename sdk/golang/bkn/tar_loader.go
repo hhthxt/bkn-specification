@@ -48,9 +48,14 @@ func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 			continue
 		}
 
+		base := filepath.Base(header.Name)
+		// 跳过 macOS AppleDouble 扩展属性文件（._*），避免解析出空 ObjectType
+		if strings.HasPrefix(base, "._") {
+			continue
+		}
+
 		// 只处理支持的文件类型（.bkn, .md）以及 CHECKSUM 文件
 		ext := strings.ToLower(filepath.Ext(header.Name))
-		base := filepath.Base(header.Name)
 		if !SupportedExtensions[ext] && base != ChecksumFileName {
 			continue
 		}

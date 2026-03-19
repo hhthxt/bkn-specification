@@ -148,6 +148,7 @@ func main() {
 | `NetworkWithout(network, targets)` | Return new network with targets removed (in-memory) |
 | `GenerateChecksumFile(root)` | Validate BKN inputs, then generate checksum.txt in directory |
 | `VerifyChecksumFile(root)` | Verify checksum.txt, return (ok, errors) |
+| `PackDirToTar(sourceDir, outputPath, gzip)` | Pack BKN directory to tar using system tar. On macOS sets COPYFILE_DISABLE=1 to avoid AppleDouble files |
 
 ## Tests
 

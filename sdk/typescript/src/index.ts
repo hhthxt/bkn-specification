@@ -26,5 +26,9 @@ export {
   verifyChecksum,
   type VerifyResult,
 } from "./checksum/index.js";
+export {
+  packToTar,
+  type PackToTarOptions,
+} from "./tar/index.js";
 
 export const VERSION = "0.1.0";

@@ -190,6 +190,38 @@ func TestExtractTarToMemory_NestedRoot(t *testing.T) {
 	assert.Equal(t, string(content), string(data))
 }
 
+func TestExtractTarToMemory_SkipsAppleDouble(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	networkContent := []byte("---\ntype: network\nid: test\n---\n")
+	podContent := []byte("---\ntype: object_type\nid: pod\nname: Pod\n---\n")
+	appleDoubleContent := []byte("invalid apple double")
+
+	tw.WriteHeader(&tar.Header{Name: "network.bkn", Size: int64(len(networkContent)), Mode: 0644})
+	tw.Write(networkContent)
+	tw.WriteHeader(&tar.Header{Name: "object_types/pod.bkn", Size: int64(len(podContent)), Mode: 0644})
+	tw.Write(podContent)
+	tw.WriteHeader(&tar.Header{Name: "object_types/._pod.bkn", Size: int64(len(appleDoubleContent)), Mode: 0644})
+	tw.Write(appleDoubleContent)
+	tw.Close()
+
+	mfs, rootDir, err := ExtractTarToMemory(&buf)
+	require.NoError(t, err)
+	assert.Equal(t, ".", rootDir)
+
+	_, err = mfs.ReadFile("object_types/pod.bkn")
+	require.NoError(t, err)
+
+	_, err = mfs.ReadFile("object_types/._pod.bkn")
+	assert.Error(t, err, "._pod.bkn should be skipped")
+
+	loaded, err := LoadNetworkFromTar(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	assert.Len(t, loaded.ObjectTypes, 1)
+	assert.Equal(t, "pod", loaded.ObjectTypes[0].ID)
+}
+
 // === Network Serialization Tests ===
 
 func TestWriteNetworkToTar_MinimalNetwork(t *testing.T) {

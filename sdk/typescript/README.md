@@ -48,6 +48,7 @@ const { ok, errors } = await verifyChecksum("examples/k8s-network");
 - `validateDataTable(table, schema?, network?)` — Validate a data table
 - `generateChecksum(path, options?)` — Generate CHECKSUM file
 - `verifyChecksum(path, options?)` — Verify CHECKSUM file
+- `packToTar(sourceDir, outputPath, options?)` — Pack BKN directory to tar (macOS: COPYFILE_DISABLE=1)
 
 ## Compatibility
 

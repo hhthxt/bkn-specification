@@ -97,6 +97,32 @@ func TestLoadFromFile(t *testing.T) {
 	}
 }
 
+// TestPackDirToTar: Directory → Tar file (uses system tar, COPYFILE_DISABLE on darwin)
+func TestPackDirToTar(t *testing.T) {
+	for _, dir := range allExampleDirs(t) {
+		name := filepath.Base(dir)
+		t.Run(name, func(t *testing.T) {
+			tmp := tempDir(t)
+			outPath := filepath.Join(tmp, name+".tar")
+
+			err := bkn.PackDirToTar(dir, outPath, false)
+			require.NoError(t, err, "pack to tar")
+
+			info, err := os.Stat(outPath)
+			require.NoError(t, err)
+			assert.Greater(t, info.Size(), int64(0))
+
+			f, err := os.Open(outPath)
+			require.NoError(t, err)
+			defer f.Close()
+
+			doc, err := bkn.LoadNetworkFromTar(f)
+			require.NoError(t, err, "load from packed tar")
+			assert.NotEmpty(t, doc.BknNetworkFrontmatter.ID)
+		})
+	}
+}
+
 // TestLoadFromTar: Tar → Model
 func TestLoadFromTar(t *testing.T) {
 	for _, dir := range allExampleDirs(t) {

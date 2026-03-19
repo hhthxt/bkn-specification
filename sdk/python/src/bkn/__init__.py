@@ -37,6 +37,7 @@ from bkn.serializer import to_bknd, to_bknd_from_table
 from bkn.validator import validate_data_table, validate_network_data
 from bkn.delete import DeleteTarget, DeletePlan, plan_delete, network_without
 from bkn.checksum import generate_checksum_file, verify_checksum_file
+from bkn.tar import pack_to_tar
 
 __version__ = "0.1.0"
 
@@ -83,4 +84,5 @@ __all__ = [
     "network_without",
     "generate_checksum_file",
     "verify_checksum_file",
+    "pack_to_tar",
 ]

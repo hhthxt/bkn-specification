@@ -43,6 +43,14 @@ generateChecksum(path: string | PathLike, options?: ChecksumOptions): Promise<st
 verifyChecksum(path: string | PathLike, options?: ChecksumOptions): Promise<VerifyResult>
 ```
 
+### Tar
+
+```ts
+packToTar(sourceDir: string, outputPath: string, options?: PackToTarOptions): Promise<void>
+```
+
+Packs a BKN directory into a tar archive. On macOS, sets `COPYFILE_DISABLE=1` when spawning tar to prevent AppleDouble (`._*.bkn`) files that would cause Go SDK parsing errors.
+
 ## Data Models (from Python models.py)
 
 - Frontmatter, DataSource, ConnectionConfig, Connection
