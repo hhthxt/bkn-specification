@@ -8,7 +8,7 @@ Frozen API and compatibility policy for Phase 1. Aligned with Python baseline an
 - **compat**: Accept observed drift in examples:
   - `type: knowledge_network` in addition to `type: network`
   - Section alias `Affect Object` → `Scope of Impact`
-  - Checksum filename: `CHECKSUM` (Go/examples) or `checksum.txt` (Python/spec)
+  - Checksum filename: `CHECKSUM` (unified across all SDKs and examples)
 
 ## Public API
 
@@ -77,6 +77,6 @@ interface ValidationError {
 
 ## Checksum Format (compat with examples)
 
-- Filename: `CHECKSUM` (primary), `checksum.txt` (fallback for read)
+- Filename: `CHECKSUM`
 - Line format: `{key}  sha256:{16hex}` where key is `object_type:id`, `SKILL.md`, etc.
 - Aggregate: `*  sha256:{hash}` (optional)

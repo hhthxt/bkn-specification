@@ -206,7 +206,9 @@ func TestExtractTarToMemory_SkipsAppleDouble(t *testing.T) {
 	tw.Write(appleDoubleContent)
 	tw.Close()
 
-	mfs, rootDir, err := ExtractTarToMemory(&buf)
+	rawBytes := buf.Bytes()
+
+	mfs, rootDir, err := ExtractTarToMemory(bytes.NewReader(rawBytes))
 	require.NoError(t, err)
 	assert.Equal(t, ".", rootDir)
 
@@ -216,7 +218,7 @@ func TestExtractTarToMemory_SkipsAppleDouble(t *testing.T) {
 	_, err = mfs.ReadFile("object_types/._pod.bkn")
 	assert.Error(t, err, "._pod.bkn should be skipped")
 
-	loaded, err := LoadNetworkFromTar(bytes.NewReader(buf.Bytes()))
+	loaded, err := LoadNetworkFromTar(bytes.NewReader(rawBytes))
 	require.NoError(t, err)
 	assert.Len(t, loaded.ObjectTypes, 1)
 	assert.Equal(t, "pod", loaded.ObjectTypes[0].ID)

@@ -12,7 +12,7 @@ import { parseFrontmatter } from "../parser/index.js";
 import { loadNetwork } from "../loader/index.js";
 import { validateNetwork } from "../validator/index.js";
 
-export const CHECKSUM_FILENAMES = ["CHECKSUM", "checksum.txt"];
+export const CHECKSUM_FILENAME = "CHECKSUM";
 export const CHECKSUM_EXTENSIONS = new Set([".bkn", ".bknd"]);
 export const CHECKSUM_FILES = new Set(["SKILL.md"]);
 
@@ -89,7 +89,7 @@ async function collectChecksumFiles(root: string): Promise<string[]> {
     for (const e of entries) {
       const p = join(dir, e.name);
       const rel = relative(root, p).replace(/\\/g, "/");
-      if (CHECKSUM_FILENAMES.includes(e.name)) continue;
+      if (e.name === CHECKSUM_FILENAME) continue;
       if (e.isDirectory()) {
         await walk(p);
       } else if (e.isFile()) {
@@ -187,11 +187,8 @@ export async function verifyChecksum(
   options?: ChecksumOptions
 ): Promise<VerifyResult> {
   const root = resolve(path);
-  const filename = options?.filename ?? CHECKSUM_FILENAMES[0];
-  let ckPath = join(root, filename);
-  if (!existsSync(ckPath) && filename === "CHECKSUM") {
-    ckPath = join(root, "checksum.txt");
-  }
+  const filename = options?.filename ?? CHECKSUM_FILENAME;
+  const ckPath = join(root, filename);
   if (!existsSync(ckPath)) {
     return { ok: false, errors: [`${filename} not found`] };
   }

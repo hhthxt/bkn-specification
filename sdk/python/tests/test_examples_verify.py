@@ -33,6 +33,10 @@ class TestLoadSingleFiles:
         assert doc is not None
         assert doc.frontmatter is not None
 
+    @pytest.mark.skipif(
+        not _get_all_bknd(),
+        reason="No .bknd files in examples (temporarily skipped)",
+    )
     @pytest.mark.parametrize(
         "path",
         _get_all_bknd(),

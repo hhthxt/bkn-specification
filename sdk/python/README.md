@@ -250,7 +250,7 @@ print(result.risk_level) # 5
 | `bkn.loader` | Loading: load(path), load_network(path_or_dir); root discovery (network.bkn > index.bkn); auto-resolves includes; implicit same-dir when no includes |
 | `bkn.risk` | Risk assessment: evaluate_risk(...) -> RiskResult; RiskResult(decision, risk_level, reason) |
 | `bkn.delete` | Delete API: DeleteTarget, plan_delete(), network_without() |
-| `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes checksum.txt; verify_checksum_file() checks it. `SKILL.md` is included in checksum computation |
+| `bkn.checksum` | Checksum: generate_checksum_file() validates first, then writes CHECKSUM; verify_checksum_file() checks it. `SKILL.md` is included in checksum computation |
 | `bkn.tar` | pack_to_tar(source_dir, output_path, gzip=False) — Pack BKN directory to tar. On macOS sets COPYFILE_DISABLE=1 to avoid AppleDouble files |
 | `bkn.transformers.base` | Abstract `Transformer` base class with `to_json()` and `to_files()` interface |
 | `bkn.transformers.kweaver` | KweaverTransformer, KweaverClient; outputs kweaver import JSON |

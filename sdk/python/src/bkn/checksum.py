@@ -1,4 +1,4 @@
-"""Checksum computation and checksum.txt generation for BKN directories."""
+"""Checksum computation and CHECKSUM generation for BKN directories."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from bkn.parser import _split_frontmatter
 from bkn.validator import validate_network_data
 
 
-CHECKSUM_FILENAME = "checksum.txt"
+CHECKSUM_FILENAME = "CHECKSUM"
 CHECKSUM_EXTENSIONS = {".bkn", ".bknd"}
 CHECKSUM_FILES = {"SKILL.md"}
 
@@ -128,9 +128,9 @@ def collect_checksum_files(root: Path) -> list[Path]:
 
 def generate_checksum_file(root: str | Path) -> str:
     """
-    Validate BKN inputs, then generate checksum.txt in the given business directory.
+    Validate BKN inputs, then generate CHECKSUM in the given business directory.
 
-    Covers .bkn, .bknd, and SKILL.md. Writes checksum.txt at root.
+    Covers .bkn, .bknd, and SKILL.md. Writes CHECKSUM at root.
     Returns the content written.
     """
     root = Path(root).resolve()
@@ -209,7 +209,7 @@ def _validate_checksum_inputs(root: Path) -> None:
 
 def verify_checksum_file(root: str | Path) -> tuple[bool, list[str]]:
     """
-    Verify checksum.txt against actual files.
+    Verify CHECKSUM against actual files.
 
     Returns (ok, list of error messages).
     """

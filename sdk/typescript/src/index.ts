@@ -25,6 +25,7 @@ export {
   generateChecksum,
   verifyChecksum,
   type VerifyResult,
+  CHECKSUM_FILENAME,
 } from "./checksum/index.js";
 export {
   packToTar,

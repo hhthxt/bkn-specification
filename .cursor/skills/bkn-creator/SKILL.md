@@ -22,7 +22,7 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 **Load flow** — For `operate action` or when context needs domain knowledge:
 
 1. Load `network.bkn` (preferred) or `index.bkn` (compatible) to get network overview and `includes`. Can also pass a directory — SDK auto-discovers the root.
-2. Load relevant includes (objects/relations/actions) by task
+2. Load relevant includes (object/relation/action definitions) by task
 3. Do not load entire network if only a subset is needed
 
 **Action selection** — When multiple Actions match user intent:
@@ -80,14 +80,14 @@ Scripts live in [scripts/](scripts/). Run from repo root. Install first: `pip in
 **validate.py** — Check BKN loads (accepts file or directory):
 ```bash
 python .cursor/skills/bkn-creator/scripts/validate.py <path-or-dir>
-# e.g. python .cursor/skills/bkn-creator/scripts/validate.py examples/k8s-modular/index.bkn
 # e.g. python .cursor/skills/bkn-creator/scripts/validate.py examples/k8s-network
+# e.g. python .cursor/skills/bkn-creator/scripts/validate.py examples/supplychain-hd
 ```
 
 **transform.py** — Export to kweaver JSON (no API):
 ```bash
 python .cursor/skills/bkn-creator/scripts/transform.py <path> -o <output_dir> [--id-prefix PREFIX]
-# e.g. python .cursor/skills/bkn-creator/scripts/transform.py examples/k8s-modular/index.bkn -o output
+# e.g. python .cursor/skills/bkn-creator/scripts/transform.py examples/k8s-network -o output
 ```
 
 **import_to_kweaver.py** — Import via API:
@@ -114,27 +114,30 @@ When the user asks to validate, convert, or import, run the corresponding script
 
 ## File Organization
 
-Choose an organization style based on network size:
+Choose an organization style based on network size. The SDK auto-discovers and loads files from these subdirectories when the root has no `includes`.
 
 **Modular** (recommended for large networks, team collaboration):
-Each object/relation/action in its own file, with a `network.bkn` (preferred) or `index.bkn` root.
-See `examples/k8s-modular/` for this pattern.
+Each object/relation/action in its own file under type-specific subdirs, with a `network.bkn` (preferred) or `index.bkn` root.
+See `examples/k8s-network/` and `examples/supplychain-hd/` for this pattern.
 
 ```
 my-network/
 ├── network.bkn                  # or index.bkn (compatible)
-├── objects/
+├── object_types/
 │   ├── order.bkn
 │   └── customer.bkn
-├── relations/
+├── relation_types/
 │   └── order_belongs_customer.bkn
-└── actions/
-    └── cancel_order.bkn
+├── action_types/
+│   └── cancel_order.bkn
+├── risk_types/                  # optional
+│   └── high_risk_action.bkn
+└── concept_groups/              # optional
+    └── domain.bkn
 ```
 
 **By-type split** (suitable for medium networks):
-Group all objects, relations, actions into separate fragment files.
-See `examples/k8s-network/` for this pattern.
+Group all objects, relations, actions into separate fragment files. Use `includes` in the root to reference them.
 
 ```
 my-network/
@@ -148,10 +151,10 @@ my-network/
 
 Read the appropriate template before generating:
 
-- `assets/object.bkn.template` — object with Data Properties, Property Override, Logic Properties
-- `assets/relation.bkn.template` — relation with Endpoints, Mapping Rules (direct and data_view)
-- `assets/action.bkn.template` — action with Trigger, Pre-conditions, Tool Configuration, Schedule
-- `assets/network.bkn.template` — network index with inline object/relation/action definitions
+- `assets/object.bkn.template` — object_type with Data Properties, Keys, Data Source, Logic Properties
+- `assets/relation.bkn.template` — relation_type with Endpoint, Mapping Rules (direct and data_view)
+- `assets/action.bkn.template` — action_type with Bound Object, Trigger, Parameter Binding, Schedule
+- `assets/network.bkn.template` — knowledge_network root with Network Overview (modular layout uses object_types/, relation_types/, etc.)
 - `assets/data.bknd.template` — instance data file for objects with Data Source Type `bknd`
 
 Fill in `{placeholders}`, remove unused optional sections, and remove template comments.
