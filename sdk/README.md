@@ -10,6 +10,7 @@ Official SDKs for parsing, validating, and transforming [BKN (Business Knowledge
 |----------|--------|------|
 | **Python** | Available | [sdk/python/](python/) |
 | **Golang** | Available | [sdk/golang/](golang/) |
+| **TypeScript** | Available | [sdk/typescript/](typescript/) |
 
 ## Python SDK Usage
 
