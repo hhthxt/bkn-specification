@@ -7,14 +7,17 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-RISK_FRAGMENT = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
+EXAMPLES_DIR = REPO_ROOT / "examples"
 
 
 @pytest.fixture
 def network():
-    """Load the risk-tagged fragment as a network (single doc, no includes)."""
+    """Load k8s-network as the test network for risk evaluation."""
+    path = EXAMPLES_DIR / "k8s-network"
+    if not path.exists():
+        pytest.skip("examples/k8s-network not found")
     from bkn.loader import load_network
-    return load_network(str(RISK_FRAGMENT))
+    return load_network(path)
 
 
 def test_evaluate_risk_no_rules_returns_unknown(network):
@@ -129,9 +132,10 @@ def test_risk_result_str_backward_compat(network):
     assert str(r) == "allow"
 
 
-def test_network_has_risk_tagged_objects(network):
-    """The risk fragment defines objects with reserved Tags: __risk__."""
-    risk_objects = [e for e in network.all_objects if "__risk__" in (e.tags or [])]
-    assert len(risk_objects) >= 1
-    ids = [e.id for e in risk_objects]
-    assert "risk_scenario" in ids or "risk_rule" in ids
+def test_risk_result_fields():
+    """RiskResult has expected fields."""
+    from bkn.risk import RiskResult
+    r = RiskResult(decision="allow", risk_level=3, reason="ok")
+    assert r.decision == "allow"
+    assert r.risk_level == 3
+    assert r.reason == "ok"

@@ -48,10 +48,21 @@ func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 			continue
 		}
 
+		base := filepath.Base(header.Name)
+		// 跳过 macOS AppleDouble 扩展属性文件（._*），避免解析出空 ObjectType
+		if strings.HasPrefix(base, "._") {
+			if _, err := io.CopyN(io.Discard, tr, header.Size); err != nil {
+				return nil, "", fmt.Errorf("failed to skip %s body: %w", header.Name, err)
+			}
+			continue
+		}
+
 		// 只处理支持的文件类型（.bkn, .md）以及 CHECKSUM 文件
 		ext := strings.ToLower(filepath.Ext(header.Name))
-		base := filepath.Base(header.Name)
 		if !SupportedExtensions[ext] && base != ChecksumFileName {
+			if _, err := io.CopyN(io.Discard, tr, header.Size); err != nil {
+				return nil, "", fmt.Errorf("failed to skip %s body: %w", header.Name, err)
+			}
 			continue
 		}
 
@@ -61,14 +72,16 @@ func ExtractTarToMemory(reader io.Reader) (*MemoryFileSystem, string, error) {
 			return nil, "", fmt.Errorf("failed to read file %s: %w", header.Name, err)
 		}
 
-		// 标准化路径（使用 / 作为分隔符）
-		path := filepath.ToSlash(header.Name)
+		// 标准化路径：去除 leading "./"，统一使用 / 分隔符
+		path := strings.TrimPrefix(filepath.ToSlash(header.Name), "./")
 		mfs.AddFile(path, content)
 
 		// 检查是否是根文件候选，记录其目录
 		if strings.EqualFold(base, RootFileName) {
 			rootDir = filepath.Dir(path)
-			// Keep . as current directory (memory FS root)
+			if rootDir == "" {
+				rootDir = "."
+			}
 		}
 	}
 

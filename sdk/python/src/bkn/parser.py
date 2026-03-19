@@ -115,6 +115,8 @@ _SECTION_ALIASES: dict[str, str] = {
     "前置检查": "Pre-checks",
     "回滚方案": "Rollback Plan",
     "审计要求": "Audit Requirements",
+    "Endpoint": "Endpoints",
+    "管控策略": "Control Policy",
 }
 
 
@@ -308,7 +310,7 @@ def _parse_data_properties(section_text: str) -> list[DataProperty]:
     props: list[DataProperty] = []
     for row in rows:
         props.append(DataProperty(
-            property=row.get("Property", ""),
+            property=row.get("Property", "") or row.get("Name", ""),
             display_name=row.get("Display Name", ""),
             type=row.get("Type", ""),
             constraint=row.get("Constraint", ""),
@@ -418,6 +420,24 @@ def _parse_object_block(block_id: str, block_text: str) -> BknObject:
 
     if "Logic Properties" in sections:
         obj.logic_properties = _parse_logic_properties(sections["Logic Properties"])
+
+    if "Keys" in sections:
+        keys_text = sections["Keys"]
+        pk_names: list[str] = []
+        dk_name = ""
+        for line in keys_text.splitlines():
+            line = line.strip()
+            if line.lower().startswith("primary key"):
+                val = line.split(":", 1)[1].strip() if ":" in line else ""
+                pk_names = [v.strip() for v in val.split(",") if v.strip()]
+            elif line.lower().startswith("display key"):
+                val = line.split(":", 1)[1].strip() if ":" in line else ""
+                dk_name = val.strip()
+        for dp in obj.data_properties:
+            if dp.property in pk_names:
+                dp.primary_key = True
+            if dp.property == dk_name:
+                dp.display_key = True
 
     if "Business Semantics" in sections:
         obj.business_semantics = sections["Business Semantics"]
@@ -575,13 +595,34 @@ def _parse_risk_block(block_id: str, block_text: str) -> Risk:
 # ---------------------------------------------------------------------------
 
 _DEFINITION_RE = re.compile(
-    r"^##\s+(Object|Relation|Action|Risk|Connection):\s*(\S+)",
+    r"^##\s+(Object(?:Type)?|Relation(?:Type)?|Action(?:Type)?|Risk(?:Type)?|Connection|ConceptGroup):\s*(.+?)\s*$",
     re.MULTILINE,
 )
 
-_VALID_BKN_TYPES = frozenset(
-    {"network", "object", "relation", "action", "fragment", "data", "risk", "connection"}
-)
+_VALID_BKN_TYPES = frozenset({
+    "network", "knowledge_network",
+    "object", "object_type",
+    "relation", "relation_type",
+    "action", "action_type",
+    "risk", "risk_type",
+    "concept_group",
+    "fragment", "data", "connection",
+})
+
+_NETWORK_TYPES = frozenset({"network", "knowledge_network"})
+
+_HEADING_CATEGORY: dict[str, str] = {
+    "Object": "Object",
+    "ObjectType": "Object",
+    "Relation": "Relation",
+    "RelationType": "Relation",
+    "Action": "Action",
+    "ActionType": "Action",
+    "Risk": "Risk",
+    "RiskType": "Risk",
+    "Connection": "Connection",
+    "ConceptGroup": "ConceptGroup",
+}
 
 
 def parse_frontmatter(text: str) -> Frontmatter:
@@ -640,8 +681,8 @@ def parse_body(text: str) -> tuple[list[BknObject], list[Relation], list[Action]
     connections: list[Connection] = []
 
     for i, m in enumerate(matches):
-        def_type = m.group(1)
-        def_id = m.group(2)
+        def_type = _HEADING_CATEGORY.get(m.group(1), m.group(1))
+        def_id = m.group(2).strip()
         start = m.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
         block_text = body[start:end]
@@ -741,7 +782,8 @@ def parse(text: str, source_path: str = "") -> BknDocument:
     if not type_val:
         raise ValueError(
             "BKN frontmatter must include a valid 'type' field "
-            "(network, object, relation, action, fragment, data, risk, connection)."
+            "(network, object, relation, action, fragment, data, risk, connection, "
+            "knowledge_network, object_type, relation_type, action_type, risk_type, concept_group)."
         )
     if type_val not in _VALID_BKN_TYPES:
         raise ValueError(
@@ -759,6 +801,25 @@ def parse(text: str, source_path: str = "") -> BknDocument:
         data_tables = parse_data_tables(text, frontmatter=frontmatter, source_path=source_path)
     else:
         objects, relations, actions, risks, connections = parse_body(text)
+
+    # For single-definition types, override ID/name/tags from frontmatter
+    _SINGLE_DEF_MAP = {
+        "object_type": objects,
+        "relation_type": relations,
+        "action_type": actions,
+        "risk_type": risks,
+    }
+    if type_val in _SINGLE_DEF_MAP:
+        items = _SINGLE_DEF_MAP[type_val]
+        if len(items) == 1:
+            item = items[0]
+            if frontmatter.id:
+                item.id = frontmatter.id
+            if not item.name and frontmatter.name:
+                item.name = frontmatter.name
+            if hasattr(item, "tags") and not item.tags and frontmatter.tags:
+                item.tags = frontmatter.tags
+
     return BknDocument(
         frontmatter=frontmatter,
         objects=objects,

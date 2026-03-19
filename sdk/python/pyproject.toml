@@ -3,15 +3,22 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bkn"
+name = "kweaver-bkn"
 version = "0.1.0"
 description = "BKN SDK - Parse, validate, and transform Business Knowledge Network files"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
+keywords = ["bkn", "knowledge-network", "parser", "kweaver"]
 dependencies = [
     "PyYAML>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/kweaver-ai/bkn-specification"
+Repository = "https://github.com/kweaver-ai/bkn-specification"
+Documentation = "https://github.com/kweaver-ai/bkn-specification/tree/main/sdk/python"
+Issues = "https://github.com/kweaver-ai/bkn-specification/issues"
 
 [project.optional-dependencies]
 api = ["requests>=2.28"]

@@ -176,13 +176,13 @@ Targets use `type:id` syntax. Supported types are:
 
 ### Checksum
 
-Generate `checksum.txt` for a business directory. The command validates BKN inputs first and refuses to write `checksum.txt` if the directory is invalid:
+Generate `CHECKSUM` for a business directory. The command validates BKN inputs first and refuses to write `CHECKSUM` if the directory is invalid:
 
 ```bash
 go run ./cmd/bkn checksum generate ../examples/risk
 ```
 
-Verify `checksum.txt`:
+Verify `CHECKSUM`:
 
 ```bash
 go run ./cmd/bkn checksum verify ../examples/risk

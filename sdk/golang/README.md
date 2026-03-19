@@ -146,8 +146,9 @@ func main() {
 | `EvaluateRiskWith(evaluator, network, actionID, context, riskRules)` | Invoke custom evaluator, return RiskResult |
 | `PlanDelete(network, targets, dryRun)` | Validate delete targets, return DeletePlan |
 | `NetworkWithout(network, targets)` | Return new network with targets removed (in-memory) |
-| `GenerateChecksumFile(root)` | Validate BKN inputs, then generate checksum.txt in directory |
-| `VerifyChecksumFile(root)` | Verify checksum.txt, return (ok, errors) |
+| `GenerateChecksumFile(root)` | Validate BKN inputs, then generate CHECKSUM in directory |
+| `VerifyChecksumFile(root)` | Verify CHECKSUM, return (ok, errors) |
+| `PackDirToTar(sourceDir, outputPath, gzip)` | Pack BKN directory to tar using system tar. On macOS sets COPYFILE_DISABLE=1 to avoid AppleDouble files |
 
 ## Tests
 

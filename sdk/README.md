@@ -10,11 +10,15 @@ Official SDKs for parsing, validating, and transforming [BKN (Business Knowledge
 |----------|--------|------|
 | **Python** | Available | [sdk/python/](python/) |
 | **Golang** | Available | [sdk/golang/](golang/) |
+| **TypeScript** | Available | [sdk/typescript/](typescript/) |
 
 ## Python SDK Usage
 
 ```bash
-# Install
+# Install from PyPI (distribution name kweaver-bkn; import package bkn)
+pip install kweaver-bkn
+
+# Or editable from this repo
 cd sdk/python
 pip install -e .
 
@@ -37,6 +41,14 @@ transformer.to_files(network, "output/")  # Or write to files
 
 See [python/README.md](python/README.md) for detailed usage and API.
 
+## TypeScript SDK Usage
+
+```bash
+npm install @kweaver-ai/bkn
+```
+
+See [typescript/README.md](typescript/README.md).
+
 ## Golang SDK
 
 ```bash
@@ -45,3 +57,5 @@ go test ./bkn/... -v
 ```
 
 See [golang/README.md](golang/README.md) for usage and API.
+
+PyPI / npm release workflows live under [.github/workflows](../.github/workflows) (`publish-pypi.yml`, `publish-npm.yml`). Go remains `go get github.com/kweaver-ai/bkn-specification/sdk/golang`.

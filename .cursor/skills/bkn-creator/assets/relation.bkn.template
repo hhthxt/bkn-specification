@@ -1,24 +1,19 @@
 ---
-type: relation
+type: relation_type
 id: {relation_id}
 name: {关系名称}
-version: 1.0.0
-spec_version: 1.0.0
-network: {network_id}
-namespace: {namespace}
-owner: {owner}
 tags: [{标签1}, {标签2}]
 ---
 
-## Relation: {relation_id}
+## RelationType: {关系名称}
 
 {详细描述}
 
-### Endpoints
+### Endpoint
 
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| {source} | {target} | direct | YES | 1 | 1 |
+| Source | Target | Type |
+|--------|--------|------|
+| {source} | {target} | direct |
 
 ### Mapping Rules
 
@@ -26,13 +21,13 @@ tags: [{标签1}, {标签2}]
 |-----------------|-----------------|
 | {source_prop} | {target_prop} |
 
-<!-- data_view type relation (replace Endpoints and Mapping Rules above):
+<!-- data_view 类型时替换为：
 
-### Endpoints
+### Endpoint
 
-| Source | Target | Type | Required | Min | Max |
-|--------|--------|------|----------|-----|-----|
-| {source} | {target} | data_view | NO | 0 | - |
+| Source | Target | Type |
+|--------|--------|------|
+| {source} | {target} | data_view |
 
 ### Mapping View
 
@@ -56,6 +51,3 @@ tags: [{标签1}, {标签2}]
 ### Business Semantics
 
 {关系的业务含义说明}
-
-- **基数**: N:1 | 1:N | N:M
-- **生命周期**: {生命周期说明}

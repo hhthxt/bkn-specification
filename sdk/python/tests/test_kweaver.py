@@ -113,9 +113,9 @@ class TestSupplychainTransform:
 
     @pytest.fixture
     def network(self):
-        root_path = EXAMPLES_DIR / "supplychain-hd" / "supplychain.bkn"
+        root_path = EXAMPLES_DIR / "supplychain-hd"
         if not root_path.exists():
-            pytest.skip(f"Example file not found: {root_path}")
+            pytest.skip(f"Example not found: {root_path}")
         return load_network(root_path)
 
     @pytest.fixture
@@ -132,7 +132,7 @@ class TestSupplychainTransform:
 
     def test_knowledge_network(self, payload):
         kn = payload["knowledge_network"]
-        assert kn["name"] == "HD供应链业务知识网络_v2"
+        assert kn["name"] == "HD供应链业务知识网络"
         assert kn["branch"] == "main"
         assert "供应链" in kn.get("tags", [])
 
@@ -213,15 +213,15 @@ class TestSupplychainTransform:
         # supplychain-hd has no actions, so list may be empty
 
 
-class TestK8sTopologyTransform:
-    """Test transforming k8s-topology (has actions) to kweaver JSON."""
+class TestK8sNetworkTransform:
+    """Test transforming k8s-network (has actions) to kweaver JSON."""
 
     @pytest.fixture
     def network(self):
-        root_path = EXAMPLES_DIR / "k8s-topology.bkn"
+        root_path = EXAMPLES_DIR / "k8s-network"
         if not root_path.exists():
-            pytest.skip(f"Example file not found: {root_path}")
-        return load_network(str(root_path))
+            pytest.skip(f"Example not found: {root_path}")
+        return load_network(root_path)
 
     @pytest.fixture
     def payload(self, network):
@@ -250,9 +250,9 @@ class TestKweaverClient:
 
     @pytest.fixture
     def network(self):
-        root_path = EXAMPLES_DIR / "supplychain-hd" / "supplychain.bkn"
+        root_path = EXAMPLES_DIR / "supplychain-hd"
         if not root_path.exists():
-            pytest.skip(f"Example file not found: {root_path}")
+            pytest.skip(f"Example not found: {root_path}")
         return load_network(root_path)
 
     @pytest.fixture

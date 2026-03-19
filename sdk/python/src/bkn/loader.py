@@ -14,6 +14,11 @@ BKN_SUPPORTED_EXTENSIONS = frozenset({".bkn", ".bknd", ".md"})
 # Root file discovery order: network.bkn > network.md > index.bkn > index.md
 ROOT_CANDIDATE_NAMES = ("network.bkn", "network.md", "index.bkn", "index.md")
 
+KNOWN_SUBDIRS = (
+    "object_types", "relation_types", "action_types",
+    "risk_types", "concept_groups",
+)
+
 
 def _check_extension(path: Path) -> None:
     """Raise ValueError if path extension is not supported."""
@@ -63,7 +68,7 @@ def discover_root_file(directory: Path) -> Path:
             continue
         try:
             doc = parse(p.read_text(encoding="utf-8"), source_path=str(p))
-            if (doc.frontmatter.type or "").strip().lower() == "network":
+            if (doc.frontmatter.type or "").strip().lower() in ("network", "knowledge_network"):
                 network_files.append(p)
         except Exception:
             continue
@@ -116,6 +121,27 @@ def _collect_same_dir_bkn_files(
         except Exception:
             continue
         result.append(p)
+    return result
+
+
+def _collect_subdir_bkn_files(directory: Path) -> list[Path]:
+    """Collect BKN files from known subdirectories (Go SDK compatible).
+
+    Scans object_types/, relation_types/, action_types/, risk_types/,
+    concept_groups/ for .bkn/.bknd/.md files.
+    """
+    result: list[Path] = []
+    for subdir_name in KNOWN_SUBDIRS:
+        subdir = directory / subdir_name
+        if not subdir.is_dir():
+            continue
+        for p in sorted(subdir.iterdir()):
+            if not p.is_file():
+                continue
+            ext = p.suffix.lower()
+            if ext not in BKN_SUPPORTED_EXTENSIONS:
+                continue
+            result.append(p)
     return result
 
 
@@ -178,13 +204,15 @@ def load_network(root_path: str | Path) -> BknNetwork:
             includes,
         )
     else:
-        # No includes: for type: network only, implicitly load same-dir files
+        # No includes: for network types only, implicitly load same-dir
+        # files and files from known subdirectories (Go SDK compatible).
         doc_type = (root_doc.frontmatter.type or "").strip().lower()
-        if doc_type == "network":
+        if doc_type in ("network", "knowledge_network"):
             implicit_paths = _collect_same_dir_bkn_files(
                 root_path.parent,
                 root_path,
             )
+            implicit_paths.extend(_collect_subdir_bkn_files(root_path.parent))
             for inc_path in implicit_paths:
                 path_str = str(inc_path.resolve())
                 if path_str in loaded_paths:

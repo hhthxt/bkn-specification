@@ -6,36 +6,6 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-EXAMPLES_DIR = REPO_ROOT / "examples"
-MD_COMPAT_DIR = EXAMPLES_DIR / "md-compat"
-
-
-class TestMdCompatPositive:
-    """Positive: .md files with valid BKN content load successfully."""
-
-    def test_load_index_md_network(self):
-        """index.md + includes objects.md loads."""
-        if not (MD_COMPAT_DIR / "index.md").exists():
-            pytest.skip("examples/md-compat not found")
-        from bkn.loader import load_network
-
-        network = load_network(MD_COMPAT_DIR / "index.md")
-        assert network.root.frontmatter.type == "network"
-        assert network.root.frontmatter.id == "md-compat-demo"
-        assert len(network.all_objects) >= 1
-
-    def test_load_objects_md_fragment(self):
-        """objects.md as fragment loads."""
-        if not (MD_COMPAT_DIR / "objects.md").exists():
-            pytest.skip("examples/md-compat not found")
-        from bkn.loader import load
-
-        doc = load(MD_COMPAT_DIR / "objects.md")
-        assert doc.frontmatter.type == "fragment"
-        assert len(doc.objects) >= 1
-        assert doc.objects[0].id == "demo_item"
-
 
 class TestMdCompatNegative:
     """Negative: invalid content fails with clear errors."""

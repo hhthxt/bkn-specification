@@ -236,7 +236,7 @@ classDiagram
 {business_dir}/
 ├── SKILL.md                     # agentskills.io 标准入口
 ├── network.bkn                  # 网络根文件（type: network）
-├── checksum.txt                 # 可选，目录级一致性校验
+├── CHECKSUM                     # 可选，目录级一致性校验
 ├── object_types/
 │   ├── pod.bkn                  # type: object_type
 │   ├── node.bkn                 # type: object_type

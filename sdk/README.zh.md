@@ -10,11 +10,15 @@
 |------|------|------|
 | **Python** | 可用 | [sdk/python/](python/) |
 | **Golang** | 可用 | [sdk/golang/](golang/) |
+| **TypeScript** | 可用 | [sdk/typescript/](typescript/) |
 
 ## Python SDK 用法
 
 ```bash
-# 安装
+# 从 PyPI 安装（发行包名 kweaver-bkn，import 仍为 bkn）
+pip install kweaver-bkn
+
+# 或从本仓库可编辑安装
 cd sdk/python
 pip install -e .
 
@@ -37,6 +41,14 @@ transformer.to_files(network, "output/")  # 或写入文件
 
 详细用法与 API 见 [python/README.md](python/README.md)。
 
+## TypeScript SDK 用法
+
+```bash
+npm install @kweaver-ai/bkn
+```
+
+详见 [typescript/README.md](typescript/README.md)。
+
 ## Golang SDK
 
 ```bash
@@ -45,3 +57,5 @@ go test ./bkn/... -v
 ```
 
 详见 [golang/README.md](golang/README.md)。
+
+PyPI / npm 发布流程见仓库 [.github/workflows](../.github/workflows)（`publish-pypi.yml`、`publish-npm.yml`）。Go 仍使用 `go get github.com/kweaver-ai/bkn-specification/sdk/golang`。

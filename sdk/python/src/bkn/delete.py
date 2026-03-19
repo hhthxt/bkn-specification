@@ -6,6 +6,12 @@ from dataclasses import dataclass, field
 
 from bkn.models import BknNetwork
 
+_DELETE_TYPE_ALIASES: dict[str, str] = {
+    "object_type": "object",
+    "relation_type": "relation",
+    "action_type": "action",
+}
+
 
 @dataclass
 class DeleteTarget:
@@ -16,6 +22,7 @@ class DeleteTarget:
 
     def __post_init__(self) -> None:
         self.type = self.type.strip().lower()
+        self.type = _DELETE_TYPE_ALIASES.get(self.type, self.type)
         if self.type not in ("object", "relation", "action"):
             raise ValueError(f"Invalid delete type: {self.type!r}; must be object, relation, or action")
 

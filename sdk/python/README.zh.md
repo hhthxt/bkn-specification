@@ -7,14 +7,20 @@
 ## 安装
 
 ```bash
-# 从仓库根目录
+# 从 PyPI（发行包名 kweaver-bkn，import 仍为 bkn）
+pip install kweaver-bkn
+
+# 可选：含 HTTP API 依赖
+pip install "kweaver-bkn[api]"
+
+# 从仓库根目录可编辑安装
 cd sdk/python
 pip install -e .
 
 # 或指定路径
 pip install -e path/to/bkn-specification/sdk/python
 
-# 含 kweaver API 调用支持
+# 含 kweaver API 调用支持（可编辑）
 pip install -e ".[api]"
 ```
 

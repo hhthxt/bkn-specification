@@ -700,7 +700,7 @@ graph LR
 {business_dir}/
 ├── SKILL.md                     # agentskills.io 标准入口，含网络拓扑、索引、使用指南
 ├── network.bkn                  # 网络根文件
-├── checksum.txt                 # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
+├── CHECKSUM                     # 可选，目录级一致性校验（SDK generate_checksum_file 生成）
 ├── object_types/
 │   ├── material.bkn             # type: object_type
 │   └── inventory.bkn            # type: object_type

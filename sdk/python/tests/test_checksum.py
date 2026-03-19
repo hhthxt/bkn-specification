@@ -202,7 +202,7 @@ def test_generate_checksum_fails_when_network_validation_fails():
 
         with pytest.raises(ValueError, match="checksum validation failed"):
             generate_checksum_file(root)
-        assert not (root / "checksum.txt").exists()
+        assert not (root / "CHECKSUM").exists()
 
 
 def _extract_hash(content: str, filename: str) -> str | None:

@@ -12,9 +12,9 @@ EXAMPLES_DIR = REPO_ROOT / "examples"
 def test_plan_delete_single():
     from bkn import load_network, plan_delete, DeleteTarget
 
-    path = EXAMPLES_DIR / "k8s-modular" / "index.bkn"
+    path = EXAMPLES_DIR / "k8s-network"
     if not path.exists():
-        pytest.skip("k8s-modular example not found")
+        pytest.skip("k8s-network example not found")
     net = load_network(path)
     plan = plan_delete(net, DeleteTarget(type="object", id="pod"), dry_run=True)
     assert plan.ok
@@ -26,9 +26,9 @@ def test_plan_delete_single():
 def test_plan_delete_not_found():
     from bkn import load_network, plan_delete, DeleteTarget
 
-    path = EXAMPLES_DIR / "k8s-modular" / "index.bkn"
+    path = EXAMPLES_DIR / "k8s-network"
     if not path.exists():
-        pytest.skip("k8s-modular example not found")
+        pytest.skip("k8s-network example not found")
     net = load_network(path)
     plan = plan_delete(net, DeleteTarget(type="object", id="nonexistent"), dry_run=True)
     assert not plan.ok
@@ -39,9 +39,9 @@ def test_plan_delete_not_found():
 def test_plan_delete_batch():
     from bkn import load_network, plan_delete, DeleteTarget
 
-    path = EXAMPLES_DIR / "k8s-modular" / "index.bkn"
+    path = EXAMPLES_DIR / "k8s-network"
     if not path.exists():
-        pytest.skip("k8s-modular example not found")
+        pytest.skip("k8s-network example not found")
     net = load_network(path)
     targets = [
         DeleteTarget(type="object", id="pod"),
@@ -56,9 +56,9 @@ def test_plan_delete_batch():
 def test_network_without():
     from bkn import load_network, network_without, DeleteTarget
 
-    path = EXAMPLES_DIR / "k8s-modular" / "index.bkn"
+    path = EXAMPLES_DIR / "k8s-network"
     if not path.exists():
-        pytest.skip("k8s-modular example not found")
+        pytest.skip("k8s-network example not found")
     net = load_network(path)
     orig_count = len(net.all_objects)
     out = network_without(net, [DeleteTarget(type="object", id="pod")])
