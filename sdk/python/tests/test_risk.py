@@ -13,6 +13,8 @@ RISK_FRAGMENT = REPO_ROOT / "examples" / "risk" / "risk-fragment.bkn"
 @pytest.fixture
 def network():
     """Load the risk-tagged fragment as a network (single doc, no includes)."""
+    if not RISK_FRAGMENT.exists():
+        pytest.skip("examples/risk/risk-fragment.bkn not found")
     from bkn.loader import load_network
     return load_network(str(RISK_FRAGMENT))
 

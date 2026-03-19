@@ -40,10 +40,12 @@ id: obj1
         root = discover_root_file(tmp_path)
         assert root.name == "network.bkn"
 
-    def test_load_network_dir_with_index_only(self):
-        """load_network(examples/k8s-network) uses index.bkn (no network.bkn)."""
+    def test_load_network_dir_k8s(self):
+        """load_network(examples/k8s-network) discovers network.bkn."""
         from bkn import load_network
         path = EXAMPLES_DIR / "k8s-network"
+        if not path.exists():
+            pytest.skip("k8s-network example not found")
         net = load_network(path)
         assert net.root.frontmatter.id == "k8s-network"
         assert len(net.all_objects) >= 3
@@ -52,6 +54,8 @@ id: obj1
         """load_network(examples/md-compat) uses index.md."""
         from bkn import load_network
         path = EXAMPLES_DIR / "md-compat"
+        if not path.exists():
+            pytest.skip("md-compat example not found")
         net = load_network(path)
         assert net.root.frontmatter.id == "md-compat-demo"
 

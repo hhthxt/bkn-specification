@@ -176,7 +176,7 @@ def _validate_checksum_inputs(root: Path) -> None:
         except Exception as exc:
             rel = path.relative_to(root).as_posix()
             raise ValueError(f"checksum validation failed for {rel}: {exc}") from exc
-        if doc.frontmatter.type.strip().lower() == "network":
+        if doc.frontmatter.type.strip().lower() in ("network", "knowledge_network"):
             network_paths.append(path)
 
     # Use root discovery per directory to avoid validating both network.bkn and
