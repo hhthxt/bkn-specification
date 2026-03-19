@@ -5,11 +5,19 @@
 # (Optional) Add a GitHub Environment to the job and register it on PyPI Trusted Publishing.
 #
 # Token fallback: set secret PYPI_API_TOKEN and uncomment user/password under Publish to PyPI.
+#
+# Manual run: optional input dry_run — build sdist/wheel only, do not upload.
 
 name: Publish Python (PyPI)
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build only; do not upload to PyPI"
+        required: false
+        default: false
+        type: boolean
   push:
     tags:
       - "python-v*"
@@ -19,7 +27,7 @@ permissions:
 
 jobs:
   publish:
-    name: Upload to PyPI
+    name: PyPI package
     runs-on: ubuntu-latest
     # Optional: add GitHub Environment "pypi" for approval rules; if you use it, register the same name on PyPI Trusted Publishing.
     permissions:
@@ -41,7 +49,12 @@ jobs:
       - name: Build sdist and wheel
         run: python -m build --outdir dist .
 
+      - name: Dry-run — list artifacts
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: ls -la dist/
+
       - name: Publish to PyPI
+        if: ${{ !((github.event_name == 'workflow_dispatch') && (inputs.dry_run == true)) }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: sdk/python/dist/

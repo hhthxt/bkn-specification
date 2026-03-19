@@ -58,4 +58,4 @@ go test ./bkn/... -v
 
 详见 [golang/README.md](golang/README.md)。
 
-PyPI / npm 发布流程见仓库 [.github/workflows](../.github/workflows)（`publish-pypi.yml`、`publish-npm.yml`）。Go 仍使用 `go get github.com/kweaver-ai/bkn-specification/sdk/golang`。
+PyPI / npm 发布流程见仓库 [.github/workflows](../.github/workflows)（`publish-pypi.yml`、`publish-npm.yml`）。手动运行时可选 **dry_run**（仅构建、不上传）；打 tag（`python-v*` / `npm-v*`）仍会发布。Go 仍使用 `go get github.com/kweaver-ai/bkn-specification/sdk/golang`。

@@ -58,4 +58,4 @@ go test ./bkn/... -v
 
 See [golang/README.md](golang/README.md) for usage and API.
 
-PyPI / npm release workflows live under [.github/workflows](../.github/workflows) (`publish-pypi.yml`, `publish-npm.yml`). Go remains `go get github.com/kweaver-ai/bkn-specification/sdk/golang`.
+PyPI / npm release workflows live under [.github/workflows](../.github/workflows) (`publish-pypi.yml`, `publish-npm.yml`). Manual runs support **dry_run**: build only, no upload. Tag pushes (`python-v*`, `npm-v*`) always publish. Go remains `go get github.com/kweaver-ai/bkn-specification/sdk/golang`.
