@@ -1,4 +1,5 @@
 # Verify Python wheel/sdist and npm package build on PRs (no upload).
+# Runs on any branch push when sdk paths change (not only main).
 
 name: SDK packaging verify
 
@@ -9,11 +10,10 @@ on:
       - "sdk/typescript/**"
       - ".github/workflows/sdk-packaging-verify.yml"
   push:
-    branches:
-      - main
     paths:
       - "sdk/python/**"
       - "sdk/typescript/**"
+      - ".github/workflows/sdk-packaging-verify.yml"
 
 permissions:
   contents: read
