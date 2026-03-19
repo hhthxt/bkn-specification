@@ -1,5 +1,5 @@
 {
-  "name": "bkn",
+  "name": "@kweaver-ai/bkn",
   "version": "0.1.0",
   "description": "BKN SDK - Parse, validate, and transform Business Knowledge Network files",
   "main": "dist/index.js",
@@ -7,10 +7,23 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["bkn", "knowledge-network", "parser"],
+  "keywords": ["bkn", "knowledge-network", "parser", "kweaver"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kweaver-ai/bkn-specification.git",
+    "directory": "sdk/typescript"
+  },
+  "bugs": {
+    "url": "https://github.com/kweaver-ai/bkn-specification/issues"
+  },
+  "homepage": "https://github.com/kweaver-ai/bkn-specification/tree/main/sdk/typescript",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   },

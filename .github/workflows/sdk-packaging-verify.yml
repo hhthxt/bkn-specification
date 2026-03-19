@@ -1,0 +1,49 @@
+# Verify Python wheel/sdist and npm package build on PRs (no upload).
+
+name: SDK packaging verify
+
+on:
+  pull_request:
+    paths:
+      - "sdk/python/**"
+      - "sdk/typescript/**"
+      - ".github/workflows/sdk-packaging-verify.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "sdk/python/**"
+      - "sdk/typescript/**"
+
+permissions:
+  contents: read
+
+jobs:
+  python-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "build>=1.0.0"
+      - run: python -m build --outdir dist .
+      - name: List artifacts
+        run: ls -la dist/
+
+  typescript-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run build
+      - run: npm pack --dry-run

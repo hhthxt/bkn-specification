@@ -2,6 +2,8 @@
 
 Frozen API and compatibility policy for Phase 1. Aligned with Python baseline and spec.
 
+**npm package:** `@kweaver-ai/bkn` (after publish). Local monorepo development: build from `sdk/typescript` then import from `"@kweaver-ai/bkn"` if linked, or use relative paths.
+
 ## Compatibility Policy
 
 - **strict**: Follow spec canonical forms (type: network, English section names, etc.)

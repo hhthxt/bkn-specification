@@ -7,14 +7,17 @@ Parse, validate, and transform [BKN (Business Knowledge Network)](../../docs/SPE
 ## Install
 
 ```bash
-# From repo root
+# From PyPI (distribution name kweaver-bkn; Python import package is still bkn)
+pip install kweaver-bkn
+
+# Optional: HTTP API client extras
+pip install "kweaver-bkn[api]"
+
+# Editable from repo root
 cd sdk/python
 pip install -e .
 
-# Or with path
-pip install -e path/to/bkn-specification/sdk/python
-
-# With kweaver API support
+# With kweaver API support (editable)
 pip install -e ".[api]"
 ```
 

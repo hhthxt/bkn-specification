@@ -4,7 +4,16 @@ Parse, validate, and transform [BKN (Business Knowledge Network)](../../docs/SPE
 
 ## Installation
 
+**From npm (after publish):**
+
 ```bash
+npm install @kweaver-ai/bkn
+```
+
+**From this monorepo (development):**
+
+```bash
+cd sdk/typescript
 npm install
 npm run build
 ```
@@ -18,7 +27,7 @@ import {
   validateNetwork,
   generateChecksum,
   verifyChecksum,
-} from "bkn";
+} from "@kweaver-ai/bkn";
 
 // Load a network directory (auto-discovers network.bkn)
 const network = await loadNetwork("examples/k8s-network");
