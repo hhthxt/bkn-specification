@@ -484,14 +484,11 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 
 	act := &BknActionType{
 		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-			Type:             "action_type",
-			ID:               strVal(fmData, "id"),
-			Name:             strVal(fmData, "name"),
-			Tags:             strSliceVal(fmData, "tags"),
-			Description:      extractBodyDescription(text),
-			Enabled:          parseBool(fmData, "enabled"),
-			RiskLevel:        strVal(fmData, "risk_level"),
-			RequiresApproval: parseBool(fmData, "requires_approval"),
+			Type:        "action_type",
+			ID:          strVal(fmData, "id"),
+			Name:        strVal(fmData, "name"),
+			Tags:        strSliceVal(fmData, "tags"),
+			Description: extractBodyDescription(text),
 		},
 		RawContent: text,
 	}
@@ -516,6 +513,9 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	if s, ok := sections["Tool Configuration"]; ok {
 		act.ToolConfig = parseToolConfiguration(s)
 	}
+	if s, ok := sections["Action Source"]; ok {
+		act.ActionSource = parseActionSource(s)
+	}
 	if s, ok := sections["Parameter Binding"]; ok {
 		act.Parameters = parseParameterBinding(s)
 	}
@@ -524,21 +524,6 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	}
 
 	return act, nil
-}
-
-// parseBool safely parses a boolean value from frontmatter.
-func parseBool(m map[string]any, key string) bool {
-	if v, ok := m[key]; ok && v != nil {
-		switch val := v.(type) {
-		case bool:
-			return val
-		case string:
-			return strings.EqualFold(val, "true") || val == "1" || strings.EqualFold(val, "yes")
-		case int:
-			return val != 0
-		}
-	}
-	return false
 }
 
 // parseBoundObject parses the bound object section.
@@ -638,19 +623,33 @@ func parseParameterBinding(sectionText string) []Parameter {
 	var params []Parameter
 	for _, row := range rows {
 		param := Parameter{
-			Name:        row["Parameter"],
+			Name:        row["Name"],
 			Type:        row["Type"],
 			Source:      row["Source"],
-			ValueFrom:   row["Binding"],
+			Operation:   row["Operation"],
+			ValueFrom:   row["ValueFrom"],
+			Value:       row["Value"],
 			Description: row["Description"],
-		}
-		// Try to parse value as int if it's a const source
-		if param.Source == "const" && row["Binding"] != "" {
-			param.Value = row["Binding"]
 		}
 		params = append(params, param)
 	}
 	return params
+}
+
+// parseActionSource parses the action source table.
+func parseActionSource(sectionText string) ActionSource {
+	rows := parseTable(strings.Split(sectionText, "\n"))
+	if len(rows) == 0 {
+		return ActionSource{}
+	}
+	r := rows[0]
+	return ActionSource{
+		Type:     r["Type"],
+		BoxID:    r["BoxID"],
+		ToolID:   r["ToolID"],
+		McpID:    r["McpID"],
+		ToolName: r["ToolName"],
+	}
 }
 
 // parseSchedule parses the schedule table.

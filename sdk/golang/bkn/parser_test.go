@@ -279,8 +279,6 @@ Restart a pod gracefully
 	at, err := ParseActionTypeFile(text, "/test/restart.bkn")
 	require.NoError(t, err)
 	assert.Equal(t, "restart", at.ID)
-	assert.Equal(t, "high", at.RiskLevel)
-	assert.True(t, at.RequiresApproval)
 	assert.Equal(t, "pod", at.BoundObject)
 	assert.Equal(t, "modify", at.ActionType)
 	require.Len(t, at.Parameters, 2)

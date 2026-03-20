@@ -495,9 +495,6 @@ func verifyActionTypes(t *testing.T, original, result []*bkn.BknActionType) {
 		assert.Equal(t, orig.Name, at.Name, "action %s: Name mismatch", at.ID)
 		assert.Equal(t, orig.Description, at.Description, "action %s: Description mismatch", at.ID)
 		assert.ElementsMatch(t, orig.Tags, at.Tags, "action %s: Tags mismatch", at.ID)
-		assert.Equal(t, orig.Enabled, at.Enabled, "action %s: Enabled mismatch", at.ID)
-		assert.Equal(t, orig.RiskLevel, at.RiskLevel, "action %s: RiskLevel mismatch", at.ID)
-		assert.Equal(t, orig.RequiresApproval, at.RequiresApproval, "action %s: RequiresApproval mismatch", at.ID)
 
 		// Compare Bound Object
 		assert.Equal(t, orig.BoundObject, at.BoundObject, "action %s: BoundObject mismatch", at.ID)

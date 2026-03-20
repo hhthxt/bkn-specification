@@ -298,11 +298,9 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 		ActionTypes: []*BknActionType{
 			{
 				BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-					Type:             "action_type",
-					ID:               "restart",
-					Name:             "Restart Pod",
-					RiskLevel:        "high",
-					RequiresApproval: true,
+					Type: "action_type",
+					ID:   "restart",
+					Name: "Restart Pod",
 				},
 				BoundObject: "pod",
 				ActionType:  "modify",
@@ -346,8 +344,6 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 	require.Len(t, loaded.ActionTypes, 1)
 	assert.Equal(t, "restart", loaded.ActionTypes[0].ID)
 	assert.Equal(t, "modify", loaded.ActionTypes[0].ActionType)
-	assert.Equal(t, "high", loaded.ActionTypes[0].RiskLevel)
-	assert.True(t, loaded.ActionTypes[0].RequiresApproval)
 	assert.Equal(t, "pod", loaded.ActionTypes[0].BoundObject)
 }
 

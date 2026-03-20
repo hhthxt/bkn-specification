@@ -228,9 +228,6 @@ func SerializeActionType(at *BknActionType) string {
 	sb.WriteString(fmt.Sprintf("name: %s\n", at.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(at.Tags, ", ")))
 	sb.WriteString(fmt.Sprintf("action_type: %s\n", at.ActionType))
-	sb.WriteString(fmt.Sprintf("enabled: %v\n", at.Enabled))
-	sb.WriteString(fmt.Sprintf("risk_level: %s\n", at.RiskLevel))
-	sb.WriteString(fmt.Sprintf("requires_approval: %v\n", at.RequiresApproval))
 	sb.WriteString("---\n\n")
 
 	sb.WriteString(fmt.Sprintf("## ActionType: %s\n\n", at.Name))
@@ -258,12 +255,21 @@ func SerializeActionType(at *BknActionType) string {
 
 	// Parameter Binding
 	sb.WriteString("### Parameter Binding\n\n")
-	sb.WriteString("| Parameter | Type | Source | Binding | Description |\n")
-	sb.WriteString("|-----------|------|--------|---------|-------------|\n")
+	sb.WriteString("| Name | Type | Source | Operation | ValueFrom | Value | Description |\n")
+	sb.WriteString("|------|------|--------|-----------|-----------|-------|-------------|\n")
 	for _, p := range at.Parameters {
-		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
-			p.Name, p.Type, p.Source, p.ValueFrom, p.Description))
+		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %v | %s |\n",
+			p.Name, p.Type, p.Source, p.Operation, p.ValueFrom, p.Value, p.Description))
 	}
+	sb.WriteString("\n")
+
+	// Action Source
+	sb.WriteString("### Action Source\n\n")
+	sb.WriteString("| Type | BoxID | ToolID | McpID | ToolName |\n")
+	sb.WriteString("|------|-------|--------|-------|----------|\n")
+	sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+		at.ActionSource.Type, at.ActionSource.BoxID, at.ActionSource.ToolID,
+		at.ActionSource.McpID, at.ActionSource.ToolName))
 	sb.WriteString("\n")
 
 	// Schedule

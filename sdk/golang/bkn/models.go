@@ -150,10 +150,6 @@ type BknActionTypeFrontmatter struct {
 	Name        string   `yaml:"name"`
 	Tags        []string `yaml:"tags"`
 	Description string   `yaml:"description"`
-
-	Enabled          bool   `yaml:"enabled"`
-	RiskLevel        string `yaml:"risk_level"`
-	RequiresApproval bool   `yaml:"requires_approval"`
 }
 
 // BknActionType represents an action type definition.
