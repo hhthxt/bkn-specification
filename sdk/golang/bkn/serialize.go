@@ -253,23 +253,29 @@ func SerializeActionType(at *BknActionType) string {
 	}
 	sb.WriteString("\n")
 
+	// Action Source
+	sb.WriteString("### Action Source\n\n")
+	sb.WriteString("| Type | BoxID | ToolID | McpID | ToolName |\n")
+	sb.WriteString("|------|-------|--------|-------|----------|\n")
+	if at.ActionSource != nil && at.ActionSource.Type != "" {
+		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+			at.ActionSource.Type, at.ActionSource.BoxID, at.ActionSource.ToolID,
+			at.ActionSource.McpID, at.ActionSource.ToolName))
+	}
+	sb.WriteString("\n")
+
 	// Parameter Binding
 	sb.WriteString("### Parameter Binding\n\n")
 	sb.WriteString("| Name | Type | Source | Operation | ValueFrom | Value | Description |\n")
 	sb.WriteString("|------|------|--------|-----------|-----------|-------|-------------|\n")
 	for _, p := range at.Parameters {
-		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %v | %s |\n",
-			p.Name, p.Type, p.Source, p.Operation, p.ValueFrom, p.Value, p.Description))
+		v := p.Value
+		if v == nil {
+			v = ""
+		}
+		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s |\n",
+			p.Name, p.Type, p.Source, p.Operation, p.ValueFrom, v, p.Description))
 	}
-	sb.WriteString("\n")
-
-	// Action Source
-	sb.WriteString("### Action Source\n\n")
-	sb.WriteString("| Type | BoxID | ToolID | McpID | ToolName |\n")
-	sb.WriteString("|------|-------|--------|-------|----------|\n")
-	sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
-		at.ActionSource.Type, at.ActionSource.BoxID, at.ActionSource.ToolID,
-		at.ActionSource.McpID, at.ActionSource.ToolName))
 	sb.WriteString("\n")
 
 	// Schedule

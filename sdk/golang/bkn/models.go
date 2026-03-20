@@ -173,8 +173,7 @@ type BknActionType struct {
 	ScopeOfImpact []*ImpactEntry
 
 	// Tool Configuration
-	ToolConfig   *ToolConfiguration
-	ActionSource ActionSource
+	ActionSource *ActionSource
 
 	// Parameter Binding
 	Parameters []Parameter
@@ -205,15 +204,6 @@ type PreCondition struct {
 type ImpactEntry struct {
 	Object      string
 	Description string
-}
-
-// ToolConfiguration represents tool configuration.
-type ToolConfiguration struct {
-	Type     string // tool, mcp, etc.
-	BoxID    string
-	ToolID   string
-	McpID    string
-	ToolName string
 }
 
 // Schedule represents an action schedule.

@@ -510,9 +510,6 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	if s, ok := sections["Scope of Impact"]; ok {
 		act.ScopeOfImpact = parseScopeOfImpact(s)
 	}
-	if s, ok := sections["Tool Configuration"]; ok {
-		act.ToolConfig = parseToolConfiguration(s)
-	}
 	if s, ok := sections["Action Source"]; ok {
 		act.ActionSource = parseActionSource(s)
 	}
@@ -593,30 +590,6 @@ func parseScopeOfImpact(sectionText string) []*ImpactEntry {
 	return entries
 }
 
-// parseToolConfiguration parses the tool configuration table.
-func parseToolConfiguration(sectionText string) *ToolConfiguration {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	if len(rows) == 0 {
-		return nil
-	}
-	r := rows[0]
-
-	config := &ToolConfiguration{
-		Type: r["Type"],
-	}
-
-	switch config.Type {
-	case "tool":
-		config.BoxID = r["Toolbox ID"]
-		config.ToolID = r["Tool ID"]
-	case "mcp":
-		config.McpID = r["MCP ID"]
-		config.ToolName = r["Tool Name"]
-	}
-
-	return config
-}
-
 // parseParameterBinding parses the parameter binding table.
 func parseParameterBinding(sectionText string) []Parameter {
 	rows := parseTable(strings.Split(sectionText, "\n"))
@@ -637,19 +610,26 @@ func parseParameterBinding(sectionText string) []Parameter {
 }
 
 // parseActionSource parses the action source table.
-func parseActionSource(sectionText string) ActionSource {
+func parseActionSource(sectionText string) *ActionSource {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
-		return ActionSource{}
+		return nil
 	}
 	r := rows[0]
-	return ActionSource{
-		Type:     r["Type"],
-		BoxID:    r["BoxID"],
-		ToolID:   r["ToolID"],
-		McpID:    r["McpID"],
-		ToolName: r["ToolName"],
+
+	actSrc := &ActionSource{
+		Type: r["Type"],
 	}
+	switch actSrc.Type {
+	case "tool":
+		actSrc.BoxID = r["Toolbox ID"]
+		actSrc.ToolID = r["Tool ID"]
+	case "mcp":
+		actSrc.McpID = r["MCP ID"]
+		actSrc.ToolName = r["Tool Name"]
+	}
+
+	return actSrc
 }
 
 // parseSchedule parses the schedule table.
