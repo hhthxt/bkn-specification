@@ -427,29 +427,52 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 		}
 	}
 
-	if s, ok := sections["Mapping Rules"]; ok {
-		rules := parseRelationMappingRules(s)
-		if rel.Endpoint.Type == "direct" {
+	switch rel.Endpoint.Type {
+	case "direct":
+		if s, ok := sections["Mapping Rules"]; ok {
+			rows := parseTable(strings.Split(s, "\n"))
+			var rules []MappingRule
+			for _, row := range rows {
+				sp, tp := row["Source Property"], row["Target Property"]
+				if sp != "" || tp != "" {
+					rules = append(rules, MappingRule{SourceProperty: sp, TargetProperty: tp})
+				}
+			}
 			rel.MappingRules = DirectMappingRule(rules)
-		} else {
-			rel.MappingRules = rules
 		}
+	case "data_view":
+		indirect := InDirectMappingRule{}
+		if s, ok := sections["Mapping View"]; ok {
+			rows := parseTable(strings.Split(s, "\n"))
+			if len(rows) > 0 {
+				indirect.BackingDataSource = &ResourceInfo{
+					Type: rows[0]["Type"],
+					ID:   rows[0]["ID"],
+				}
+			}
+		}
+		if s, ok := sections["Source Mapping"]; ok {
+			rows := parseTable(strings.Split(s, "\n"))
+			for _, row := range rows {
+				sp, vp := row["Source Property"], row["View Property"]
+				if sp != "" || vp != "" {
+					indirect.SourceMappingRules = append(indirect.SourceMappingRules, MappingRule{SourceProperty: sp, TargetProperty: vp})
+				}
+			}
+		}
+		if s, ok := sections["Target Mapping"]; ok {
+			rows := parseTable(strings.Split(s, "\n"))
+			for _, row := range rows {
+				vp, tp := row["View Property"], row["Target Property"]
+				if vp != "" || tp != "" {
+					indirect.TargetMappingRules = append(indirect.TargetMappingRules, MappingRule{SourceProperty: vp, TargetProperty: tp})
+				}
+			}
+		}
+		rel.MappingRules = indirect
 	}
 
 	return rel, nil
-}
-
-// parseRelationMappingRules parses the mapping rules section for a relation.
-func parseRelationMappingRules(sectionText string) []MappingRule {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	var rules []MappingRule
-	for _, row := range rows {
-		sp, tp := row["Source Property"], row["Target Property"]
-		if sp != "" || tp != "" {
-			rules = append(rules, MappingRule{SourceProperty: sp, TargetProperty: tp})
-		}
-	}
-	return rules
 }
 
 // ParseActionTypeFile parses an action_type definition file.

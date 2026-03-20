@@ -15,7 +15,7 @@ func SerializeBknNetwork(doc *BknNetwork) string {
 	fm := doc.BknNetworkFrontmatter
 	var sb strings.Builder
 	sb.WriteString("---\n")
-	sb.WriteString("type: network\n")
+	sb.WriteString("type: knowledge_network\n")
 	sb.WriteString(fmt.Sprintf("id: %s\n", fm.ID))
 	sb.WriteString(fmt.Sprintf("name: %s\n", fm.Name))
 	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(fm.Tags, ", ")))
@@ -170,8 +170,51 @@ func SerializeRelationType(rt *BknRelationType) string {
 	sb.WriteString("|--------|--------|------|\n")
 	sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n\n", rt.Endpoint.Source, rt.Endpoint.Target, rt.Endpoint.Type))
 
-	// Mapping Rules
-	sb.WriteString("### Mapping Rules\n\n")
+	switch rt.Endpoint.Type {
+	case "direct":
+		// ### Mapping Rules — simple source→target property table
+		sb.WriteString("### Mapping Rules\n\n")
+		sb.WriteString("| Source Property | Target Property |\n")
+		sb.WriteString("|-----------------|------------------|\n")
+		if rules, ok := rt.MappingRules.(DirectMappingRule); ok {
+			for _, r := range rules {
+				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
+			}
+		}
+		sb.WriteString("\n")
+
+	case "data_view":
+		// ### Mapping View — backing data source reference
+		sb.WriteString("### Mapping View\n\n")
+		sb.WriteString("| Type | ID |\n")
+		sb.WriteString("|------|-----|\n")
+		if rules, ok := rt.MappingRules.(InDirectMappingRule); ok {
+			if rules.BackingDataSource != nil {
+				sb.WriteString(fmt.Sprintf("| %s | %s |\n", rules.BackingDataSource.Type, rules.BackingDataSource.ID))
+			}
+			sb.WriteString("\n")
+
+			// ### Source Mapping — source property → view property
+			sb.WriteString("### Source Mapping\n\n")
+			sb.WriteString("| Source Property | View Property |\n")
+			sb.WriteString("|-----------------|----------------|\n")
+			for _, r := range rules.SourceMappingRules {
+				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
+			}
+			sb.WriteString("\n")
+
+			// ### Target Mapping — view property → target property
+			sb.WriteString("### Target Mapping\n\n")
+			sb.WriteString("| View Property | Target Property |\n")
+			sb.WriteString("|---------------|------------------|\n")
+			for _, r := range rules.TargetMappingRules {
+				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
+			}
+			sb.WriteString("\n")
+		} else {
+			sb.WriteString("\n")
+		}
+	}
 
 	return sb.String()
 }

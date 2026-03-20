@@ -21,7 +21,8 @@ type BknNetworkFrontmatter struct {
 // BknDocument is a parsed network.bkn file: frontmatter + body definitions.
 type BknNetwork struct {
 	BknNetworkFrontmatter
-	RawContent string
+	RawContent   string
+	SkillContent string
 
 	ObjectTypes   []*BknObjectType
 	RelationTypes []*BknRelationType

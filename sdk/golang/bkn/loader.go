@@ -87,12 +87,14 @@ func LoadNetworkWithFS(fsys FileSystem, rootPath string) (*BknNetwork, error) {
 		return nil, fmt.Errorf("load network.bkn: %w", err)
 	}
 
-	// Step 3: Load SKILL.md if exists (for additional metadata)
+	// Step 3: Load SKILL.md if exists
 	skillFile := fsys.Join(absRoot, SkillFileName)
 	if _, err := fsys.Stat(skillFile); err == nil {
-		// SKILL.md exists, could parse additional metadata if needed
-		// For now, we use network.bkn as the primary source of truth
-		_ = skillFile
+		skillData, err := fsys.ReadFile(skillFile)
+		if err != nil {
+			return nil, fmt.Errorf("read SKILL.md: %w", err)
+		}
+		bknDoc.SkillContent = string(skillData)
 	}
 
 	// Step 4: Traverse subdirectories and load definitions
