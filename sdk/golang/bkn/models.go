@@ -160,7 +160,6 @@ type BknActionType struct {
 
 	// Bound Object
 	BoundObject  string
-	ActionType   string
 	AffectObject string
 
 	// Trigger Condition

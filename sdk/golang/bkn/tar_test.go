@@ -298,12 +298,12 @@ func TestWriteNetworkToTar_FullNetwork(t *testing.T) {
 		ActionTypes: []*BknActionType{
 			{
 				BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-					Type: "action_type",
-					ID:   "restart",
-					Name: "Restart Pod",
+					Type:       "action_type",
+					ID:         "restart",
+					Name:       "Restart Pod",
+					ActionType: "modify",
 				},
 				BoundObject: "pod",
-				ActionType:  "modify",
 				Parameters: []Parameter{
 					{Name: "graceful", Type: "boolean", Source: "const", Value: true},
 				},
@@ -391,12 +391,12 @@ func TestRoundTrip_NetworkWithAllTypes(t *testing.T) {
 		ActionTypes: []*BknActionType{
 			{
 				BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-					Type: "action_type",
-					ID:   "act1",
-					Name: "Action 1",
+					Type:       "action_type",
+					ID:         "act1",
+					Name:       "Action 1",
+					ActionType: "create",
 				},
 				BoundObject: "obj1",
-				ActionType:  "create",
 			},
 		},
 	}
