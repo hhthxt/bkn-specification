@@ -488,6 +488,7 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 			ID:          strVal(fmData, "id"),
 			Name:        strVal(fmData, "name"),
 			Tags:        strSliceVal(fmData, "tags"),
+			ActionType:  strVal(fmData, "action_type"),
 			Description: extractBodyDescription(text),
 		},
 		RawContent: text,
@@ -496,7 +497,7 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	sections := extractSections(text, "###")
 
 	if s, ok := sections["Bound Object"]; ok {
-		act.BoundObject, act.ActionType = parseBoundObject(s)
+		act.BoundObject = parseBoundObject(s)
 	}
 	if s, ok := sections["Affect Object"]; ok {
 		act.AffectObject = parseAffectObject(s)
@@ -524,13 +525,13 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 }
 
 // parseBoundObject parses the bound object section.
-func parseBoundObject(sectionText string) (boundObject, actionType string) {
+func parseBoundObject(sectionText string) (boundObject string) {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
-		return "", ""
+		return ""
 	}
 	r := rows[0]
-	return r["Bound Object"], r["Action Type"]
+	return r["Bound Object"]
 }
 
 // parseAffectObject parses the affect object section.

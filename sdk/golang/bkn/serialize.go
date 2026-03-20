@@ -237,10 +237,10 @@ func SerializeActionType(at *BknActionType) string {
 
 	// Bound Object
 	sb.WriteString("### Bound Object\n\n")
-	sb.WriteString("| Bound Object | Action Type |\n")
-	sb.WriteString("|--------------|-------------|\n")
+	sb.WriteString("| Bound Object |\n")
+	sb.WriteString("|--------------|\n")
 	if at.BoundObject != "" {
-		sb.WriteString(fmt.Sprintf("| %s | %s |\n", at.BoundObject, at.ActionType))
+		sb.WriteString(fmt.Sprintf("| %s |\n", at.BoundObject))
 	}
 	sb.WriteString("\n")
 

@@ -150,6 +150,7 @@ type BknActionTypeFrontmatter struct {
 	Name        string   `yaml:"name"`
 	Tags        []string `yaml:"tags"`
 	Description string   `yaml:"description"`
+	ActionType  string   `yaml:"action_type"`
 }
 
 // BknActionType represents an action type definition.
