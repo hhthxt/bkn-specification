@@ -1,5 +1,7 @@
 # BKN 规范
 
+[![构建状态](https://img.shields.io/github/actions/workflow/status/kweaver-ai/bkn-specification/sdk-packaging-verify.yml?label=build)](https://github.com/kweaver-ai/bkn-specification/actions/workflows/sdk-packaging-verify.yml)
+
 **BKN（Business Knowledge Network，业务知识网络）** 是一种基于 Markdown 的业务知识网络建模语言。本仓库托管官方规范与示例。
 
 [English](README.md)
@@ -10,6 +12,16 @@
 
 - **[SPECIFICATION.md](docs/SPECIFICATION.md)** — 完整规范（中文）
 - **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — 英文版
+
+## SDK
+
+解析、校验与转换 BKN 文件的官方 SDK。完整文档见 [sdk/](sdk/)。
+
+| 语言 | 包 | 安装 |
+|------|-----|------|
+| Python | [![PyPI](https://img.shields.io/pypi/v/kweaver-bkn)](https://pypi.org/project/kweaver-bkn/) | `pip install kweaver-bkn` |
+| TypeScript | [![npm](https://img.shields.io/npm/v/@kweaver-ai/bkn)](https://www.npmjs.com/package/@kweaver-ai/bkn) | `npm install @kweaver-ai/bkn` |
+| Golang | — | `go get github.com/kweaver-ai/bkn-specification/sdk/golang` |
 
 ## CLI
 

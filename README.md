@@ -1,5 +1,7 @@
 # BKN Specification
 
+[![Build](https://img.shields.io/github/actions/workflow/status/kweaver-ai/bkn-specification/sdk-packaging-verify.yml?label=build)](https://github.com/kweaver-ai/bkn-specification/actions/workflows/sdk-packaging-verify.yml)
+
 **BKN (Business Knowledge Network)** is a Markdown-based domain modeling language for business knowledge networks. This repository hosts the official specification and examples.
 
 [中文](README.zh.md)
@@ -10,6 +12,16 @@ The core documentation is the **BKN Language Specification**:
 
 - **[SPECIFICATION.md](docs/SPECIFICATION.md)** — Full specification (Chinese)
 - **[SPECIFICATION.en.md](docs/SPECIFICATION.en.md)** — English edition
+
+## SDK
+
+Official SDKs for parsing, validating, and transforming BKN files. See [sdk/](sdk/) for full documentation.
+
+| Language | Package | Install |
+|----------|---------|---------|
+| Python | [![PyPI](https://img.shields.io/pypi/v/kweaver-bkn)](https://pypi.org/project/kweaver-bkn/) | `pip install kweaver-bkn` |
+| TypeScript | [![npm](https://img.shields.io/npm/v/@kweaver-ai/bkn)](https://www.npmjs.com/package/@kweaver-ai/bkn) | `npm install @kweaver-ai/bkn` |
+| Golang | — | `go get github.com/kweaver-ai/bkn-specification/sdk/golang` |
 
 ## CLI
 
