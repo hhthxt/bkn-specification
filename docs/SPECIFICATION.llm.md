@@ -5,7 +5,6 @@
 ## 文件扩展名
 
 - `.bkn`：BKN 定义文件（schema）
-- `.csv`：实例数据文件（标准 CSV 格式，不含 frontmatter，不属于 BKN schema）
 
 ## 根文件与目录加载
 
@@ -44,10 +43,8 @@
 │   └── {action}.bkn
 ├── risk_types/
 │   └── {risk}.bkn
-├── concept_groups/
-│   └── {group}.bkn
-└── data/                        # 可选，.csv 实例数据
-    └── {object}.csv
+└── concept_groups/
+    └── {group}.bkn
 ```
 
 ## 网络 (Network)
@@ -211,15 +208,6 @@ tags: [tag1, tag2]               # 可选
 正文：
 - `## ConceptGroup: {显示名称}` + 简短描述
 - `### Object Types`（必须）：表格 ID | Name | Description
-
-## 数据文件 (CSV)
-
-实例数据使用标准 CSV 格式，不含 YAML frontmatter。
-
-- 列名与目标 object_type 的 Data Properties `Name` 列一致
-- 每个 CSV 文件只包含一个对象类型的数据
-- 放置在 `data/` 目录下
-- **不要**生成含 `type: data` frontmatter 的数据文件
 
 ## 更新与删除（无 patch 模型）
 
