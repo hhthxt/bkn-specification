@@ -1,13 +1,13 @@
 ---
 type: knowledge_network
-id: yzm_mock_system_import
-name: 员工入职系统_import
+id: mock_system
+name: 员工入职系统
 tags: []
 branch: main
 business_domain: bd_public
 ---
 
-# 员工入职系统_import
+# 员工入职系统
 
 
 ## Network Overview

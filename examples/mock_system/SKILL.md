@@ -1,6 +1,6 @@
 # 员工入职系统_import - Agent 使用指南
 
-> **网络ID**: yzm_mock_system_import  
+> **网络ID**: mock_system
 > **版本**:   
 
 ## 网络概览

@@ -25,9 +25,10 @@ golang/
 │   ├── tar_writer.go    # WriteNetworkToTar
 │   ├── tar_checksum.go  # ComputeChecksumFromTar, VerifyChecksumFromTar, DiffNetworksFromTar
 │   └── parser_test.go
-└── tests/
-    ├── integration_test.go
-    └── testdata/        # Real BKN networks used by integration tests
+├── tests/
+│   └── integration_test.go
+└── tools/
+    └── regenerate_checksum.go  # 批量重新生成 examples/ 的 CHECKSUM
 ```
 
 ## 如何引入（How to Use）
@@ -191,6 +192,17 @@ if !result.OK() {
 | `NewMemoryFileSystem()` | 内存文件系统，用于测试或 tar 解压 |
 
 ---
+
+## Tools
+
+### regenerate_checksum.go
+
+批量重新生成 `examples/` 下所有网络的 CHECKSUM 文件。当 examples 内容发生变更（重命名、修改 .bkn 文件、更新 SKILL.md 等）后需要执行。
+
+```bash
+# 在 sdk/golang/ 目录下运行，传入 examples 父目录
+go run tools/regenerate_checksum.go ../../examples
+```
 
 ## Tests
 
