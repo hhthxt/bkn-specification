@@ -93,8 +93,8 @@ flowchart LR
 
 **核心特性**:
 - 声明数据属性（Data Properties）和键定义（Keys）
-- 可选映射数据视图（Data Source）
 - 支持逻辑属性（指标、算子等）
+- 可选映射数据视图（Data Source）
 
 ```mermaid
 classDiagram
@@ -235,7 +235,7 @@ classDiagram
 ```
 {business_dir}/
 ├── SKILL.md                     # agentskills.io 标准入口
-├── network.bkn                  # 网络根文件（type: network）
+├── network.bkn                  # 网络根文件（type: knowledge_network）
 ├── CHECKSUM                     # 可选，目录级一致性校验
 ├── object_types/
 │   ├── pod.bkn                  # type: object_type
@@ -247,8 +247,7 @@ classDiagram
 ├── action_types/
 │   ├── restart_pod.bkn          # type: action_type
 │   └── cordon_node.bkn          # type: action_type
-├── risk_types/
-│   └── restart_pod_high_risk.bkn # type: risk_type
+├── risk_types/                  # 可选，type: risk_type
 ├── concept_groups/
 │   └── k8s.bkn                  # type: concept_group
 └── data/                        # 可选，.csv 实例数据
@@ -298,7 +297,7 @@ flowchart LR
 
 | type | 说明 | 用途 |
 |------|------|------|
-| `network` | 完整知识网络 | 初始化或全量导入 |
+| `knowledge_network` | 完整知识网络 | 初始化或全量导入 |
 | `object_type` | 单个对象类型定义 | 增量添加/更新对象 |
 | `relation_type` | 单个关系类型定义 | 增量添加/更新关系 |
 | `action_type` | 单个行动类型定义 | 增量添加/更新行动 |
@@ -307,7 +306,7 @@ flowchart LR
 
 ### 典型工作流
 
-1. **初始化**: 导入 `network` 类型的完整定义
+1. **初始化**: 导入 `knowledge_network` 类型的完整定义
 2. **扩展**: 导入单个 `object_type` / `relation_type` / `action_type` / `risk_type` 文件
 3. **修改**: 导入同 ID 的文件，自动覆盖
 4. **删除**: 调用 SDK/CLI 的 delete API

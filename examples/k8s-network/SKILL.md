@@ -30,12 +30,6 @@
 | restart_pod | `action_types/restart_pod.bkn` | Pod | 重启指定 Pod |
 | cordon_node | `action_types/cordon_node.bkn` | Node | 隔离节点，禁止调度 |
 
-### 风险类型
-
-| 风险 | 文件路径 | 说明 |
-|------|----------|------|
-| restart_pod_high_risk | `risk_types/restart_pod_high_risk.bkn` | 重启 Pod 高风险操作 |
-
 ## 拓扑结构
 
 ```
@@ -78,7 +72,6 @@
 - **对象定义**: `object_types/*.bkn`
 - **关系定义**: `relation_types/*.bkn`
 - **行动定义**: `action_types/*.bkn`
-- **风险定义**: `risk_types/*.bkn`
 
 ### 按功能索引
 
@@ -86,7 +79,6 @@
 - **网络路由**: service_routes_pod
 - **调度归属**: pod_belongs_node
 - **运维操作**: restart_pod, cordon_node
-- **风险管控**: restart_pod_high_risk
 
 ## 注意事项
 

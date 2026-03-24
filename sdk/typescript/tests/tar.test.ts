@@ -67,7 +67,6 @@ describe("packToTar", () => {
       expect(contents.some((c) => c.endsWith("object_types/pod.bkn"))).toBe(true);
       expect(contents.some((c) => c.endsWith("relation_types/pod_belongs_node.bkn"))).toBe(true);
       expect(contents.some((c) => c.endsWith("action_types/restart_pod.bkn"))).toBe(true);
-      expect(contents.some((c) => c.endsWith("risk_types/restart_pod_high_risk.bkn"))).toBe(true);
       expect(contents.some((c) => c.endsWith("concept_groups/k8s.bkn"))).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true });

@@ -57,7 +57,7 @@ Generate `.bkn` files conforming to the BKN specification, and optionally import
 
 1. **理解需求**：识别业务域、对象、关系、行动
 2. **读规范**：加载 [references/specification.md](references/specification.md)，按格式规则生成
-3. **选模板**：从 [assets/](assets/) 选取对应类型（object、relation、action、network、data）
+3. **选模板**：从 [assets/](assets/) 选取对应类型（object、relation、action、network、concept_group、data）
 4. **生成 `.bkn` 文件**：按下方 Output Rules 输出
 5. **（可选）校验/导入**：按 Script Chain 顺序运行脚本
 
@@ -130,8 +130,6 @@ my-network/
 │   └── order_belongs_customer.bkn
 ├── action_types/
 │   └── cancel_order.bkn
-├── risk_types/                  # optional
-│   └── high_risk_action.bkn
 └── concept_groups/              # optional
     └── domain.bkn
 ```
@@ -151,11 +149,12 @@ my-network/
 
 Read the appropriate template before generating:
 
-- `assets/object.bkn.template` — object_type with Data Properties, Keys, Data Source, Logic Properties
-- `assets/relation.bkn.template` — relation_type with Endpoint, Mapping Rules (direct and data_view)
-- `assets/action.bkn.template` — action_type with Bound Object, Trigger, Parameter Binding, Schedule
-- `assets/network.bkn.template` — knowledge_network root with Network Overview (modular layout uses object_types/, relation_types/, etc.)
-- `assets/data.bknd.template` — instance data file for objects with Data Source Type `bknd`
+- `assets/object.bkn.template` — object_type：Data Properties、Keys、Logic Properties、Data Source（与 [docs/SPECIFICATION.md](../../../docs/SPECIFICATION.md) 一致）
+- `assets/relation.bkn.template` — relation_type：Endpoint、Mapping Rules（direct / data_view 见注释）
+- `assets/action.bkn.template` — action_type：Bound Object、Tool / Parameter Binding 等（与规范一致）
+- `assets/network.bkn.template` — knowledge_network 根与 Network Overview
+- `assets/concept_group.bkn.template` — concept_group：Object Types 表
+- `assets/data.bknd.template` — 实例数据 `.bknd`（Data Source Type `bknd` 时）
 
 Fill in `{placeholders}`, remove unused optional sections, and remove template comments.
 
@@ -168,10 +167,16 @@ Fill in `{placeholders}`, remove unused optional sections, and remove template c
 3. Use existing object/relation IDs when referencing other definitions in the same network.
 4. Follow table column names exactly as defined in the spec.
 5. IDs: lowercase letters, digits, underscores. Display names and descriptions in Chinese unless specified otherwise.
-6. Required fields: `type`, `id`, `name`, `network` in frontmatter.
-   - Object: must have Data Source + at least one Primary Key and one Display Key.
-   - Relation: must have Endpoints + Mapping Rules.
-   - Action: must have Bound Object + Trigger Condition.
+6. Required fields: 以 [docs/SPECIFICATION.md](../../../docs/SPECIFICATION.md) 为准；各类型 frontmatter 至少 `type`、`id`、`name`。
+   - ObjectType：Data Properties、Keys（Primary Keys + Display Key）；Data Source 可选。
+   - RelationType：Endpoint、Mapping Rules（或 data_view 时的 Mapping View + Source/Target Mapping）。
+   - ActionType：Bound Object、Tool Configuration、Parameter Binding。
+
+7. **业务规则放置**（用户提供的业务规则应按作用域分层写入，不要放在规范外的位置）：
+   - 网络级规则 → `network.bkn` 的 `# {name}` 后描述区
+   - 类型级规则 → 对应类型文件的 body 描述段（`## ObjectType: {name}` 后、第一个 `###` 前），不放 frontmatter
+   - 属性级规则 → Data Properties 的 Description 列
+   - 不要在 BKN 文件中添加自定义 section 或非标准结构，超出规范部分在 SDK 解析和平台导入时可能不被保存
 
 **Execute mode** (operate action):
 
@@ -250,6 +255,7 @@ bkn-creator/
 │   ├── relation.bkn.template
 │   ├── action.bkn.template
 │   ├── network.bkn.template
+│   ├── concept_group.bkn.template
 │   └── data.bknd.template
 └── scripts/
     ├── validate.py

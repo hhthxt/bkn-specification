@@ -13,7 +13,7 @@ tags: [{标签1}, {标签2}]
 
 | Source | Target | Type |
 |--------|--------|------|
-| {source} | {target} | direct |
+| {source_object_id} | {target_object_id} | direct |
 
 ### Mapping Rules
 
@@ -21,13 +21,13 @@ tags: [{标签1}, {标签2}]
 |-----------------|-----------------|
 | {source_prop} | {target_prop} |
 
-<!-- data_view 类型时替换为：
+<!-- data_view 类型时替换为（详见 docs/SPECIFICATION.md「关系类型定义规范」）：
 
 ### Endpoint
 
 | Source | Target | Type |
 |--------|--------|------|
-| {source} | {target} | data_view |
+| {source_object_id} | {target_object_id} | data_view |
 
 ### Mapping View
 
@@ -47,7 +47,3 @@ tags: [{标签1}, {标签2}]
 |---------------|-----------------|
 | {view_prop} | {target_prop} |
 -->
-
-### Business Semantics
-
-{关系的业务含义说明}

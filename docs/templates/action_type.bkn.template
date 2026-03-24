@@ -28,7 +28,7 @@ requires_approval: true
 
 ```yaml
 condition:
-  object_type_id: {object_id}
+  object_type_id: {object_type_id}
   field: {property_name}
   operation: {operator}
   value: {value}
@@ -67,6 +67,7 @@ condition:
 | Parameter | Type | Source | Binding | Description |
 |-----------|------|--------|---------|-------------|
 | {param} | string | property | {property_name} | {说明} |
+| {param} | string | input | - | {说明} |
 | {param} | string | const | {value} | {说明} |
 
 ### Schedule

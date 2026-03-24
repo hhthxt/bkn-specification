@@ -1,6 +1,6 @@
 # BKN 语言规范
 
-版本: 2.0.0
+版本: 2.0.1
 
 ## 概述
 
@@ -51,13 +51,13 @@ BKN (Business Knowledge Network) 是一种基于 Markdown 的声明式建模语�
 | 术语 | 含义 |
 |------|------|
 | frontmatter | YAML 元数据区（`---` 包裹），每个 .bkn 文件的头部 |
-| network | 文件类型 `type: network`，完整知识网络的顶层容器 |
+| knowledge_network | 文件类型 `type: knowledge_network`，完整知识网络的顶层容器 |
 
 ### 标准原语表 (Primitives)
 
 Section 标题和表格列名的规范形式，建议使用英文。解析器应同时支持英文与中文以便兼容。
 
-下表按 **统一标题层级** 组织，适用于所有 BKN 文件类型（network / object_type / relation_type / action_type / risk_type / concept_group）。
+下表按 **统一标题层级** 组织，适用于所有 BKN 文件类型（knowledge_network / object_type / relation_type / action_type / risk_type / concept_group）。
 
 | Level | English (canonical) | Definition | 中文 | Syntax |
 |:-----:|---------------------|------------|------|--------|
@@ -115,7 +115,7 @@ Section 标题和表格列名的规范形式，建议使用英文。解析器应
 
 ```markdown
 ---
-type: network
+type: knowledge_network
 id: example-network
 name: Example Network
 tags: [example]
@@ -138,18 +138,18 @@ Network description...
 
 | type | 说明 | 用途 |
 |------|------|------|
-| `network` | 完整知识网络 | 网络顶层容器文件 |
+| `knowledge_network` | 完整知识网络 | 网络顶层容器文件 |
 | `object_type` | 单个对象类型定义 | 独立的对象类型文件，可直接导入 |
 | `relation_type` | 单个关系类型定义 | 独立的关系类型文件，可直接导入 |
 | `action_type` | 单个行动类型定义 | 独立的行动类型文件，可直接导入 |
 | `risk_type` | 单个风险类型定义 | 独立的风险类文件，可直接导入 |
 | `concept_group` | 概念分组 | 将相关对象类型组织在一起 |
 
-### 网络文件 (type: network)
+### 网络文件 (type: knowledge_network)
 
 ```yaml
 ---
-type: network                    # 完整知识网络
+type: knowledge_network          # 完整知识网络
 id: string                       # 网络ID，唯一标识
 name: string                     # 网络显示名称
 tags: [string]                   # 可选，标签列表
@@ -424,7 +424,7 @@ Pod 实例与其所属 Node 的归属关系。
 
 | Bound Object | Action Type |
 |--------------|-------------|
-| {object_type_id} | add 或 modify 或 delete |
+| {object_type_id} | add 或 modify 或 delete 或 query |
 
 ### Affect Object
 
@@ -732,7 +732,7 @@ graph LR
 `SKILL.md` 是 agentskills.io 定义的 Agent Skill 入口文件，与 BKN 的目录组织互补使用：
 
 - **SKILL.md 管职责**：描述 Skill 的能力、脚本入口、工作流、模板和输出规则，供 AI Agent 解读。
-- **network.bkn 管结构**：通过 frontmatter `type: network` 声明网络元数据，SDK/CLI 自动发现同目录下的 BKN 文件。
+- **network.bkn 管结构**：通过 frontmatter `type: knowledge_network` 声明网络元数据，SDK/CLI 自动发现同目录下的 BKN 文件。
 - **互不替代**：SKILL.md 不是 BKN 根文件，SDK/CLI 的 `load_network` 和 `validate network` 读取的是 `network.bkn`，而非 `SKILL.md`。
 - **共存推荐**：在目录中同时放置 `SKILL.md`（Agent 入口）和 `network.bkn`（SDK/CLI 入口），两者各司其职。
 - **checksum 纳入**：`SKILL.md` 被 `checksum generate` 纳入校验和计算（按 `SKILL.md` 全文 normalize 后哈希），确保 Skill 描述变更可被审计追踪。
@@ -764,14 +764,14 @@ Kubernetes 中的最小部署单元，一个或多个容器的集合。
 | pod_ip | Pod IP | string | Pod IP地址 | pod_ip |
 | pod_created_at | 创建时间 | datetime | Pod创建时间 | pod_created_at |
 
-### Logic Properties
-
-
 ### Keys
 
 Primary Keys: id
 Display Key: pod_name
 Incremental Key:
+
+### Logic Properties
+
 
 ### Data Source
 
@@ -814,7 +814,7 @@ BKN 支持将任何 `.bkn` 文件动态导入到已有的知识网络。
 
 - `key = (network_id, type, id)`
 
-其中 `network_id` 由导入目标网络（导入命令参数或 `type: network` 的 `id`）确定。
+其中 `network_id` 由导入目标网络（导入命令参数或 `type: knowledge_network` 的 `id`）确定。
 
 ### 更新语义（replace vs merge）
 
@@ -943,6 +943,16 @@ BKN 采用**无 patch 的更新模型**：定义文件仅用于新增与修改�
 2. 使用 mermaid 图展示整体拓扑
 3. 对象定义在前，关系和行动在后
 4. 相关定义放在一起
+
+### 业务规则放置
+
+业务规则应按作用域分层放置，不要在 BKN 文件中添加规范外的额外信息：
+
+1. **网络级规则** — 写在 `network.bkn` 的 `# {name}` 标题之后的描述区，用于声明整个知识网络的顶层业务约束
+2. **类型级规则** — 写在对应类型文件（`object_type.bkn`、`relation_type.bkn`、`action_type.bkn`）的 body 描述段（`## ObjectType: {name}` 标题之后、第一个 `###` 之前的自由文本），不要放在 frontmatter 中
+3. **属性级规则** — 直接写在 Data Properties 表的 `Description` 列中
+
+> **注意**：BKN 文件有严格的格式约束（frontmatter + 标准 section），超出规范定义的内容在 SDK 解析和平台导入时可能不会被保存。请将业务规则放在上述三个层级中，不要添加自定义 section 或非标准结构。
 
 ### 简洁原则
 

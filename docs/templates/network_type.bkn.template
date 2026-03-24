@@ -1,5 +1,5 @@
 ---
-type: network
+type: knowledge_network
 id: {network_id}
 name: {网络名称}
 tags: [{标签1}, {标签2}]

@@ -13,7 +13,8 @@ tags: [{标签1}, {标签2}]
 
 | Name | Display Name | Type | Description | Mapped Field |
 |------|--------------|------|-------------|--------------|
-| {property} | {显示名} | {type} | {说明} | {mapped_field} |
+| {name} | {显示名} | string | {说明} | {mapped_field} |
+| {name} | {显示名} | integer | {说明} | {mapped_field} |
 
 ### Keys
 
@@ -21,22 +22,17 @@ Primary Keys: {primary_key}
 Display Key: {display_key}
 Incremental Key:
 
-### Data Source
-
-| Type | ID | Name |
-|------|-----|------|
-| data_view | {view_id} | {view_name} |
-
 ### Logic Properties
 
-<!-- 可选：指标、算子等扩展属性 -->
+<!-- 可选：为空时留空即可 -->
+
+<!-- 子章节格式（指标、算子等扩展属性）：
 
 #### {logic_property_name}
 
-- **Display**: {display_name}
-- **Type**: metric | operator
+- **Display**: {显示名}
+- **Type**: operator
 - **Source**: {source_id} ({source_type})
-- **说明**: {说明}
 
 | Parameter | Type | Source | Binding | Description |
 |-----------|------|--------|---------|-------------|
@@ -44,14 +40,10 @@ Incremental Key:
 | {param} | string | input | - | {说明} |
 | {param} | string | const | {value} | {说明} |
 
-### Property Override
+-->
 
-<!-- 可选：仅声明需要特殊配置的属性 -->
+### Data Source
 
-| Property | Display Name | Index Config | Constraint | Description |
-|----------|--------------|--------------|------------|-------------|
-| {property} | {显示名} | {索引配置} | {constraint} | {说明} |
-
-### Business Semantics
-
-{业务含义说明}
+| Type | ID | Name |
+|------|-----|------|
+| data_view | {view_id} | {view_name} |

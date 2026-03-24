@@ -1,6 +1,6 @@
 # BKN Language Specification
 
-Version: 2.0.0
+Version: 2.0.1
 
 ## Overview
 
@@ -51,13 +51,13 @@ This document defines the complete syntax specification for BKN.
 | Term | Meaning |
 |------|---------|
 | frontmatter | YAML metadata block (wrapped in `---`); header of each .bkn file |
-| network | File type `type: network`; top-level container for a complete knowledge network |
+| knowledge_network | File type `type: knowledge_network`; top-level container for a complete knowledge network |
 
 ### Primitives Table
 
 Section titles and table column names should use English as the canonical form. Parsers should support both English and Chinese for compatibility.
 
-The table below is organized by **unified heading level**, applicable to all BKN file types (network / object_type / relation_type / action_type / risk_type / concept_group).
+The table below is organized by **unified heading level**, applicable to all BKN file types (knowledge_network / object_type / relation_type / action_type / risk_type / concept_group).
 
 | Level | English (canonical) | Definition | Syntax |
 |:-----:|---------------------|------------|--------|
@@ -115,7 +115,7 @@ Each BKN file consists of two parts:
 
 ```markdown
 ---
-type: network
+type: knowledge_network
 id: example-network
 name: Example Network
 tags: [example]
@@ -138,18 +138,18 @@ Network description...
 
 | type | Description | Purpose |
 |------|-------------|---------|
-| `network` | Complete knowledge network | Top-level network container file |
+| `knowledge_network` | Complete knowledge network | Top-level network container file |
 | `object_type` | Single object type definition | Standalone object type file, can be imported directly |
 | `relation_type` | Single relation type definition | Standalone relation type file, can be imported directly |
 | `action_type` | Single action type definition | Standalone action type file, can be imported directly |
 | `risk_type` | Single risk type definition | Standalone risk type file, can be imported directly |
 | `concept_group` | Concept group | Organizes related object types together |
 
-### Network File (type: network)
+### Network File (type: knowledge_network)
 
 ```yaml
 ---
-type: network                    # Complete knowledge network
+type: knowledge_network          # Complete knowledge network
 id: string                       # Network ID, unique identifier
 name: string                     # Network display name
 tags: [string]                   # Optional, tag list
@@ -424,7 +424,7 @@ The like relationship between users and posts.
 
 | Bound Object | Action Type |
 |--------------|-------------|
-| {object_type_id} | add or modify or delete |
+| {object_type_id} | add or modify or delete or query |
 
 ### Trigger Condition
 
@@ -491,7 +491,7 @@ or
 |-------|:--------:|-------------|
 | {name} | YES | Action type display name |
 | Bound Object | YES | Target object type ID |
-| Action Type | YES | `add` / `modify` / `delete` |
+| Action Type | YES | `add` / `modify` / `delete` / `query` |
 | Trigger Condition | NO | Automatic trigger condition |
 | Pre-conditions | NO | Data pre-conditions before execution |
 | Scope of Impact | NO | Impact scope declaration |
@@ -724,7 +724,7 @@ Instance data uses standard CSV format, not part of the BKN schema definition, a
 `SKILL.md` is the Agent Skill entry file defined by agentskills.io, used complementarily with BKN's directory organization:
 
 - **SKILL.md manages responsibilities**: Describes the Skill's capabilities, script entry points, workflows, templates, and output rules for AI Agent interpretation.
-- **network.bkn manages structure**: Declares network metadata via frontmatter `type: network`; SDK/CLI automatically discovers BKN files in the same directory.
+- **network.bkn manages structure**: Declares network metadata via frontmatter `type: knowledge_network`; SDK/CLI automatically discovers BKN files in the same directory.
 - **Not interchangeable**: SKILL.md is not a BKN root file. SDK/CLI's `load_network` and `validate network` read `network.bkn`, not `SKILL.md`.
 - **Co-existence recommended**: Place both `SKILL.md` (Agent entry) and `network.bkn` (SDK/CLI entry) in the directory, each serving its own purpose.
 - **Checksum inclusion**: `SKILL.md` is included in `checksum generate` hash computation (normalized full text hash), ensuring Skill description changes are auditable.
@@ -756,14 +756,14 @@ The smallest deployable unit in Kubernetes, a collection of one or more containe
 | pod_ip | Pod IP | string | Pod IP address | pod_ip |
 | pod_created_at | Created At | datetime | Pod creation time | pod_created_at |
 
-### Logic Properties
-
-
 ### Keys
 
 Primary Keys: id
 Display Key: pod_name
 Incremental Key:
+
+### Logic Properties
+
 
 ### Data Source
 
@@ -806,7 +806,7 @@ The suggested unique key for each definition:
 
 - `key = (network_id, type, id)`
 
-Where `network_id` is determined by the import target network (import command parameter or `type: network`'s `id`).
+Where `network_id` is determined by the import target network (import command parameter or the network root file's `type: knowledge_network` and `id`).
 
 ### Update Semantics (replace vs merge)
 
@@ -861,14 +861,14 @@ Kubernetes deployment controller.
 | id | ID | integer | Unique identifier | id |
 | deployment_name | Deployment Name | string | Deployment name | deployment_name |
 
-### Logic Properties
-
-
 ### Keys
 
 Primary Keys: id
 Display Key: deployment_name
 Incremental Key:
+
+### Logic Properties
+
 
 ### Data Source
 
@@ -935,6 +935,16 @@ BKN uses a **no-patch update model**: definition files are used only for adding 
 2. Use mermaid diagrams to show overall topology
 3. Object definitions first, then relations and actions
 4. Keep related definitions together
+
+### Business Rule Placement
+
+Business rules should be placed according to their scope. Do not add extra information beyond the standard BKN structure:
+
+1. **Network-level rules** — Write in the description area of `network.bkn` (free text after the `# {name}` heading), for top-level business constraints of the entire knowledge network
+2. **Type-level rules** — Write in the body description of the corresponding type file (`object_type.bkn`, `relation_type.bkn`, `action_type.bkn`) — the free text between the `## ObjectType: {name}` heading and the first `###` section. Do not put business rules in frontmatter
+3. **Property-level rules** — Write directly in the `Description` column of the Data Properties table
+
+> **Note**: BKN files have strict format constraints (frontmatter + standard sections). Content outside the specification may not be preserved during SDK parsing and platform import. Place business rules in the three levels above; do not add custom sections or non-standard structures.
 
 ### Simplicity Principle
 

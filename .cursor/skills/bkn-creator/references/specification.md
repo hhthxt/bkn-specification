@@ -11,7 +11,7 @@
 
 - **根文件命名**：推荐 `network.bkn` 作为网络入口；`index.bkn` 兼容。发现顺序：`network.bkn` > `network.md` > `index.bkn` > `index.md`
 - **目录输入**：`load_network(dir)` 支持传入目录，自动发现根文件
-- **无 includes**：当根文件为 `type: network` 或 `type: knowledge_network` 且未声明 `includes` 时：
+- **无 includes**：当根文件为 `type: knowledge_network` 且未声明 `includes` 时：
   - 同目录下所有 BKN 文件视为同一网络输入
   - **子目录隐式加载**：`object_types/`、`relation_types/`、`action_types/`、`risk_types/`、`concept_groups/` 下的 `.bkn`/`.bknd`/`.md` 文件也会被自动加载
 - **有 includes**：则仅按 `includes` 加载
@@ -26,7 +26,7 @@
 
 | type | 说明 |
 |------|------|
-| `knowledge_network` / `network` | 知识网络根文件（推荐 `knowledge_network`） |
+| `knowledge_network` | 知识网络根文件 |
 | `object_type` | 单个对象类型定义 |
 | `relation_type` | 单个关系类型定义 |
 | `action_type` | 单个行动类型定义 |
@@ -67,15 +67,13 @@ tags: [tag1, tag2]     # 可选
 
 正文结构：
 - `## ObjectType: {显示名称}` + 简短描述
-- `### Data Properties`（必须）：表格，列 Name | Display Name | Type | Description | Mapped Field（`Name` 与 `Property` 列二选一，SDK 均支持）
+- `### Data Properties`（必须）：表格，列 Name | Display Name | Type | Description | Mapped Field
 - `### Keys`（必须）：
   - `Primary Keys: {key_name}`（至少一个，逗号分隔多个）
   - `Display Key: {key_name}`（一个）
   - `Incremental Key: {key_name}`（可选，可为空）
-- `### Data Source`（可选）：表格，列 Type | ID | Name，行 `data_view | {view_id} | {view_name}`
 - `### Logic Properties`（可选）：`#### {property_name}`，含 Display/Type/Source/Description，以及 Parameter 表
-- `### Property Override`（可选）：表格，列 Property | Display Name | Index Config | Constraint | Description
-- `### Business Semantics`（可选）：业务说明
+- `### Data Source`（可选）：表格，列 Type | ID | Name，行 `data_view | {view_id} | {view_name}`
 
 ### 数据类型
 
@@ -114,7 +112,7 @@ requires_approval: true  # 是否需要审批
 
 正文：
 - `## ActionType: {显示名称}` + 简短描述
-- `### Bound Object`（必须）：表格 Bound Object | Action Type（`add` 或 `modify` 或 `delete`）
+- `### Bound Object`（必须）：表格 Bound Object | Action Type（`add` / `modify` / `delete` / `query`）
 - `### Affect Object`（可选）：表格 Affect Object
 - `### Trigger Condition`（可选）：YAML 块，含 condition.object_type_id、field、operation、value
 - `### Pre-conditions`（可选）：表格 Object | Check | Condition | Message

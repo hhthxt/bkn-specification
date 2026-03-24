@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kweaver-bkn"
-version = "0.1.0"
+version = "0.1.1"
 description = "BKN SDK - Parse, validate, and transform Business Knowledge Network files"
 readme = "README.md"
 requires-python = ">=3.9"

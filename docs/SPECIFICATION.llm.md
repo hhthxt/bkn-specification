@@ -22,7 +22,7 @@
 
 | type | 说明 |
 |------|------|
-| `network` | 完整知识网络顶层容器 |
+| `knowledge_network` | 完整知识网络顶层容器 |
 | `object_type` | 单个对象类型定义 |
 | `relation_type` | 单个关系类型定义 |
 | `action_type` | 单个行动类型定义 |
@@ -47,11 +47,11 @@
     └── {group}.bkn
 ```
 
-## 网络 (Network)
+## 网络 (Knowledge network)
 
 ```yaml
 ---
-type: network
+type: knowledge_network
 id: {network_id}
 name: {显示名称}
 tags: [tag1, tag2]               # 可选
@@ -74,14 +74,14 @@ tags: [tag1, tag2]               # 可选
 ---
 ```
 
-正文结构：
+正文结构以 [`docs/SPECIFICATION.md`](SPECIFICATION.md)「对象类型定义规范」为准；推荐顺序如下（`examples/` 下可运行网络可作参照）：
 - `## ObjectType: {显示名称}` + 简短描述
 - `### Data Properties`（必须）：表格，列 Name | Display Name | Type | Description | Mapped Field
 - `### Keys`（必须）：
   - `Primary Keys: {key_name}`（至少一个）
   - `Display Key: {key_name}`（一个）
   - `Incremental Key: {key_name}`（可选，可为空）
-- `### Logic Properties`（可选）：`#### {property_name}`，含 Display/Type/Source/Description，以及 Parameter 表（列 Parameter | Type | Source | Binding | Description）
+- `### Logic Properties`（可选）：无内容时保留空小节；有内容时 `#### {property_name}`，含 Display/Type/Source/Description，以及 Parameter 表（列 Parameter | Type | Source | Binding | Description）
   - Source 值：`property`（对象属性）/ `input`（用户输入）/ `const`（常量）
   - Binding：Source 为 property 时填属性名，const 时填常量值，input 时填 `-`
 - `### Data Source`（可选）：表格，列 Type | ID | Name，行 `data_view | {view_id} | {view_name}`
@@ -143,7 +143,7 @@ requires_approval: boolean       # 可选
 
 正文：
 - `## ActionType: {显示名称}` + 简短描述
-- `### Bound Object`（必须）：表格 Bound Object | Action Type（`add` 或 `modify` 或 `delete`）
+- `### Bound Object`（必须）：表格 Bound Object | Action Type（`add` / `modify` / `delete` / `query`，与规范字段表一致）
 - `### Affect Object`（可选）：表格 Affect Object
 - `### Trigger Condition`（可选）：YAML 代码块，格式：
   ```yaml
@@ -230,3 +230,8 @@ tags: [tag1, tag2]               # 可选
    - RiskType：Control Scope、Control Policy
    - ConceptGroup：Object Types
 7. **标题层级**：`#` 网络标题、`##` 类型定义、`###` 定义内 section、`####` 子项（逻辑属性名）
+8. **业务规则放置**：
+   - 网络级规则 → `network.bkn` 的 `# {name}` 后描述区
+   - 类型级规则 → 对应类型文件 body 描述段（`## ObjectType: {name}` 后、第一个 `###` 前），不放 frontmatter
+   - 属性级规则 → Data Properties 的 Description 列
+   - **不要添加规范外的额外信息**：BKN 格式约束严格，超出标准 section 的内容在解析和导入时可能不被保存

@@ -16,6 +16,12 @@ tags: [{标签1}, {标签2}]
 | {name} | {显示名} | string | {说明} | {mapped_field} |
 | {name} | {显示名} | integer | {说明} | {mapped_field} |
 
+### Keys
+
+Primary Keys: {primary_key}
+Display Key: {display_key}
+Incremental Key:
+
 ### Logic Properties
 
 <!-- 可选：为空时留空即可 -->
@@ -35,12 +41,6 @@ tags: [{标签1}, {标签2}]
 | {param} | string | const | {value} | {说明} |
 
 -->
-
-### Keys
-
-Primary Keys: {primary_key}
-Display Key: {display_key}
-Incremental Key:
 
 ### Data Source
 

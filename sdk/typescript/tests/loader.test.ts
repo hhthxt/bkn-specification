@@ -41,7 +41,7 @@ describe("loadNetwork", () => {
     expect(allObjects(network).length).toBeGreaterThan(0);
     expect(allRelations(network).length).toBeGreaterThan(0);
     expect(allActions(network).length).toBeGreaterThan(0);
-    expect(allRisks(network).length).toBeGreaterThan(0);
+    expect(allRisks(network).length).toBe(0);
   });
 
   it("loads supplychain-hd", async () => {
