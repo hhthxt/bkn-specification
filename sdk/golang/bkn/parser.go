@@ -499,7 +499,11 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 	sections := extractSections(text, "###")
 
 	if s, ok := sections["Bound Object"]; ok {
-		act.BoundObject = parseBoundObject(s)
+		bo, at := parseBoundObject(s)
+		act.BoundObject = bo
+		if act.ActionType == "" && at != "" {
+			act.ActionType = at
+		}
 	}
 	if s, ok := sections["Affect Object"]; ok {
 		act.AffectObject = parseAffectObject(s)
@@ -508,6 +512,8 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 		act.TriggerCondition = parseTriggerCondition(s)
 	}
 	if s, ok := sections["Action Source"]; ok {
+		act.ActionSource = parseActionSource(s)
+	} else if s, ok := sections["Tool Configuration"]; ok {
 		act.ActionSource = parseActionSource(s)
 	}
 	if s, ok := sections["Parameter Binding"]; ok {
@@ -521,13 +527,15 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 }
 
 // parseBoundObject parses the bound object section.
-func parseBoundObject(sectionText string) (boundObject string) {
+// Returns the bound object ID and, if present, the action_type from the table's
+// "Action Type" column (used as fallback when frontmatter action_type is empty).
+func parseBoundObject(sectionText string) (boundObject string, actionType string) {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
-		return ""
+		return "", ""
 	}
 	r := rows[0]
-	return r["Bound Object"]
+	return r["Bound Object"], r["Action Type"]
 }
 
 // parseAffectObject parses the affect object section.
@@ -545,8 +553,8 @@ func parseAffectObject(sectionText string) (affectObject *ActionAffect) {
 }
 
 // parseTriggerCondition parses the trigger condition from YAML code block.
+// Handles both direct CondCfg and wrapped `condition:` / `trigger_condition:` keys.
 func parseTriggerCondition(sectionText string) *CondCfg {
-	// Extract YAML content from ```yaml ... ``` block
 	matches := yamlBlockRE.FindStringSubmatch(sectionText)
 	if len(matches) < 2 {
 		return nil
@@ -554,24 +562,43 @@ func parseTriggerCondition(sectionText string) *CondCfg {
 
 	yamlContent := matches[1]
 
+	// Try wrapped format first: { condition: {...} } or { trigger_condition: {...} }
+	var wrapper map[string]*CondCfg
+	if err := yaml.Unmarshal([]byte(yamlContent), &wrapper); err == nil {
+		if c, ok := wrapper["condition"]; ok && c != nil {
+			return c
+		}
+		if c, ok := wrapper["trigger_condition"]; ok && c != nil {
+			return c
+		}
+	}
+
+	// Fall back to direct CondCfg
 	var cond CondCfg
 	if err := yaml.Unmarshal([]byte(yamlContent), &cond); err != nil {
+		return nil
+	}
+	if cond.Operation == "" && cond.Field == "" && len(cond.SubConds) == 0 {
 		return nil
 	}
 	return &cond
 }
 
 // parseParameterBinding parses the parameter binding table.
+// BKN files use column header "Parameter" for the name field, and "Binding"
+// for the value_from field.
 func parseParameterBinding(sectionText string) []Parameter {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	var params []Parameter
 	for _, row := range rows {
+		name := firstNonEmpty(row, "Name", "Parameter")
+		valueFrom := firstNonEmpty(row, "ValueFrom", "Binding", "Value From")
 		param := Parameter{
-			Name:        row["Name"],
+			Name:        name,
 			Type:        row["Type"],
 			Source:      row["Source"],
 			Operation:   row["Operation"],
-			ValueFrom:   row["ValueFrom"],
+			ValueFrom:   valueFrom,
 			Value:       row["Value"],
 			Description: row["Description"],
 		}
@@ -581,6 +608,7 @@ func parseParameterBinding(sectionText string) []Parameter {
 }
 
 // parseActionSource parses the action source table.
+// Handles multiple column naming conventions found in BKN files.
 func parseActionSource(sectionText string) *ActionSource {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	if len(rows) == 0 {
@@ -591,13 +619,13 @@ func parseActionSource(sectionText string) *ActionSource {
 	actSrc := &ActionSource{
 		Type: r["Type"],
 	}
-	switch actSrc.Type {
+	switch strings.ToLower(strings.TrimSpace(actSrc.Type)) {
 	case "tool":
-		actSrc.BoxID = r["BoxID"]
-		actSrc.ToolID = r["ToolID"]
+		actSrc.BoxID = firstNonEmpty(r, "BoxID", "Box ID", "Toolbox ID")
+		actSrc.ToolID = firstNonEmpty(r, "ToolID", "Tool ID")
 	case "mcp":
-		actSrc.McpID = r["McpID"]
-		actSrc.ToolName = r["ToolName"]
+		actSrc.McpID = firstNonEmpty(r, "McpID", "MCP ID", "Mcp ID")
+		actSrc.ToolName = firstNonEmpty(r, "ToolName", "Tool Name")
 	}
 
 	return actSrc
@@ -698,6 +726,16 @@ func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, er
 	}
 
 	return cg, nil
+}
+
+// firstNonEmpty returns the first non-empty value found in row under the given keys.
+func firstNonEmpty(row map[string]string, keys ...string) string {
+	for _, k := range keys {
+		if v := row[k]; v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 // parseConceptGroupObjectTypes parses the object types list for a concept group.

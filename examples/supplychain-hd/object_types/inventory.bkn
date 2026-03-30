@@ -30,7 +30,7 @@ tags: [供应链, 库存, 已审核]
 ### Keys
 
 Primary Keys: seq_no
-Display Key:
+Display Key: seq_no
 Incremental Key:
 
 ### Data Source

@@ -39,6 +39,11 @@ network: test
 | Property | Type |
 |----------|------|
 | id | string |
+
+### Keys
+
+Primary Key: id
+Display Key: id
 `,
         "utf-8"
       );

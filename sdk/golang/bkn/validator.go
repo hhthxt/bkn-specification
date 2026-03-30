@@ -1,4 +1,4 @@
-// Copyright The kweaver-ai Authors.
+// Copyright The kweaver.ai Authors.
 //
 // Licensed under the Apache License, Version 2.0.
 // See the LICENSE file in the project root for details.
@@ -9,10 +9,35 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
-// IDs allow lowercase letters, digits, underscores, and hyphens (matches common BKN examples e.g. k8s-network).
-var idPattern = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
+// Aligned with adp bkn-backend/interfaces/common.go RegexPattern_NonBuiltin_ID
+var idPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,39}$`)
+
+// Property names: adp RegexPattern_Property_Name
+var propertyNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,39}$`)
+
+// NAME_INVALID_CHARACTER from adp bkn-backend/interfaces/common.go
+const nameInvalidChars = `/:?\"<>|：？''""！《》,#[]{}%&*$^!=.'`
+
+const (
+	objectNameMaxLength = 40
+	commentMaxLength    = 1000
+	tagsMaxNumber       = 5
+	maxPropertyNum      = 1000
+)
+
+const (
+	dataSourceTypeDataView = "data_view"
+	relationTypeDirect     = "direct"
+	relationTypeDataView   = "data_view"
+)
+
+const valueFromProperty = "property"
+
+// actionCondMaxSub matches backend: max sub-conditions for action trigger (cond.MaxSubCondition)
+const actionCondMaxSub = 100
 
 // ValidationError represents a single validation problem.
 type ValidationError struct {
@@ -43,7 +68,61 @@ func appendError(result *ValidationResult, table, column, code, message string) 
 	})
 }
 
-// ValidateNetwork performs structural validation on a loaded BknNetwork (aligned with TypeScript SDK).
+func normType(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}
+
+var validPrimaryKeyTypes = map[string]bool{
+	"integer": true, "unsigned integer": true, "string": true, "text": true,
+}
+
+var validDisplayKeyTypes = map[string]bool{
+	"integer": true, "unsigned integer": true, "float": true, "decimal": true,
+	"string": true, "text": true, "date": true, "timestamp": true, "time": true,
+	"datetime": true, "boolean": true,
+}
+
+var validDataPropertyTypes = map[string]bool{
+	"integer": true, "unsigned integer": true, "string": true, "float": true, "decimal": true,
+	"text": true, "date": true, "timestamp": true, "time": true, "datetime": true,
+	"boolean": true, "binary": true, "json": true, "vector": true, "point": true, "shape": true, "ip": true,
+}
+
+var validIncrementalKeyTypes = map[string]bool{
+	"integer": true, "datetime": true, "timestamp": true,
+}
+
+var validLogicPropertyTypes = map[string]bool{
+	"metric": true, "operator": true,
+}
+
+var validLogicSourceTypes = map[string]bool{
+	"metric": true, "operator": true,
+}
+
+var validActionKinds = map[string]bool{
+	"add": true, "modify": true, "delete": true,
+}
+
+var validActionSourceTypes = map[string]bool{
+	"tool": true, "mcp": true,
+}
+
+// actionCondOps — adp ActionCondOperationMap keys + common aliases (==, !=)
+var actionCondOps = map[string]bool{
+	"and": true, "or": true,
+	"eq": true, "not_eq": true, "gt": true, "gte": true, "lt": true, "lte": true,
+	"in": true, "not_in": true,
+	"empty": true, "not_empty": true, "true": true, "false": true,
+	"range": true, "out_range": true, "before": true, "between": true,
+	"exist": true, "not_exist": true,
+	"like": true, "not_like": true, "prefix": true, "not_prefix": true,
+	"null": true, "not_null": true,
+	"regex": true, "contain": true, "not_contain": true, "current": true,
+	"==": true, "!=": true, ">": true, ">=": true, "<": true, "<=": true,
+}
+
+// ValidateNetwork performs structural and business validation aligned with adp bkn-backend driveradapters/validate*.go
 func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	result := &ValidationResult{}
 
@@ -57,9 +136,91 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	if strings.TrimSpace(doc.Name) == "" {
 		appendError(result, "network.bkn", "name", "missing_frontmatter_field", "frontmatter 'name' is required")
 	}
-	if doc.ID != "" && !idPattern.MatchString(strings.TrimSpace(doc.ID)) {
-		appendError(result, "network.bkn", "id", "invalid_id", fmt.Sprintf("frontmatter id %q must match /^[a-z][a-z0-9_]*$/", doc.ID))
+	if doc.ID != "" {
+		if err := validateIDString(doc.ID); err != "" {
+			appendError(result, "network.bkn", "id", "invalid_id", err)
+		}
 	}
+	if doc.Name != "" {
+		if err := validateObjectName(doc.Name, "knowledge_network"); err != "" {
+			appendError(result, "network.bkn", "name", "invalid_name", err)
+		}
+	}
+	if err := validateTags(doc.Tags); err != nil {
+		appendError(result, "network.bkn", "tags", "invalid_tags", err.Error())
+	}
+	if err := validateComment(doc.Description); err != nil {
+		appendError(result, "network.bkn", "description", "invalid_comment", err.Error())
+	}
+
+	duplicateIDs := func(ids []string, kind string) {
+		seen := make(map[string]int)
+		for _, id := range ids {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			seen[id]++
+		}
+		for id, n := range seen {
+			if n > 1 {
+				appendError(result, "network.bkn", "id", "duplicate_id", fmt.Sprintf("duplicate %s id %q in network", kind, id))
+			}
+		}
+	}
+	duplicateNames := func(names []string, kind string) {
+		seen := make(map[string]int)
+		for _, id := range names {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			seen[id]++
+		}
+		for id, n := range seen {
+			if n > 1 {
+				appendError(result, "network.bkn", "name", "duplicate_name", fmt.Sprintf("duplicate %s name %q in network", kind, id))
+			}
+		}
+	}
+
+	var otIDs, otNames []string
+	for _, ot := range doc.ObjectTypes {
+		otIDs = append(otIDs, ot.ID)
+		otNames = append(otNames, ot.Name)
+	}
+	duplicateIDs(otIDs, "object_type")
+	duplicateNames(otNames, "object_type")
+
+	var rtIDs []string
+	for _, rt := range doc.RelationTypes {
+		rtIDs = append(rtIDs, rt.ID)
+	}
+	duplicateIDs(rtIDs, "relation_type")
+
+	var atIDs, atNames []string
+	for _, at := range doc.ActionTypes {
+		atIDs = append(atIDs, at.ID)
+		atNames = append(atNames, at.Name)
+	}
+	duplicateIDs(atIDs, "action_type")
+	duplicateNames(atNames, "action_type")
+
+	var rtRiskIDs, rtRiskNames []string
+	for _, r := range doc.RiskTypes {
+		rtRiskIDs = append(rtRiskIDs, r.ID)
+		rtRiskNames = append(rtRiskNames, r.Name)
+	}
+	duplicateIDs(rtRiskIDs, "risk_type")
+	duplicateNames(rtRiskNames, "risk_type")
+
+	var cgIDs, cgNames []string
+	for _, cg := range doc.ConceptGroups {
+		cgIDs = append(cgIDs, cg.ID)
+		cgNames = append(cgNames, cg.Name)
+	}
+	duplicateIDs(cgIDs, "concept_group")
+	duplicateNames(cgNames, "concept_group")
 
 	objectIDs := make(map[string]struct{})
 	for _, ot := range doc.ObjectTypes {
@@ -69,17 +230,31 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	for _, ot := range doc.ObjectTypes {
 		t := tableName("object_type", ot.ID)
 		validateDefFrontmatter(result, t, ot.Type, ot.ID, ot.Name)
+		if err := validateTags(ot.Tags); err != nil {
+			appendError(result, t, "tags", "invalid_tags", err.Error())
+		}
+		if err := validateComment(ot.Description); err != nil {
+			appendError(result, t, "description", "invalid_comment", err.Error())
+		}
 		if !ot.HasDataPropertiesSection {
 			appendError(result, t, "", "missing_section", "ObjectType must include a ### Data Properties section")
 		}
 		if !ot.HasKeysSection {
 			appendError(result, t, "", "missing_section", "ObjectType must include a ### Keys section")
 		}
+		validateObjectTypeDeep(result, t, ot)
 	}
 
 	for _, rt := range doc.RelationTypes {
 		t := tableName("relation_type", rt.ID)
 		validateDefFrontmatter(result, t, rt.Type, rt.ID, rt.Name)
+		if err := validateTags(rt.Tags); err != nil {
+			appendError(result, t, "tags", "invalid_tags", err.Error())
+		}
+		if err := validateComment(rt.Description); err != nil {
+			appendError(result, t, "description", "invalid_comment", err.Error())
+		}
+		validateRelationTypeDeep(result, t, rt)
 		src := strings.TrimSpace(rt.Endpoint.Source)
 		tgt := strings.TrimSpace(rt.Endpoint.Target)
 		if src == "" && tgt == "" {
@@ -100,6 +275,13 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	for _, at := range doc.ActionTypes {
 		t := tableName("action_type", at.ID)
 		validateDefFrontmatter(result, t, at.Type, at.ID, at.Name)
+		if err := validateTags(at.Tags); err != nil {
+			appendError(result, t, "tags", "invalid_tags", err.Error())
+		}
+		if err := validateComment(at.Description); err != nil {
+			appendError(result, t, "description", "invalid_comment", err.Error())
+		}
+		validateActionTypeDeep(result, t, at)
 		bo := strings.TrimSpace(at.BoundObject)
 		if bo != "" {
 			if _, ok := objectIDs[bo]; !ok {
@@ -111,11 +293,23 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	for _, r := range doc.RiskTypes {
 		t := tableName("risk_type", r.ID)
 		validateDefFrontmatter(result, t, r.Type, r.ID, r.Name)
+		if err := validateTags(r.Tags); err != nil {
+			appendError(result, t, "tags", "invalid_tags", err.Error())
+		}
+		if err := validateComment(r.Description); err != nil {
+			appendError(result, t, "description", "invalid_comment", err.Error())
+		}
 	}
 
 	for _, cg := range doc.ConceptGroups {
 		t := tableName("concept_group", cg.ID)
 		validateDefFrontmatter(result, t, cg.Type, cg.ID, cg.Name)
+		if err := validateTags(cg.Tags); err != nil {
+			appendError(result, t, "tags", "invalid_tags", err.Error())
+		}
+		if err := validateComment(cg.Description); err != nil {
+			appendError(result, t, "description", "invalid_comment", err.Error())
+		}
 		for _, oid := range cg.ObjectTypes {
 			oid = strings.TrimSpace(oid)
 			if oid == "" {
@@ -128,6 +322,374 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	}
 
 	return result
+}
+
+func validateIDString(id string) string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return ""
+	}
+	if !idPattern.MatchString(id) {
+		return fmt.Sprintf("id %q must match %s", id, idPattern.String())
+	}
+	return ""
+}
+
+func validateObjectName(name string, _ string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "name must not be empty"
+	}
+	if utf8.RuneCountInString(name) > objectNameMaxLength {
+		return fmt.Sprintf("name length exceeds %d characters", objectNameMaxLength)
+	}
+	return ""
+}
+
+func validateTags(tags []string) error {
+	if len(tags) > tagsMaxNumber {
+		return fmt.Errorf("at most %d tags allowed", tagsMaxNumber)
+	}
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		if tag == "" {
+			return fmt.Errorf("tag must not be empty")
+		}
+		if utf8.RuneCountInString(tag) > objectNameMaxLength {
+			return fmt.Errorf("tag %q exceeds max length %d", tag, objectNameMaxLength)
+		}
+		if strings.ContainsAny(tag, nameInvalidChars) {
+			return fmt.Errorf("tag %q contains invalid characters", tag)
+		}
+	}
+	return nil
+}
+
+func validateComment(comment string) error {
+	if utf8.RuneCountInString(comment) > commentMaxLength {
+		return fmt.Errorf("description/comment exceeds %d characters", commentMaxLength)
+	}
+	return nil
+}
+
+func validateObjectTypeDeep(result *ValidationResult, table string, ot *BknObjectType) {
+	if ot.DataSource != nil && strings.TrimSpace(ot.DataSource.Type) != "" {
+		if normType(ot.DataSource.Type) != dataSourceTypeDataView {
+			appendError(result, table, "data_source", "invalid_data_source",
+				fmt.Sprintf("data_source.type must be %q when set, got %q", dataSourceTypeDataView, ot.DataSource.Type))
+		}
+	}
+	if len(ot.DataProperties) > maxPropertyNum {
+		appendError(result, table, "data_properties", "invalid_object_type",
+			fmt.Sprintf("data_properties count %d exceeds max %d", len(ot.DataProperties), maxPropertyNum))
+	}
+	if len(ot.LogicProperties) > maxPropertyNum {
+		appendError(result, table, "logic_properties", "invalid_object_type",
+			fmt.Sprintf("logic_properties count %d exceeds max %d", len(ot.LogicProperties), maxPropertyNum))
+	}
+
+	dataPropMap := make(map[string]*DataProperty)
+	for _, dp := range ot.DataProperties {
+		if dp == nil {
+			continue
+		}
+		if err := validatePropertyName(dp.Name); err != nil {
+			appendError(result, table, "data_properties", "invalid_property_name", err.Error())
+		}
+		if msg := validateObjectName(dp.DisplayName, ""); msg != "" {
+			appendError(result, table, "data_properties", "invalid_display_name", fmt.Sprintf("property %q: %s", dp.Name, msg))
+		}
+		if err := validateComment(dp.Description); err != nil {
+			appendError(result, table, "data_properties", "invalid_comment", err.Error())
+		}
+		if strings.TrimSpace(dp.Type) != "" {
+			nt := normType(dp.Type)
+			if !validDataPropertyTypes[nt] {
+				appendError(result, table, "data_properties", "invalid_property_type",
+					fmt.Sprintf("data property %q has invalid type %q", dp.Name, dp.Type))
+			}
+		}
+		if dp.MappedField != "" && strings.TrimSpace(dp.MappedField) == "" {
+			appendError(result, table, "data_properties", "invalid_object_type", fmt.Sprintf("mapped_field for %q must not be empty when set", dp.Name))
+		}
+		dataPropMap[dp.Name] = dp
+	}
+
+	if len(ot.PrimaryKeys) == 0 {
+		appendError(result, table, "primary_keys", "null_primary_keys", "primary_keys must not be empty")
+	} else {
+		for _, pk := range ot.PrimaryKeys {
+			prop, ok := dataPropMap[pk]
+			if !ok {
+				appendError(result, table, "primary_keys", "invalid_object_type",
+					fmt.Sprintf("primary key %q is not a defined data property", pk))
+				continue
+			}
+			nt := normType(prop.Type)
+			if !validPrimaryKeyTypes[nt] {
+				appendError(result, table, "primary_keys", "invalid_object_type",
+					fmt.Sprintf("primary key %q type %q must be integer, unsigned integer, string, or text", pk, prop.Type))
+			}
+		}
+	}
+
+	if strings.TrimSpace(ot.DisplayKey) == "" {
+		appendError(result, table, "display_key", "null_display_key", "display_key must not be empty")
+	} else {
+		prop, ok := dataPropMap[ot.DisplayKey]
+		if !ok {
+			appendError(result, table, "display_key", "invalid_object_type",
+				fmt.Sprintf("display_key %q is not a defined data property", ot.DisplayKey))
+		} else {
+			nt := normType(prop.Type)
+			if !validDisplayKeyTypes[nt] {
+				appendError(result, table, "display_key", "invalid_object_type",
+					fmt.Sprintf("display_key %q type %q is not valid for display", ot.DisplayKey, prop.Type))
+			}
+		}
+	}
+
+	if strings.TrimSpace(ot.IncrementalKey) != "" {
+		prop, ok := dataPropMap[ot.IncrementalKey]
+		if !ok {
+			appendError(result, table, "incremental_key", "invalid_object_type",
+				fmt.Sprintf("incremental_key %q is not a defined data property", ot.IncrementalKey))
+		} else {
+			nt := normType(prop.Type)
+			if !validIncrementalKeyTypes[nt] {
+				appendError(result, table, "incremental_key", "invalid_object_type",
+					fmt.Sprintf("incremental_key %q type %q must be integer, datetime, or timestamp", ot.IncrementalKey, prop.Type))
+			}
+		}
+	}
+
+	for _, lp := range ot.LogicProperties {
+		if lp == nil {
+			continue
+		}
+		if err := validatePropertyName(lp.Name); err != nil {
+			appendError(result, table, "logic_properties", "invalid_property_name", err.Error())
+		}
+		if msg := validateObjectName(lp.DisplayName, ""); msg != "" {
+			appendError(result, table, "logic_properties", "invalid_display_name", fmt.Sprintf("logic property %q: %s", lp.Name, msg))
+		}
+		if err := validateComment(lp.Description); err != nil {
+			appendError(result, table, "logic_properties", "invalid_comment", err.Error())
+		}
+		if strings.TrimSpace(lp.Type) != "" {
+			nt := normType(lp.Type)
+			if !validLogicPropertyTypes[nt] {
+				appendError(result, table, "logic_properties", "invalid_object_type",
+					fmt.Sprintf("logic property %q type must be metric or operator", lp.Name))
+			}
+		}
+		if lp.DataSource != nil {
+			dst := normType(lp.DataSource.Type)
+			if !validLogicSourceTypes[dst] {
+				appendError(result, table, "logic_properties", "invalid_object_type",
+					fmt.Sprintf("logic property %q data_source.type must be metric or operator", lp.Name))
+			}
+			if strings.TrimSpace(lp.Type) != "" && normType(lp.Type) != dst {
+				appendError(result, table, "logic_properties", "invalid_object_type",
+					fmt.Sprintf("logic property %q type must match data_source.type", lp.Name))
+			}
+		}
+		for _, p := range lp.Parameters {
+			if strings.TrimSpace(p.Name) == "" {
+				appendError(result, table, "logic_properties", "invalid_object_type",
+					fmt.Sprintf("logic property %q has parameter with empty name", lp.Name))
+			}
+		}
+	}
+}
+
+func validatePropertyName(name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return fmt.Errorf("property name must not be empty")
+	}
+	if !propertyNamePattern.MatchString(name) {
+		return fmt.Errorf("property name %q must match %s", name, propertyNamePattern.String())
+	}
+	return nil
+}
+
+func validateRelationTypeDeep(result *ValidationResult, table string, rt *BknRelationType) {
+	epType := strings.TrimSpace(rt.Endpoint.Type)
+	if epType != "" && epType != relationTypeDirect && epType != relationTypeDataView {
+		appendError(result, table, "endpoint.type", "invalid_relation_type",
+			fmt.Sprintf("relation type must be %q or %q, got %q", relationTypeDirect, relationTypeDataView, epType))
+	}
+	if strings.TrimSpace(rt.Endpoint.Source) == "" {
+		appendError(result, table, "Source", "invalid_relation_type", "endpoint source_object_type_id must not be empty")
+	}
+	if strings.TrimSpace(rt.Endpoint.Target) == "" {
+		appendError(result, table, "Target", "invalid_relation_type", "endpoint target_object_type_id must not be empty")
+	}
+	if epType == "" {
+		return
+	}
+	if rt.MappingRules == nil {
+		appendError(result, table, "mapping_rules", "invalid_relation_type", "mapping_rules must not be empty when endpoint type is set")
+		return
+	}
+
+	switch epType {
+	case relationTypeDirect:
+		rules, ok := rt.MappingRules.(DirectMappingRule)
+		if !ok {
+			appendError(result, table, "mapping_rules", "invalid_relation_type", "direct relation requires direct mapping rules array")
+			return
+		}
+		if len(rules) == 0 {
+			appendError(result, table, "mapping_rules", "invalid_relation_type", "direct mapping_rules must not be empty")
+			return
+		}
+		seen := make(map[string]bool)
+		for i, r := range rules {
+			if strings.TrimSpace(r.SourceProperty) == "" {
+				appendError(result, table, "mapping_rules", "invalid_relation_type", fmt.Sprintf("direct mapping_rules[%d] source property must not be empty", i))
+			}
+			if strings.TrimSpace(r.TargetProperty) == "" {
+				appendError(result, table, "mapping_rules", "invalid_relation_type", fmt.Sprintf("direct mapping_rules[%d] target property must not be empty", i))
+			}
+			key := r.SourceProperty + ":" + r.TargetProperty
+			if seen[key] {
+				appendError(result, table, "mapping_rules", "invalid_relation_type", fmt.Sprintf("duplicate mapping rule %q", key))
+			}
+			seen[key] = true
+		}
+	case relationTypeDataView:
+		ind, ok := rt.MappingRules.(InDirectMappingRule)
+		if !ok {
+			if ptr, ok2 := rt.MappingRules.(*InDirectMappingRule); ok2 && ptr != nil {
+				ind = *ptr
+				ok = true
+			}
+		}
+		if !ok {
+			appendError(result, table, "mapping_rules", "invalid_relation_type", "data_view relation requires InDirectMappingRule")
+			return
+		}
+		if ind.BackingDataSource == nil {
+			appendError(result, table, "mapping_rules", "invalid_relation_type", "backing_data_source must not be empty")
+			return
+		}
+		if strings.TrimSpace(ind.BackingDataSource.Type) == "" {
+			appendError(result, table, "backing_data_source", "invalid_relation_type", "backing_data_source.type must not be empty")
+		} else if normType(ind.BackingDataSource.Type) != relationTypeDataView {
+			appendError(result, table, "backing_data_source", "invalid_relation_type",
+				fmt.Sprintf("backing_data_source.type must be %q", relationTypeDataView))
+		}
+		if strings.TrimSpace(ind.BackingDataSource.ID) == "" {
+			appendError(result, table, "backing_data_source", "invalid_relation_type", "backing_data_source.id must not be empty")
+		}
+		if len(ind.SourceMappingRules) == 0 {
+			appendError(result, table, "source_mapping_rules", "invalid_relation_type", "source_mapping_rules must not be empty")
+		}
+		seenS := make(map[string]bool)
+		for i, r := range ind.SourceMappingRules {
+			if strings.TrimSpace(r.SourceProperty) == "" || strings.TrimSpace(r.TargetProperty) == "" {
+				appendError(result, table, "source_mapping_rules", "invalid_relation_type", fmt.Sprintf("source_mapping_rules[%d] properties must not be empty", i))
+			}
+			key := r.SourceProperty + ":" + r.TargetProperty
+			if seenS[key] {
+				appendError(result, table, "source_mapping_rules", "invalid_relation_type", fmt.Sprintf("duplicate mapping %q", key))
+			}
+			seenS[key] = true
+		}
+		if len(ind.TargetMappingRules) == 0 {
+			appendError(result, table, "target_mapping_rules", "invalid_relation_type", "target_mapping_rules must not be empty")
+		}
+		seenT := make(map[string]bool)
+		for i, r := range ind.TargetMappingRules {
+			if strings.TrimSpace(r.SourceProperty) == "" || strings.TrimSpace(r.TargetProperty) == "" {
+				appendError(result, table, "target_mapping_rules", "invalid_relation_type", fmt.Sprintf("target_mapping_rules[%d] properties must not be empty", i))
+			}
+			key := r.SourceProperty + ":" + r.TargetProperty
+			if seenT[key] {
+				appendError(result, table, "target_mapping_rules", "invalid_relation_type", fmt.Sprintf("duplicate mapping %q", key))
+			}
+			seenT[key] = true
+		}
+	}
+}
+
+func validateActionTypeDeep(result *ValidationResult, table string, at *BknActionType) {
+	atKind := strings.TrimSpace(at.ActionType)
+	if atKind != "" && !validActionKinds[strings.ToLower(atKind)] {
+		appendError(result, table, "action_type", "invalid_action_type",
+			fmt.Sprintf("action_type must be one of add, modify, delete, got %q", at.ActionType))
+	}
+
+	bound := strings.TrimSpace(at.BoundObject)
+	if bound == "" {
+		if at.TriggerCondition != nil {
+			appendError(result, table, "trigger_condition", "invalid_action_type", "when bound object is empty, trigger condition must be empty")
+		}
+		for _, p := range at.Parameters {
+			if strings.EqualFold(strings.TrimSpace(p.ValueFrom), valueFromProperty) {
+				appendError(result, table, "parameters", "invalid_action_type", "when bound object is empty, parameter value_from must not be property")
+				break
+			}
+		}
+	}
+
+	if at.ActionSource != nil && strings.TrimSpace(at.ActionSource.Type) != "" {
+		t := strings.TrimSpace(at.ActionSource.Type)
+		if !validActionSourceTypes[strings.ToLower(t)] {
+			appendError(result, table, "action_source", "invalid_action_type",
+				fmt.Sprintf("action_source.type must be tool or mcp, got %q", at.ActionSource.Type))
+		} else {
+			switch strings.ToLower(t) {
+			case "tool":
+				if strings.TrimSpace(at.ActionSource.McpID) != "" || strings.TrimSpace(at.ActionSource.ToolName) != "" {
+					appendError(result, table, "action_source", "invalid_action_type", "tool type must not set mcp_id or tool_name")
+				}
+			case "mcp":
+				if strings.TrimSpace(at.ActionSource.BoxID) != "" || strings.TrimSpace(at.ActionSource.ToolID) != "" {
+					appendError(result, table, "action_source", "invalid_action_type", "mcp type must not set box_id or tool_id")
+				}
+			}
+		}
+	}
+
+	for _, p := range at.Parameters {
+		if strings.TrimSpace(p.Name) == "" {
+			appendError(result, table, "parameters", "invalid_action_type", "parameter name must not be empty")
+		}
+	}
+
+	if at.TriggerCondition != nil {
+		validateActionCondition(result, table, at.TriggerCondition, 0)
+	}
+}
+
+func validateActionCondition(result *ValidationResult, table string, cfg *CondCfg, depth int) {
+	if cfg == nil {
+		return
+	}
+	op := strings.TrimSpace(strings.ToLower(cfg.Operation))
+	if op == "" {
+		appendError(result, table, "condition", "invalid_action_condition", "operation must not be empty")
+		return
+	}
+	if op == "and" || op == "or" {
+		if len(cfg.SubConds) > actionCondMaxSub {
+			appendError(result, table, "condition", "invalid_action_condition", fmt.Sprintf("too many sub conditions (max %d)", actionCondMaxSub))
+			return
+		}
+		for _, sub := range cfg.SubConds {
+			validateActionCondition(result, table, sub, depth+1)
+		}
+		return
+	}
+	if !actionCondOps[op] {
+		appendError(result, table, "condition", "invalid_action_condition", fmt.Sprintf("unsupported operation %q", cfg.Operation))
+	}
+	if strings.TrimSpace(cfg.Field) == "" {
+		appendError(result, table, "condition", "invalid_action_condition", "field must not be empty for leaf condition")
+	}
 }
 
 func tableName(kind, id string) string {
@@ -147,7 +709,14 @@ func validateDefFrontmatter(result *ValidationResult, table, typ, id, name strin
 	if strings.TrimSpace(name) == "" {
 		appendError(result, table, "name", "missing_frontmatter_field", "frontmatter 'name' is required")
 	}
-	if strings.TrimSpace(id) != "" && !idPattern.MatchString(strings.TrimSpace(id)) {
-		appendError(result, table, "id", "invalid_id", fmt.Sprintf("frontmatter id %q must match /^[a-z][a-z0-9_]*$/", id))
+	if strings.TrimSpace(id) != "" {
+		if err := validateIDString(id); err != "" {
+			appendError(result, table, "id", "invalid_id", err)
+		}
+	}
+	if strings.TrimSpace(name) != "" {
+		if err := validateObjectName(name, ""); err != "" {
+			appendError(result, table, "name", "invalid_name", err)
+		}
 	}
 }

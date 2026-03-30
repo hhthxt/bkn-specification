@@ -128,7 +128,7 @@ describe("validateNetwork — structural", () => {
   it("reports invalid_id when id does not match pattern", () => {
     const fm = emptyFrontmatter();
     fm.type = "object_type";
-    fm.id = "1bad";
+    fm.id = "Bad_Upper";
     fm.name = "Bad";
     const doc: BknDocument = {
       frontmatter: fm,

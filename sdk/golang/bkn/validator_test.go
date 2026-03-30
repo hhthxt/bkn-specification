@@ -30,6 +30,14 @@ func TestValidateNetwork_ValidK8s(t *testing.T) {
 	assert.True(t, res.OK(), "errors: %+v", res.Errors)
 }
 
+func TestValidateNetwork_ValidRestoreKnowledge(t *testing.T) {
+	dir := filepath.Join(testExamplesDir(t), "restore-knowledge")
+	net, err := LoadNetwork(dir)
+	require.NoError(t, err)
+	res := ValidateNetwork(net)
+	assert.True(t, res.OK(), "errors: %+v", res.Errors)
+}
+
 func TestValidateNetwork_MissingID(t *testing.T) {
 	net := &BknNetwork{
 		BknNetworkFrontmatter: BknNetworkFrontmatter{
@@ -72,11 +80,14 @@ func TestValidateNetwork_InvalidIDFormat(t *testing.T) {
 			{
 				BknObjectTypeFrontmatter: BknObjectTypeFrontmatter{
 					Type: "object_type",
-					ID:   "1bad",
+					ID:   "Bad_Upper",
 					Name: "Bad",
 				},
 				HasDataPropertiesSection: true,
 				HasKeysSection:           true,
+				DataProperties: []*DataProperty{{Name: "k", Type: "string"}},
+				PrimaryKeys:    []string{"k"},
+				DisplayKey:     "k",
 			},
 		},
 	}

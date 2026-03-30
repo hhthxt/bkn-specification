@@ -13,8 +13,8 @@ import {
   allRelations,
 } from "../models/index.js";
 
-/** IDs: lowercase start; then letters, digits, underscores, hyphens (e.g. k8s-network). */
-const ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
+/** IDs: aligned with adp bkn-backend RegexPattern_NonBuiltin_ID. */
+const ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 
 export interface ValidationError {
   table: string;
@@ -343,7 +343,7 @@ function validateStructure(network: BknNetwork, errors: ValidationError[]): void
         row: null,
         column: "id",
         code: "invalid_id",
-        message: `connection id '${conn.id}' must match /^[a-z][a-z0-9_]*$/`,
+        message: `connection id '${conn.id}' must match ${ID_PATTERN}`,
       });
     }
   }
@@ -406,7 +406,7 @@ function validateDocumentFrontmatter(doc: BknDocument, errors: ValidationError[]
       row: null,
       column: "id",
       code: "invalid_id",
-      message: `frontmatter id '${id}' must match /^[a-z][a-z0-9_]*$/`,
+      message: `frontmatter id '${id}' must match ${ID_PATTERN}`,
     });
   }
 }
