@@ -19,7 +19,7 @@ Frozen API and compatibility policy for Phase 1. Aligned with Python baseline an
 ```ts
 parseBkn(text: string, options?: ParseOptions): BknDocument
 parseFrontmatter(text: string): Frontmatter
-parseBody(text: string): { objects, relations, actions, risks, connections }
+parseBody(text: string): { objects, relations, actions, risks, connections, concept_groups }
 ```
 
 ### Load

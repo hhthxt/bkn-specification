@@ -376,6 +376,8 @@ func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error)
 	}
 
 	sections := extractSections(text, "###")
+	_, obj.HasDataPropertiesSection = sections["Data Properties"]
+	_, obj.HasKeysSection = sections["Keys"]
 	if s, ok := sections["Data Source"]; ok {
 		obj.DataSource = parseDataSource(s)
 	}

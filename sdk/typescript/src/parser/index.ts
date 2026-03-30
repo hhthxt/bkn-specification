@@ -7,6 +7,7 @@ import type {
   Action,
   BknDocument,
   BknObject,
+  ConceptGroup,
   Connection,
   DataTable,
   Frontmatter,
@@ -15,7 +16,14 @@ import type {
 } from "../models/index.js";
 import { emptyFrontmatter } from "../models/index.js";
 import { splitFrontmatter, parseTable, extractSections, extractFirstTableLines, parseTableColumns } from "./utils.js";
-import { parseObjectBlock, parseRelationBlock, parseActionBlock, parseRiskBlock, parseConnectionBlock } from "./blocks.js";
+import {
+  parseObjectBlock,
+  parseRelationBlock,
+  parseActionBlock,
+  parseRiskBlock,
+  parseConnectionBlock,
+  parseConceptGroupBlock,
+} from "./blocks.js";
 
 const VALID_BKN_TYPES = new Set([
   "network",
@@ -107,6 +115,7 @@ export function parseBody(text: string): {
   actions: Action[];
   risks: Risk[];
   connections: Connection[];
+  concept_groups: ConceptGroup[];
 } {
   const [, body] = splitFrontmatter(text);
   const matches = [...body.matchAll(DEFINITION_RE)];
@@ -116,6 +125,7 @@ export function parseBody(text: string): {
   const actions: Action[] = [];
   const risks: Risk[] = [];
   const connections: Connection[] = [];
+  const concept_groups: ConceptGroup[] = [];
 
   for (let i = 0; i < matches.length; i++) {
     const m = matches[i];
@@ -138,10 +148,12 @@ export function parseBody(text: string): {
       risks.push(parseRiskBlock(defId, blockText));
     } else if (defType === "Connection") {
       connections.push(parseConnectionBlock(defId, blockText));
+    } else if (defType === "ConceptGroup") {
+      concept_groups.push(parseConceptGroupBlock(defId, blockText));
     }
   }
 
-  return { objects, relations, actions, risks, connections };
+  return { objects, relations, actions, risks, connections, concept_groups };
 }
 
 export function parseDataTables(
@@ -220,6 +232,7 @@ export function parseBkn(text: string, options?: ParseOptions): BknDocument {
   let actions: Action[] = [];
   let risks: Risk[] = [];
   let connections: Connection[] = [];
+  let concept_groups: ConceptGroup[] = [];
   let dataTables: DataTable[] = [];
 
   if (frontmatter.type === "data") {
@@ -231,6 +244,7 @@ export function parseBkn(text: string, options?: ParseOptions): BknDocument {
     actions = parsed.actions;
     risks = parsed.risks;
     connections = parsed.connections;
+    concept_groups = parsed.concept_groups;
   }
 
   const SINGLE_DEF_MAP: Record<string, unknown[]> = {
@@ -238,10 +252,11 @@ export function parseBkn(text: string, options?: ParseOptions): BknDocument {
     relation_type: relations,
     action_type: actions,
     risk_type: risks,
+    concept_group: concept_groups,
   };
   const items = SINGLE_DEF_MAP[typeVal];
   if (items && items.length === 1) {
-    const item = items[0] as BknObject | Relation | Action | Risk;
+    const item = items[0] as BknObject | Relation | Action | Risk | ConceptGroup;
     if (frontmatter.id) item.id = frontmatter.id;
     if (!item.name && frontmatter.name) item.name = frontmatter.name;
     if ("tags" in item && !item.tags?.length && frontmatter.tags?.length) {
@@ -256,6 +271,7 @@ export function parseBkn(text: string, options?: ParseOptions): BknDocument {
     actions,
     risks,
     connections,
+    concept_groups,
     data_tables: dataTables,
     source_path: sourcePath,
   };

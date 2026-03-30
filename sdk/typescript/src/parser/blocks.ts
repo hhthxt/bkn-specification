@@ -5,6 +5,7 @@
 import type {
   Action,
   BknObject,
+  ConceptGroup,
   Connection,
   ConnectionConfig,
   DataProperty,
@@ -211,6 +212,8 @@ export function parseObjectBlock(blockId: string, blockText: string): BknObject 
   if (sections["Business Semantics"]) {
     obj.business_semantics = sections["Business Semantics"];
   }
+  obj.has_data_properties_section = sections["Data Properties"] !== undefined;
+  obj.has_keys_section = sections["Keys"] !== undefined;
   return obj;
 }
 
@@ -274,12 +277,24 @@ export function parseActionBlock(blockId: string, blockText: string): Action {
     risk: "",
   };
 
-  const boundRows = parseTable(blockText.split("\n"));
-  for (const row of boundRows) {
-    if ("Bound Object" in row) {
-      action.bound_object = row["Bound Object"] ?? "";
-      action.action_type = row["Action Type"] ?? "";
-      break;
+  if (sections["Bound Object"]) {
+    const boundRows = parseTable(sections["Bound Object"].split("\n"));
+    action.bound_object_refs = boundRows
+      .map((row) => (row["Bound Object"] ?? "").trim())
+      .filter(Boolean);
+    if (boundRows.length > 0) {
+      action.bound_object = boundRows[0]["Bound Object"] ?? "";
+      action.action_type = boundRows[0]["Action Type"] ?? "";
+    }
+  } else {
+    const boundRows = parseTable(blockText.split("\n"));
+    for (const row of boundRows) {
+      if ("Bound Object" in row) {
+        action.bound_object = row["Bound Object"] ?? "";
+        action.action_type = row["Action Type"] ?? "";
+        action.bound_object_refs = [action.bound_object].filter(Boolean);
+        break;
+      }
     }
   }
 
@@ -371,4 +386,29 @@ export function parseRiskBlock(blockId: string, blockText: string): Risk {
     risk.audit_requirements = sections["Audit Requirements"];
   }
   return risk;
+}
+
+export function parseConceptGroupBlock(blockId: string, blockText: string): ConceptGroup {
+  const { name, desc } = parseDisplayName(blockText);
+  const { tags, owner } = parseInlineMeta(blockText);
+  const sections = extractSections(blockText);
+
+  const cg: ConceptGroup = {
+    id: blockId,
+    name,
+    description: desc,
+    tags,
+    owner,
+    object_type_ids: [],
+  };
+
+  if (sections["Object Types"]) {
+    const rows = parseTable(sections["Object Types"].split("\n"));
+    for (const row of rows) {
+      const id = (row["ID"] ?? row["Id"] ?? "").trim();
+      if (id) cg.object_type_ids.push(id);
+    }
+  }
+
+  return cg;
 }

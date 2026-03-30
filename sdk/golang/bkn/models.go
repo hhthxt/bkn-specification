@@ -53,6 +53,10 @@ type BknObjectType struct {
 	PrimaryKeys    []string
 	DisplayKey     string
 	IncrementalKey string
+
+	// Set during parse; used by ValidateNetwork
+	HasDataPropertiesSection bool
+	HasKeysSection           bool
 }
 
 // ResourceInfo represents a data source reference.

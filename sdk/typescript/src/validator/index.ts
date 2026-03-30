@@ -1,9 +1,20 @@
 /**
- * Validate .bknd DataTable rows against Object/Relation schema definitions.
+ * Validate .bknd DataTable rows against Object/Relation schema definitions,
+ * and structural rules (IDs, cross-references, required sections).
  */
 
-import type { BknNetwork, BknObject, DataProperty, DataTable } from "../models/index.js";
-import { allObjects, allDataTables } from "../models/index.js";
+import type { BknDocument, BknNetwork, BknObject, DataProperty, DataTable } from "../models/index.js";
+import {
+  allActions,
+  allConceptGroups,
+  allConnections,
+  allDataTables,
+  allObjects,
+  allRelations,
+} from "../models/index.js";
+
+/** IDs: lowercase start; then letters, digits, underscores, hyphens (e.g. k8s-network). */
+const ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
 
 export interface ValidationError {
   table: string;
@@ -237,6 +248,204 @@ export interface ValidateOptions {
   mode?: "strict" | "compat";
 }
 
+function validateStructure(network: BknNetwork, errors: ValidationError[]): void {
+  const objectIds = new Set(allObjects(network).map((o) => o.id));
+
+  for (const doc of [network.root, ...network.includes]) {
+    validateDocumentFrontmatter(doc, errors);
+  }
+
+  for (const obj of allObjects(network)) {
+    const path = objectSourcePath(network, obj.id) ?? obj.id;
+    if (obj.has_data_properties_section === false) {
+      errors.push({
+        table: path,
+        row: null,
+        column: "",
+        code: "missing_section",
+        message: "ObjectType must include a ### Data Properties section",
+      });
+    }
+    if (obj.has_keys_section === false) {
+      errors.push({
+        table: path,
+        row: null,
+        column: "",
+        code: "missing_section",
+        message: "ObjectType must include a ### Keys section",
+      });
+    }
+  }
+
+  for (const rel of allRelations(network)) {
+    const path = relationSourcePath(network, rel.id) ?? rel.id;
+    if (rel.endpoints.length === 0) {
+      errors.push({
+        table: path,
+        row: null,
+        column: "",
+        code: "empty_endpoint",
+        message: "RelationType must have at least one endpoint row under ### Endpoint(s)",
+      });
+    }
+    for (const ep of rel.endpoints) {
+      const src = (ep.source ?? "").trim();
+      const tgt = (ep.target ?? "").trim();
+      if (src && !objectIds.has(src)) {
+        errors.push({
+          table: path,
+          row: null,
+          column: "Source",
+          code: "invalid_endpoint_ref",
+          message: `endpoint source '${src}' is not a defined object type id`,
+        });
+      }
+      if (tgt && !objectIds.has(tgt)) {
+        errors.push({
+          table: path,
+          row: null,
+          column: "Target",
+          code: "invalid_endpoint_ref",
+          message: `endpoint target '${tgt}' is not a defined object type id`,
+        });
+      }
+    }
+  }
+
+  for (const act of allActions(network)) {
+    const path = actionSourcePath(network, act.id) ?? act.id;
+    const refs =
+      act.bound_object_refs && act.bound_object_refs.length > 0
+        ? act.bound_object_refs
+        : act.bound_object
+          ? [act.bound_object]
+          : [];
+    for (const bid of refs) {
+      const id = (bid ?? "").trim();
+      if (!id) continue;
+      if (!objectIds.has(id)) {
+        errors.push({
+          table: path,
+          row: null,
+          column: "Bound Object",
+          code: "invalid_bound_object_ref",
+          message: `bound object '${id}' is not a defined object type id`,
+        });
+      }
+    }
+  }
+
+  for (const conn of allConnections(network)) {
+    const path = connectionSourcePath(network, conn.id) ?? conn.id;
+    if (conn.id && !ID_PATTERN.test(conn.id)) {
+      errors.push({
+        table: path,
+        row: null,
+        column: "id",
+        code: "invalid_id",
+        message: `connection id '${conn.id}' must match /^[a-z][a-z0-9_]*$/`,
+      });
+    }
+  }
+
+  for (const cg of allConceptGroups(network)) {
+    const path = conceptGroupSourcePath(network, cg.id) ?? cg.id;
+    for (const oid of cg.object_type_ids) {
+      if (!objectIds.has(oid)) {
+        errors.push({
+          table: path,
+          row: null,
+          column: "Object Types",
+          code: "invalid_concept_group_ref",
+          message: `concept group lists unknown object type id '${oid}'`,
+        });
+      }
+    }
+  }
+}
+
+function validateDocumentFrontmatter(doc: BknDocument, errors: ValidationError[]): void {
+  const fm = doc.frontmatter;
+  const t = (fm.type ?? "").trim();
+  if (t === "data") return;
+
+  const path = doc.source_path || "<document>";
+  if (!t) {
+    errors.push({
+      table: path,
+      row: null,
+      column: "type",
+      code: "missing_frontmatter_field",
+      message: "frontmatter 'type' is required",
+    });
+    return;
+  }
+  const id = (fm.id ?? "").trim();
+  const name = (fm.name ?? "").trim();
+  if (!id) {
+    errors.push({
+      table: path,
+      row: null,
+      column: "id",
+      code: "missing_frontmatter_field",
+      message: "frontmatter 'id' is required",
+    });
+  }
+  if (!name) {
+    errors.push({
+      table: path,
+      row: null,
+      column: "name",
+      code: "missing_frontmatter_field",
+      message: "frontmatter 'name' is required",
+    });
+  }
+  if (id && !ID_PATTERN.test(id)) {
+    errors.push({
+      table: path,
+      row: null,
+      column: "id",
+      code: "invalid_id",
+      message: `frontmatter id '${id}' must match /^[a-z][a-z0-9_]*$/`,
+    });
+  }
+}
+
+function objectSourcePath(network: BknNetwork, objectId: string): string | undefined {
+  for (const doc of [network.root, ...network.includes]) {
+    if (doc.objects.some((o) => o.id === objectId)) return doc.source_path;
+  }
+  return undefined;
+}
+
+function relationSourcePath(network: BknNetwork, relationId: string): string | undefined {
+  for (const doc of [network.root, ...network.includes]) {
+    if (doc.relations.some((r) => r.id === relationId)) return doc.source_path;
+  }
+  return undefined;
+}
+
+function actionSourcePath(network: BknNetwork, actionId: string): string | undefined {
+  for (const doc of [network.root, ...network.includes]) {
+    if (doc.actions.some((a) => a.id === actionId)) return doc.source_path;
+  }
+  return undefined;
+}
+
+function conceptGroupSourcePath(network: BknNetwork, cgId: string): string | undefined {
+  for (const doc of [network.root, ...network.includes]) {
+    if (doc.concept_groups.some((c) => c.id === cgId)) return doc.source_path;
+  }
+  return undefined;
+}
+
+function connectionSourcePath(network: BknNetwork, connId: string): string | undefined {
+  for (const doc of [network.root, ...network.includes]) {
+    if (doc.connections.some((c) => c.id === connId)) return doc.source_path;
+  }
+  return undefined;
+}
+
 export function validateDataTable(
   table: DataTable,
   schema?: BknObject | null,
@@ -342,10 +551,17 @@ export function validateDataTable(
 }
 
 export function validateDocument(
-  _doc: import("../models/index.js").BknDocument,
+  doc: BknDocument,
   _options?: ValidateOptions
 ): ValidationResult {
-  return createResult([]);
+  const network: BknNetwork = { root: doc, includes: [] };
+  const result = createResult([]);
+  validateStructure(network, result.errors);
+  for (const table of allDataTables(network)) {
+    const tableResult = validateDataTable(table, undefined, network);
+    result.errors.push(...tableResult.errors);
+  }
+  return result;
 }
 
 export function validateNetwork(
@@ -353,6 +569,7 @@ export function validateNetwork(
   _options?: ValidateOptions
 ): ValidationResult {
   const result = createResult([]);
+  validateStructure(network, result.errors);
   for (const table of allDataTables(network)) {
     const tableResult = validateDataTable(table, undefined, network);
     result.errors.push(...tableResult.errors);

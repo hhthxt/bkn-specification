@@ -120,6 +120,10 @@ export interface BknObject {
   property_overrides: PropertyOverride[];
   logic_properties: LogicProperty[];
   business_semantics: string;
+  /** Set when parsing; used by structural validation */
+  has_data_properties_section?: boolean;
+  /** Set when parsing; used by structural validation */
+  has_keys_section?: boolean;
 }
 
 export interface Relation {
@@ -167,6 +171,8 @@ export interface Action {
   description: string;
   bound_object: string;
   action_type: string;
+  /** All object type IDs from the Bound Object table (multi-row actions) */
+  bound_object_refs?: string[];
   trigger_condition: string;
   pre_conditions: PreCondition[];
   tool_config?: ToolConfig;
@@ -175,6 +181,17 @@ export interface Action {
   scope_of_impact: Record<string, string>[];
   execution_description: string;
   risk: string;
+}
+
+/** Concept group definition (concept_group files). */
+export interface ConceptGroup {
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
+  owner: string;
+  /** Object type IDs listed under ### Object Types */
+  object_type_ids: string[];
 }
 
 export interface DataTable {
@@ -193,6 +210,7 @@ export interface BknDocument {
   actions: Action[];
   risks: Risk[];
   connections: Connection[];
+  concept_groups: ConceptGroup[];
   data_tables: DataTable[];
   source_path: string;
 }
@@ -267,6 +285,14 @@ export function allConnections(network: BknNetwork): Connection[] {
   const result = [...network.root.connections];
   for (const doc of network.includes) {
     result.push(...doc.connections);
+  }
+  return result;
+}
+
+export function allConceptGroups(network: BknNetwork): ConceptGroup[] {
+  const result = [...network.root.concept_groups];
+  for (const doc of network.includes) {
+    result.push(...doc.concept_groups);
   }
   return result;
 }
