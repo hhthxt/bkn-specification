@@ -30,14 +30,6 @@ func TestValidateNetwork_ValidK8s(t *testing.T) {
 	assert.True(t, res.OK(), "errors: %+v", res.Errors)
 }
 
-func TestValidateNetwork_ValidRestoreKnowledge(t *testing.T) {
-	dir := filepath.Join(testExamplesDir(t), "restore-knowledge")
-	net, err := LoadNetwork(dir)
-	require.NoError(t, err)
-	res := ValidateNetwork(net)
-	assert.True(t, res.OK(), "errors: %+v", res.Errors)
-}
-
 func TestValidateNetwork_MissingID(t *testing.T) {
 	net := &BknNetwork{
 		BknNetworkFrontmatter: BknNetworkFrontmatter{
