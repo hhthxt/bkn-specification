@@ -9,6 +9,12 @@ tags: [供应链, 采购, 已审核]
 
 根据MRP生成的内部采购申请PR。
 
+### Data Source
+
+| Type | ID | Name |
+|------|----|------|
+| data_view | 2017573348833259522 | erp_purchase_request |
+
 ### Data Properties
 
 | Name | Display Name | Type | Description | Mapped Field |
@@ -31,10 +37,5 @@ tags: [供应链, 采购, 已审核]
 
 Primary Keys: entry_id
 Display Key: billno
-Incremental Key:
+Incremental Key: 
 
-### Data Source
-
-| Type | ID | Name |
-|------|-----|------|
-| data_view | 2017573348833259522 | erp_purchase_request |

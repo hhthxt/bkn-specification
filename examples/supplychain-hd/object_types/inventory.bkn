@@ -9,6 +9,12 @@ tags: [供应链, 库存, 已审核]
 
 实时记录物料在各仓库及仓位的现有库存量、库存状态及批次信息。
 
+### Data Source
+
+| Type | ID | Name |
+|------|----|------|
+| data_view | 2017573348090867713 | erp_real_time_inventory |
+
 ### Data Properties
 
 | Name | Display Name | Type | Description | Mapped Field |
@@ -31,10 +37,5 @@ tags: [供应链, 库存, 已审核]
 
 Primary Keys: seq_no
 Display Key: seq_no
-Incremental Key:
+Incremental Key: 
 
-### Data Source
-
-| Type | ID | Name |
-|------|-----|------|
-| data_view | 2017573348090867713 | erp_real_time_inventory |

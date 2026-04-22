@@ -1,11 +1,11 @@
 ---
 type: relation_type
 id: source_object_type_id
-name: source_object_type_id
+name: 员工-部门
 tags: []
 ---
 
-## RelationType: source_object_type_id
+## RelationType: 员工-部门
 
 ### Endpoint
 
@@ -16,6 +16,6 @@ tags: []
 ### Mapping Rules
 
 | Source Property | Target Property |
-|-----------------|------------------|
-| employee_id | department_id |
+|-----------------|-----------------|
+| id | department_id |
 

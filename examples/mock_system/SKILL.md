@@ -1,6 +1,6 @@
-# 员工入职系统_import - Agent 使用指南
+# 员工入职系统-resource版本 - Agent 使用指南
 
-> **网络ID**: mock_system
+> **网络ID**: yzm_mock_system2  
 > **版本**:   
 
 ## 网络概览
@@ -9,34 +9,26 @@
 
 | 对象 | 文件路径 | 说明 |
 |------|----------|------|
-| 4444 | `object_types/44444.bkn` |  |
-| 1 | `object_types/d6scnjmrp5plcj8ejjk0.bkn` |  |
-| dddd | `object_types/dddd.bkn` |  |
-| 部门 | `object_types/department.bkn` |  |
-| 员工 | `object_types/employee.bkn` |  |
-| 员工部门关系 | `object_types/relation.bkn` |  |
+| 部门表 | `object_types/department.bkn` |  |
+| 部门表2 | `object_types/department2.bkn` |  |
+| 员工表 | `object_types/employee.bkn` | d7blk86fmoj81ili0q3g |
+| 员工表2 | `object_types/employee2.bkn` | d7blk86fmoj81ili0q3g |
+| 技能类 | `object_types/skill_object_type.bkn` |  |
+| 技能类1 | `object_types/skill_object_type1.bkn` |  |
 
 ### 核心关系
 
 | 关系 | 文件路径 | 说明 |
 |------|----------|------|
-| source_object_type_id | `relation_types/source_object_type_id.bkn` |  |
+| resource关联 | `relation_types/d7bmni0lr8vft7go3smg.bkn` |  |
+| 员工-skill | `relation_types/emp_skill.bkn` |  |
 
 ### 可用行动
 
 | 行动 | 文件路径 | 说明 |
 |------|----------|------|
-| 1111 | `action_types/1111.bkn` |  |
-| 222 | `action_types/222.bkn` |  |
-| 2223 | `action_types/2223.bkn` |  |
-| 44 | `action_types/44.bkn` |  |
-| test0206 | `action_types/d62pdl8jijbh3srg26qg.bkn` |  |
-| test-demo | `action_types/d62qc80jijbh3srg26rg.bkn` |  |
-| del | `action_types/d6p330u1v4b3l62f0l00.bkn` |  |
-| 新员工入职 | `action_types/new_job.bkn` |  |
-| 新员工入职2 | `action_types/new_job2.bkn` |  |
-| no | `action_types/no.bkn` |  |
-| xxx | `action_types/xxx.bkn` | xxx |
+| a | `action_types/d7c6r1orj0k4ejrg82kg.bkn` |  |
+| cc | `action_types/d7c9288rj0k4ejrg82lg.bkn` |  |
 
 ## 目录结构
 

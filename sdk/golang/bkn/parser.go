@@ -15,7 +15,39 @@ import (
 
 var sectionRE = regexp.MustCompile(`(?m)^###\s+(.+)$`)
 var subSectionRE = regexp.MustCompile(`(?m)^####\s+(.+)$`)
-var inlineMetaRE = regexp.MustCompile(`(?m)^-\s+\*\*(\w+)\*\*:\s*(.+)$`)
+
+var knownObjectTypeSections = map[string]bool{
+	"Data Source":      true,
+	"Data Properties":  true,
+	"Logic Properties": true,
+	"Keys":             true,
+}
+
+var knownRelationTypeSections = map[string]bool{
+	"Endpoint":         true,
+	"Mapping Rules":    true,
+	"Mapping View":     true,
+	"Source Mapping":   true,
+	"Target Mapping":   true,
+	"Source Condition": true,
+	"Target Condition": true,
+}
+
+var knownActionTypeSections = map[string]bool{
+	"Bound Object":      true,
+	"Affect Object":     true,
+	"Trigger Condition": true,
+	"Action Source":     true,
+	"Parameter Binding": true,
+	"Schedule":          true,
+}
+
+var knownRiskTypeSections = map[string]bool{}
+
+var knownConceptGroupSections = map[string]bool{
+	"Object Types": true,
+}
+
 var h1HeadingRE = regexp.MustCompile(`(?m)^#\s+(.+)$`)
 var h2HeadingRE = regexp.MustCompile(`(?m)^##\s+(.+)$`)
 var tableSepRE = regexp.MustCompile(`^\|?[\s:*-]+(\|[\s:*-]+)*\|?$`)
@@ -54,6 +86,21 @@ func extractBodyDescription(text string) string {
 	}
 
 	return ""
+}
+
+// ExtractSummary derives a one-sentence summary from a description:
+// the text up to the first "。", ". " (period+space), or "\n", whichever comes first.
+func ExtractSummary(desc string) string {
+	if desc == "" {
+		return ""
+	}
+	end := len(desc)
+	for _, sep := range []string{"。", ". ", "\n"} {
+		if i := strings.Index(desc, sep); i >= 0 && i < end {
+			end = i + len(sep)
+		}
+	}
+	return strings.TrimSpace(desc[:end])
 }
 
 func splitFrontmatter(text string) (fm string, body string) {
@@ -119,6 +166,53 @@ func parseTable(lines []string) []map[string]string {
 		rows = append(rows, row)
 	}
 	return rows
+}
+
+// extractSectionsWithDesc splits a BKN entity file into the pre-section description
+// and all ### sections (map + document order). One pass replaces both
+// extractBodyDescription and extractSections for ### level.
+func extractSectionsWithDesc(text string) (desc string, sections map[string]string, order []string) {
+	_, body := splitFrontmatter(text)
+
+	h2Loc := h2HeadingRE.FindStringIndex(body)
+	if h2Loc == nil {
+		return "", make(map[string]string), nil
+	}
+	rest := body[h2Loc[1]:]
+
+	matches := sectionRE.FindAllStringSubmatchIndex(rest, -1)
+	sections = make(map[string]string, len(matches))
+	if len(matches) == 0 {
+		return strings.TrimSpace(rest), sections, nil
+	}
+
+	desc = strings.TrimSpace(rest[:matches[0][0]])
+	for i, m := range matches {
+		title := strings.TrimSpace(rest[m[2]:m[3]])
+		start := m[1]
+		end := len(rest)
+		if i+1 < len(matches) {
+			end = matches[i+1][0]
+		}
+		sections[title] = strings.TrimSpace(rest[start:end])
+		order = append(order, title)
+	}
+	return
+}
+
+// buildDescription joins the pre-section description text with any unknown sections
+// (sections whose titles are not in knownSections), preserving document order.
+func buildDescription(desc string, sections map[string]string, order []string, knownSections map[string]bool) string {
+	var parts []string
+	if desc != "" {
+		parts = append(parts, desc)
+	}
+	for _, title := range order {
+		if !knownSections[title] {
+			parts = append(parts, "### "+title+"\n\n"+sections[title])
+		}
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 func extractSections(body string, level string) map[string]string {
@@ -204,63 +298,83 @@ func parseLogicProperties(sectionText string) []*LogicProperty {
 	return props
 }
 
+// boldLabelRE matches a bold label anchor like **Meta** at the start of a trimmed line.
+var boldLabelRE = regexp.MustCompile(`^\*\*(.+?)\*\*$`)
+
 func parseLogicPropertySubSection(name, content string) *LogicProperty {
 	prop := &LogicProperty{Name: name}
+	lines := strings.Split(content, "\n")
+	var currentLabel string
+	var tableLines []string
 
-	for _, line := range strings.Split(content, "\n") {
-		matches := inlineMetaRE.FindStringSubmatch(strings.TrimSpace(line))
-		if len(matches) == 3 {
-			val := strings.TrimSpace(matches[2])
-			switch matches[1] {
-			case "Display":
-				prop.DisplayName = val
-			case "Type":
-				prop.Type = val
-			case "Source":
-				prop.DataSource = parseInlineSource(val)
-			case "Description":
-				prop.Description = val
+	flush := func() {
+		if currentLabel == "" || len(tableLines) == 0 {
+			return
+		}
+		rows := parseTable(tableLines)
+		switch currentLabel {
+		case "Meta":
+			if len(rows) > 0 {
+				prop.DisplayName = rows[0]["Display Name"]
+				prop.Type = rows[0]["Type"]
+				prop.Description = rows[0]["Description"]
+			}
+		case "Source":
+			if len(rows) > 0 {
+				prop.DataSource = &ResourceInfo{
+					Type: rows[0]["Source Type"],
+					ID:   rows[0]["Source ID"],
+					Name: rows[0]["Source Name"],
+				}
+			}
+		case "Parameters":
+			for _, row := range rows {
+				v := any(row["Value"])
+				if row["Value"] == "" {
+					v = nil
+				}
+				prop.Parameters = append(prop.Parameters, Parameter{
+					Name:        row["Name"],
+					Type:        row["Type"],
+					Source:      row["Source"],
+					Operation:   row["Operation"],
+					ValueFrom:   row["ValueFrom"],
+					Value:       v,
+					Description: row["Description"],
+				})
+			}
+		case "Analysis Dimensions":
+			for _, row := range rows {
+				prop.AnalysisDims = append(prop.AnalysisDims, Field{
+					Name:        row["Name"],
+					DisplayName: row["Display Name"],
+					Type:        row["Type"],
+					Description: row["Description"],
+				})
 			}
 		}
+		tableLines = nil
 	}
 
-	// Parse parameter table
-	rows := parseTable(strings.Split(content, "\n"))
-	for _, row := range rows {
-		prop.Parameters = append(prop.Parameters, Parameter{
-			Name:        row["Parameter"],
-			Type:        row["Type"],
-			Source:      row["Source"],
-			ValueFrom:   row["Binding"],
-			Description: row["Description"],
-		})
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if m := boldLabelRE.FindStringSubmatch(trimmed); len(m) == 2 {
+			flush()
+			currentLabel = m[1]
+			continue
+		}
+		if strings.HasPrefix(trimmed, "|") {
+			tableLines = append(tableLines, trimmed)
+		}
 	}
-
+	flush()
 	return prop
-}
-
-// parseInlineSource parses "name (type)" format, e.g. "bom_tree_builder (operator)"
-func parseInlineSource(val string) *ResourceInfo {
-	if idx := strings.Index(val, "("); idx > 0 {
-		name := strings.TrimSpace(val[:idx])
-		typePart := strings.TrimSuffix(strings.TrimSpace(val[idx+1:]), ")")
-		return &ResourceInfo{ID: name, Name: name, Type: typePart}
-	}
-	return &ResourceInfo{ID: val, Name: val}
 }
 
 func parseKeys(sectionText string) (pks []string, dk string, ik string) {
 	for _, line := range strings.Split(sectionText, "\n") {
 		trimmed := strings.TrimSpace(line)
-		if after, ok := strings.CutPrefix(trimmed, "Primary Key:"); ok {
-			val := strings.TrimSpace(after)
-			if val != "" {
-				pks = strings.Split(val, ",")
-				for i := range pks {
-					pks[i] = strings.TrimSpace(pks[i])
-				}
-			}
-		} else if after, ok := strings.CutPrefix(trimmed, "Primary Keys:"); ok {
+		if after, ok := strings.CutPrefix(trimmed, "Primary Keys:"); ok {
 			val := strings.TrimSpace(after)
 			if val != "" {
 				pks = strings.Split(val, ",")
@@ -346,13 +460,14 @@ func ParseNetworkFile(text string, sourcePath string) (*BknNetwork, error) {
 			ID:             strVal(fmData, "id"),
 			Name:           strVal(fmData, "name"),
 			Tags:           strSliceVal(fmData, "tags"),
-			Description:    extractBodyDescription(text),
 			Version:        strVal(fmData, "version"),
 			Branch:         strVal(fmData, "branch"),
 			BusinessDomain: strVal(fmData, "business_domain"),
 		},
-		RawContent: text,
+		Description: extractBodyDescription(text),
+		RawContent:  text,
 	}
+	network.Summary = ExtractSummary(network.Description)
 
 	return network, nil
 }
@@ -364,20 +479,23 @@ func ParseObjectTypeFile(text string, sourcePath string) (*BknObjectType, error)
 		return nil, err
 	}
 
+	desc, sections, order := extractSectionsWithDesc(text)
+
 	obj := &BknObjectType{
 		BknObjectTypeFrontmatter: BknObjectTypeFrontmatter{
-			Type:        "object_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: extractBodyDescription(text),
+			Type: "object_type",
+			ID:   strVal(fmData, "id"),
+			Name: strVal(fmData, "name"),
+			Tags: strSliceVal(fmData, "tags"),
 		},
-		RawContent: text,
+		Description: buildDescription(desc, sections, order, knownObjectTypeSections),
+		RawContent:  text,
 	}
+	obj.Summary = ExtractSummary(obj.Description)
 
-	sections := extractSections(text, "###")
 	_, obj.HasDataPropertiesSection = sections["Data Properties"]
 	_, obj.HasKeysSection = sections["Keys"]
+
 	if s, ok := sections["Data Source"]; ok {
 		obj.DataSource = parseDataSource(s)
 	}
@@ -404,18 +522,19 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 		return nil, err
 	}
 
+	desc, sections, order := extractSectionsWithDesc(text)
+
 	rel := &BknRelationType{
 		BknRelationTypeFrontmatter: BknRelationTypeFrontmatter{
-			Type:        "relation_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: extractBodyDescription(text),
+			Type: "relation_type",
+			ID:   strVal(fmData, "id"),
+			Name: strVal(fmData, "name"),
+			Tags: strSliceVal(fmData, "tags"),
 		},
-		RawContent: text,
+		Description: buildDescription(desc, sections, order, knownRelationTypeSections),
+		RawContent:  text,
 	}
-
-	sections := extractSections(text, "###")
+	rel.Summary = ExtractSummary(rel.Description)
 
 	if s, ok := sections["Endpoint"]; ok {
 		rows := parseTable(strings.Split(s, "\n"))
@@ -430,7 +549,7 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 	}
 
 	switch rel.Endpoint.Type {
-	case "direct":
+	case RELATION_MAPPING_TYPE_DIRECT:
 		if s, ok := sections["Mapping Rules"]; ok {
 			rows := parseTable(strings.Split(s, "\n"))
 			var rules []MappingRule
@@ -442,8 +561,17 @@ func ParseRelationTypeFile(text string, sourcePath string) (*BknRelationType, er
 			}
 			rel.MappingRules = DirectMappingRule(rules)
 		}
-	case "data_view":
-		indirect := InDirectMappingRule{}
+	case RELATION_MAPPING_TYPE_FILTERED_CROSS_JOIN:
+		mapping := &FilteredCrossJoinMapping{}
+		if s, ok := sections["Source Condition"]; ok {
+			mapping.SourceCondition = parseCondition(s)
+		}
+		if s, ok := sections["Target Condition"]; ok {
+			mapping.TargetCondition = parseCondition(s)
+		}
+		rel.MappingRules = mapping
+	case RELATION_MAPPING_TYPE_DATA_VIEW:
+		indirect := &InDirectMappingRule{}
 		if s, ok := sections["Mapping View"]; ok {
 			rows := parseTable(strings.Split(s, "\n"))
 			if len(rows) > 0 {
@@ -484,19 +612,20 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 		return nil, err
 	}
 
+	desc, sections, order := extractSectionsWithDesc(text)
+
 	act := &BknActionType{
 		BknActionTypeFrontmatter: BknActionTypeFrontmatter{
-			Type:        "action_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			ActionType:  strVal(fmData, "action_type"),
-			Description: extractBodyDescription(text),
+			Type:       "action_type",
+			ID:         strVal(fmData, "id"),
+			Name:       strVal(fmData, "name"),
+			Tags:       strSliceVal(fmData, "tags"),
+			ActionType: strVal(fmData, "action_type"),
 		},
-		RawContent: text,
+		Description: buildDescription(desc, sections, order, knownActionTypeSections),
+		RawContent:  text,
 	}
-
-	sections := extractSections(text, "###")
+	act.Summary = ExtractSummary(act.Description)
 
 	if s, ok := sections["Bound Object"]; ok {
 		bo, at := parseBoundObject(s)
@@ -509,7 +638,7 @@ func ParseActionTypeFile(text string, sourcePath string) (*BknActionType, error)
 		act.AffectObject = parseAffectObject(s)
 	}
 	if s, ok := sections["Trigger Condition"]; ok {
-		act.TriggerCondition = parseTriggerCondition(s)
+		act.TriggerCondition = parseActionCondition(s)
 	}
 	if s, ok := sections["Action Source"]; ok {
 		act.ActionSource = parseActionSource(s)
@@ -552,9 +681,9 @@ func parseAffectObject(sectionText string) (affectObject *ActionAffect) {
 	return affectObject
 }
 
-// parseTriggerCondition parses the trigger condition from YAML code block.
+// parseActionCondition parses the trigger condition from YAML code block.
 // Handles both direct CondCfg and wrapped `condition:` / `trigger_condition:` keys.
-func parseTriggerCondition(sectionText string) *CondCfg {
+func parseCondition(sectionText string) *CondCfg {
 	matches := yamlBlockRE.FindStringSubmatch(sectionText)
 	if len(matches) < 2 {
 		return nil
@@ -584,9 +713,42 @@ func parseTriggerCondition(sectionText string) *CondCfg {
 	return &cond
 }
 
+// parseActionCondition parses the trigger condition from YAML code block.
+// Handles both direct CondCfg and wrapped `condition:` / `trigger_condition:` keys.
+func parseActionCondition(sectionText string) *ActionCondCfg {
+	matches := yamlBlockRE.FindStringSubmatch(sectionText)
+	if len(matches) < 2 {
+		return nil
+	}
+
+	yamlContent := matches[1]
+
+	// Try wrapped format first: { condition: {...} } or { trigger_condition: {...} }
+	var wrapper map[string]*ActionCondCfg
+	if err := yaml.Unmarshal([]byte(yamlContent), &wrapper); err == nil {
+		if c, ok := wrapper["condition"]; ok && c != nil {
+			return c
+		}
+		if c, ok := wrapper["trigger_condition"]; ok && c != nil {
+			return c
+		}
+	}
+
+	// Fall back to direct CondCfg
+	var cond ActionCondCfg
+	if err := yaml.Unmarshal([]byte(yamlContent), &cond); err != nil {
+		return nil
+	}
+	if cond.Operation == "" && cond.Field == "" && len(cond.SubConds) == 0 {
+		return nil
+	}
+	return &cond
+}
+
 // parseParameterBinding parses the parameter binding table.
-// BKN files use column header "Parameter" for the name field, and "Binding"
-// for the value_from field.
+// Current column headers: Name | Type | Source | Operation | ValueFrom | Value | Description.
+// Legacy aliases "Parameter" (for Name) and "Binding"/"Value From" (for ValueFrom) are
+// also accepted for backwards compatibility with older BKN files.
 func parseParameterBinding(sectionText string) []Parameter {
 	rows := parseTable(strings.Split(sectionText, "\n"))
 	var params []Parameter
@@ -651,55 +813,21 @@ func ParseRiskTypeFile(text string, sourcePath string) (*BknRiskType, error) {
 		return nil, err
 	}
 
+	desc, sections, order := extractSectionsWithDesc(text)
+
 	risk := &BknRiskType{
 		BknRiskTypeFrontmatter: BknRiskTypeFrontmatter{
-			Type:        "risk_type",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: extractBodyDescription(text),
+			Type: "risk_type",
+			ID:   strVal(fmData, "id"),
+			Name: strVal(fmData, "name"),
+			Tags: strSliceVal(fmData, "tags"),
 		},
-		RawContent: text,
+		Description: buildDescription(desc, sections, order, knownRiskTypeSections),
+		RawContent:  text,
 	}
-
-	sections := extractSections(text, "###")
-
-	if s, ok := sections["Control Scope"]; ok {
-		risk.ControlScope = s
-	}
-	if s, ok := sections["Control Policy"]; ok {
-		risk.ControlPolicy = s
-	}
-	if s, ok := sections["Pre-checks"]; ok {
-		risk.PreChecks = parseRiskPreChecks(s)
-	}
-	if s, ok := sections["Rollback Plan"]; ok {
-		risk.RollbackPlan = s
-	}
-	if s, ok := sections["Audit Requirements"]; ok {
-		risk.AuditRequirements = s
-	}
+	risk.Summary = ExtractSummary(risk.Description)
 
 	return risk, nil
-}
-
-// parseRiskPreChecks parses the pre-checks table for risk types.
-func parseRiskPreChecks(sectionText string) []*CondCfg {
-	rows := parseTable(strings.Split(sectionText, "\n"))
-	var checks []*CondCfg
-	for _, row := range rows {
-		check := &CondCfg{
-			ObjectTypeID: row["Object"],
-			Field:        row["Check"],
-			Operation:    row["Condition"],
-		}
-		// Parse value from condition if it's a simple comparison
-		if val := row["Condition"]; val != "" {
-			check.Value = val
-		}
-		checks = append(checks, check)
-	}
-	return checks
 }
 
 func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, error) {
@@ -708,18 +836,19 @@ func ParseConceptGroupFile(text string, sourcePath string) (*BknConceptGroup, er
 		return nil, err
 	}
 
+	desc, sections, order := extractSectionsWithDesc(text)
+
 	cg := &BknConceptGroup{
 		BknConceptGroupFrontmatter: BknConceptGroupFrontmatter{
-			Type:        "concept_group",
-			ID:          strVal(fmData, "id"),
-			Name:        strVal(fmData, "name"),
-			Tags:        strSliceVal(fmData, "tags"),
-			Description: extractBodyDescription(text),
+			Type: "concept_group",
+			ID:   strVal(fmData, "id"),
+			Name: strVal(fmData, "name"),
+			Tags: strSliceVal(fmData, "tags"),
 		},
-		RawContent: text,
+		Description: buildDescription(desc, sections, order, knownConceptGroupSections),
+		RawContent:  text,
 	}
-
-	sections := extractSections(text, "###")
+	cg.Summary = ExtractSummary(cg.Description)
 
 	if s, ok := sections["Object Types"]; ok {
 		cg.ObjectTypes = parseConceptGroupObjectTypes(s)

@@ -26,8 +26,6 @@ action_type: add
 object_type_id: employee
 field: status
 operation: ==
-sub_conds: []
-value_from: ""
 value: 0
 ```
 
@@ -41,7 +39,7 @@ value: 0
 
 | Name | Type | Source | Operation | ValueFrom | Value | Description |
 |------|------|--------|-----------|-----------|-------|-------------|
-| employee_id | string | Query |  | property | employee_id |  |
+| employee_id | string | Query |  | property | id |  |
 
 ### Schedule
 

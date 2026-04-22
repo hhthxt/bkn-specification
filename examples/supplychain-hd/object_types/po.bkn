@@ -9,6 +9,12 @@ tags: [供应链, 采购, 已审核]
 
 发给供应商的正式采购订单。
 
+### Data Source
+
+| Type | ID | Name |
+|------|----|------|
+| data_view | 2017573348875202562 | erp_purchase_order |
+
 ### Data Properties
 
 | Name | Display Name | Type | Description | Mapped Field |
@@ -23,14 +29,10 @@ tags: [供应链, 采购, 已审核]
 
 ### Logic Properties
 
+
 ### Keys
 
 Primary Keys: billno
 Display Key: billno
-Incremental Key:
+Incremental Key: 
 
-### Data Source
-
-| Type | ID | Name |
-|------|-----|------|
-| data_view | 2017573348875202562 | erp_purchase_order |

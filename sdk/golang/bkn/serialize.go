@@ -6,76 +6,161 @@
 package bkn
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
+// encodeYAMLBlock encodes v to YAML and wraps it in a ```yaml code fence.
+func encodeYAMLBlock(v any) string {
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+	_ = enc.Encode(v)
+	_ = enc.Close()
+	return "```yaml\n" + buf.String() + "```\n"
+}
+
 // SerializeBknNetwork Serializes BknNetwork to BKN format
 func SerializeBknNetwork(doc *BknNetwork) string {
-	fm := doc.BknNetworkFrontmatter
 	var sb strings.Builder
 	sb.WriteString("---\n")
 	sb.WriteString("type: knowledge_network\n")
-	sb.WriteString(fmt.Sprintf("id: %s\n", fm.ID))
-	sb.WriteString(fmt.Sprintf("name: %s\n", fm.Name))
-	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(fm.Tags, ", ")))
+	sb.WriteString(fmt.Sprintf("id: %s\n", doc.ID))
+	sb.WriteString(fmt.Sprintf("name: %s\n", doc.Name))
+	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(doc.Tags, ", ")))
 
-	if fm.Version != "" {
-		sb.WriteString(fmt.Sprintf("version: %s\n", fm.Version))
+	if doc.Version != "" {
+		sb.WriteString(fmt.Sprintf("version: %s\n", doc.Version))
 	}
-	if fm.Branch != "" {
-		sb.WriteString(fmt.Sprintf("branch: %s\n", fm.Branch))
+	if doc.Branch != "" {
+		sb.WriteString(fmt.Sprintf("branch: %s\n", doc.Branch))
 	}
-	if fm.BusinessDomain != "" {
-		sb.WriteString(fmt.Sprintf("business_domain: %s\n", fm.BusinessDomain))
+	if doc.BusinessDomain != "" {
+		sb.WriteString(fmt.Sprintf("business_domain: %s\n", doc.BusinessDomain))
 	}
 	sb.WriteString("---\n\n")
 
-	sb.WriteString(fmt.Sprintf("# %s\n\n", fm.Name))
-	if fm.Description != "" {
-		sb.WriteString(fm.Description + "\n")
+	sb.WriteString(fmt.Sprintf("# %s\n\n", doc.Name))
+	if doc.Description != "" {
+		sb.WriteString(doc.Description + "\n")
 	}
 
-	// Write Network Overview section
-	sb.WriteString("\n## Network Overview\n\n")
+	// Network Overview
+	sb.WriteString("\n## Network Overview\n")
 
+	sb.WriteString("\n### Object Types\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
 	if len(doc.ObjectTypes) > 0 {
-		var names []string
+		sort.Slice(doc.ObjectTypes, func(i, j int) bool { return doc.ObjectTypes[i].ID < doc.ObjectTypes[j].ID })
 		for _, ot := range doc.ObjectTypes {
-			names = append(names, ot.ID)
+			fmt.Fprintf(&sb, "| %s | %s | `object_types/%s.bkn` | %s |\n", ot.ID, ot.Name, ot.ID, ot.Summary)
 		}
-		sb.WriteString(fmt.Sprintf("- **ObjectTypes** (object_types/): %s\n", strings.Join(names, ", ")))
+	}
+
+	sb.WriteString("\n### Relation Types\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
+	if len(doc.RelationTypes) > 0 {
+		sort.Slice(doc.RelationTypes, func(i, j int) bool { return doc.RelationTypes[i].ID < doc.RelationTypes[j].ID })
+		for _, rt := range doc.RelationTypes {
+			fmt.Fprintf(&sb, "| %s | %s | `relation_types/%s.bkn` | %s |\n", rt.ID, rt.Name, rt.ID, rt.Summary)
+		}
+	}
+
+	sb.WriteString("\n### Action Types\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
+	if len(doc.ActionTypes) > 0 {
+		sort.Slice(doc.ActionTypes, func(i, j int) bool { return doc.ActionTypes[i].ID < doc.ActionTypes[j].ID })
+		for _, at := range doc.ActionTypes {
+			fmt.Fprintf(&sb, "| %s | %s | `action_types/%s.bkn` | %s |\n", at.ID, at.Name, at.ID, at.Summary)
+		}
+	}
+
+	sb.WriteString("\n### Risk Types\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
+	if len(doc.RiskTypes) > 0 {
+		sort.Slice(doc.RiskTypes, func(i, j int) bool { return doc.RiskTypes[i].ID < doc.RiskTypes[j].ID })
+		for _, rt := range doc.RiskTypes {
+			fmt.Fprintf(&sb, "| %s | %s | `risk_types/%s.bkn` | %s |\n", rt.ID, rt.Name, rt.ID, rt.Summary)
+		}
+	}
+
+	sb.WriteString("\n### Concept Groups\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
+	if len(doc.ConceptGroups) > 0 {
+		sort.Slice(doc.ConceptGroups, func(i, j int) bool { return doc.ConceptGroups[i].ID < doc.ConceptGroups[j].ID })
+		for _, cg := range doc.ConceptGroups {
+			fmt.Fprintf(&sb, "| %s | %s | `concept_groups/%s.bkn` | %s |\n", cg.ID, cg.Name, cg.ID, cg.Summary)
+		}
+	}
+
+	// Directory Structure — full tree with file listings
+	type dirEntry struct {
+		dir   string
+		files []string
+	}
+	var dirs []dirEntry
+	if len(doc.ObjectTypes) > 0 {
+		files := make([]string, len(doc.ObjectTypes))
+		for i, ot := range doc.ObjectTypes {
+			files[i] = ot.ID + ".bkn"
+		}
+		dirs = append(dirs, dirEntry{"object_types", files})
 	}
 	if len(doc.RelationTypes) > 0 {
-		var names []string
-		for _, rt := range doc.RelationTypes {
-			names = append(names, rt.ID)
+		files := make([]string, len(doc.RelationTypes))
+		for i, rt := range doc.RelationTypes {
+			files[i] = rt.ID + ".bkn"
 		}
-		sb.WriteString(fmt.Sprintf("- **RelationTypes** (relation_types/): %s\n", strings.Join(names, ", ")))
+		dirs = append(dirs, dirEntry{"relation_types", files})
 	}
 	if len(doc.ActionTypes) > 0 {
-		var names []string
-		for _, at := range doc.ActionTypes {
-			names = append(names, at.ID)
+		files := make([]string, len(doc.ActionTypes))
+		for i, at := range doc.ActionTypes {
+			files[i] = at.ID + ".bkn"
 		}
-		sb.WriteString(fmt.Sprintf("- **ActionTypes** (action_types/): %s\n", strings.Join(names, ", ")))
+		dirs = append(dirs, dirEntry{"action_types", files})
 	}
 	if len(doc.RiskTypes) > 0 {
-		var names []string
-		for _, rt := range doc.RiskTypes {
-			names = append(names, rt.ID)
+		files := make([]string, len(doc.RiskTypes))
+		for i, rt := range doc.RiskTypes {
+			files[i] = rt.ID + ".bkn"
 		}
-		sb.WriteString(fmt.Sprintf("- **RiskTypes** (risk_types/): %s\n", strings.Join(names, ", ")))
+		dirs = append(dirs, dirEntry{"risk_types", files})
 	}
 	if len(doc.ConceptGroups) > 0 {
-		var names []string
-		for _, cg := range doc.ConceptGroups {
-			names = append(names, cg.ID)
+		files := make([]string, len(doc.ConceptGroups))
+		for i, cg := range doc.ConceptGroups {
+			files[i] = cg.ID + ".bkn"
 		}
-		sb.WriteString(fmt.Sprintf("- **ConceptGroups** (concept_groups/): %s\n", strings.Join(names, ", ")))
+		dirs = append(dirs, dirEntry{"concept_groups", files})
 	}
+
+	sb.WriteString("\n## Directory Structure\n\n```\n.\n├── network.bkn\n├── SKILL.md\n├── CHECKSUM\n")
+	for i, d := range dirs {
+		isLastDir := i == len(dirs)-1
+		dirPrefix, childPrefix := "├── ", "│   "
+		if isLastDir {
+			dirPrefix, childPrefix = "└── ", "    "
+		}
+		fmt.Fprintf(&sb, "%s%s/\n", dirPrefix, d.dir)
+		for j, f := range d.files {
+			if j == len(d.files)-1 {
+				fmt.Fprintf(&sb, "%s└── %s\n", childPrefix, f)
+			} else {
+				fmt.Fprintf(&sb, "%s├── %s\n", childPrefix, f)
+			}
+		}
+	}
+	sb.WriteString("```\n")
 
 	return sb.String()
 }
@@ -98,7 +183,7 @@ func SerializeObjectType(ot *BknObjectType) string {
 	// Data Source
 	sb.WriteString("### Data Source\n\n")
 	sb.WriteString("| Type | ID | Name |\n")
-	sb.WriteString("|------|-----|------|\n")
+	sb.WriteString("|------|----|------|\n")
 	if ot.DataSource != nil {
 		sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n",
 			ot.DataSource.Type, ot.DataSource.ID, ot.DataSource.Name))
@@ -121,29 +206,50 @@ func SerializeObjectType(ot *BknObjectType) string {
 	sb.WriteString("### Logic Properties\n\n")
 	for _, lp := range ot.LogicProperties {
 		sb.WriteString(fmt.Sprintf("#### %s\n\n", lp.Name))
-		if lp.Type != "" {
-			sb.WriteString(fmt.Sprintf("- **Type**: %s\n", lp.Type))
-		}
+
+		// Meta table
+		sb.WriteString("**Meta**\n\n")
+		sb.WriteString("| Display Name | Type | Description |\n")
+		sb.WriteString("|--------------|------|-------------|\n")
+		sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n\n", lp.DisplayName, lp.Type, lp.Description))
+
+		// Source table
+		sb.WriteString("**Source**\n\n")
+		sb.WriteString("| Source Type | Source ID | Source Name |\n")
+		sb.WriteString("|-------------|-----------|-------------|\n")
 		if lp.DataSource != nil {
-			sb.WriteString(fmt.Sprintf("- **Source**: %s (%s)\n", lp.DataSource.Type, lp.DataSource.Name))
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n", lp.DataSource.Type, lp.DataSource.ID, lp.DataSource.Name))
 		}
-		if lp.Description != "" {
-			sb.WriteString(fmt.Sprintf("- **Description**: %s\n", lp.Description))
-		}
-		if len(lp.Parameters) > 0 {
-			sb.WriteString("\n| Parameter | Type | Source | Binding | Description |\n")
-			sb.WriteString("|-----------|------|--------|---------|-------------|\n")
-			for _, p := range lp.Parameters {
-				sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
-					p.Name, p.Type, p.Source, p.Operation, p.Description))
+		sb.WriteString("\n")
+
+		// Parameter table
+		sb.WriteString("**Parameters**\n\n")
+		sb.WriteString("| Name | Type | Source | Operation | ValueFrom | Value | Description |\n")
+		sb.WriteString("|------|------|--------|-----------|-----------|-------|-------------|\n")
+		for _, p := range lp.Parameters {
+			v := ""
+			if p.Value != nil {
+				v = fmt.Sprintf("%v", p.Value)
 			}
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s |\n",
+				p.Name, p.Type, p.Source, p.Operation, p.ValueFrom, v, p.Description))
 		}
+		sb.WriteString("\n")
+
+		// Analysis Dims table
+		sb.WriteString("**Analysis Dimensions**\n\n")
+		sb.WriteString("| Name | Display Name | Type | Description |\n")
+		sb.WriteString("|------|--------------|------|-------------|\n")
+		for _, d := range lp.AnalysisDims {
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n", d.Name, d.DisplayName, d.Type, d.Description))
+		}
+		sb.WriteString("\n")
 	}
 	sb.WriteString("\n")
 
 	// Keys section
 	sb.WriteString("### Keys\n\n")
-	sb.WriteString(fmt.Sprintf("Primary Key: %s\n", strings.Join(ot.PrimaryKeys, ", ")))
+	sb.WriteString(fmt.Sprintf("Primary Keys: %s\n", strings.Join(ot.PrimaryKeys, ", ")))
 	sb.WriteString(fmt.Sprintf("Display Key: %s\n", ot.DisplayKey))
 	sb.WriteString(fmt.Sprintf("Incremental Key: %s\n", ot.IncrementalKey))
 	sb.WriteString("\n")
@@ -173,11 +279,11 @@ func SerializeRelationType(rt *BknRelationType) string {
 	sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n\n", rt.Endpoint.Source, rt.Endpoint.Target, rt.Endpoint.Type))
 
 	switch rt.Endpoint.Type {
-	case "direct":
+	case RELATION_MAPPING_TYPE_DIRECT:
 		// ### Mapping Rules — simple source→target property table
 		sb.WriteString("### Mapping Rules\n\n")
 		sb.WriteString("| Source Property | Target Property |\n")
-		sb.WriteString("|-----------------|------------------|\n")
+		sb.WriteString("|-----------------|-----------------|\n")
 		if rules, ok := rt.MappingRules.(DirectMappingRule); ok {
 			for _, r := range rules {
 				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
@@ -185,12 +291,12 @@ func SerializeRelationType(rt *BknRelationType) string {
 		}
 		sb.WriteString("\n")
 
-	case "data_view":
+	case RELATION_MAPPING_TYPE_DATA_VIEW:
 		// ### Mapping View — backing data source reference
 		sb.WriteString("### Mapping View\n\n")
 		sb.WriteString("| Type | ID |\n")
-		sb.WriteString("|------|-----|\n")
-		if rules, ok := rt.MappingRules.(InDirectMappingRule); ok {
+		sb.WriteString("|------|----|\n")
+		if rules, ok := rt.MappingRules.(*InDirectMappingRule); ok {
 			if rules.BackingDataSource != nil {
 				sb.WriteString(fmt.Sprintf("| %s | %s |\n", rules.BackingDataSource.Type, rules.BackingDataSource.ID))
 			}
@@ -199,7 +305,7 @@ func SerializeRelationType(rt *BknRelationType) string {
 			// ### Source Mapping — source property → view property
 			sb.WriteString("### Source Mapping\n\n")
 			sb.WriteString("| Source Property | View Property |\n")
-			sb.WriteString("|-----------------|----------------|\n")
+			sb.WriteString("|-----------------|---------------|\n")
 			for _, r := range rules.SourceMappingRules {
 				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
 			}
@@ -208,12 +314,27 @@ func SerializeRelationType(rt *BknRelationType) string {
 			// ### Target Mapping — view property → target property
 			sb.WriteString("### Target Mapping\n\n")
 			sb.WriteString("| View Property | Target Property |\n")
-			sb.WriteString("|---------------|------------------|\n")
+			sb.WriteString("|---------------|-----------------|\n")
 			for _, r := range rules.TargetMappingRules {
 				sb.WriteString(fmt.Sprintf("| %s | %s |\n", r.SourceProperty, r.TargetProperty))
 			}
 			sb.WriteString("\n")
 		} else {
+			sb.WriteString("\n")
+		}
+
+	case RELATION_MAPPING_TYPE_FILTERED_CROSS_JOIN:
+		if fcj, ok := rt.MappingRules.(*FilteredCrossJoinMapping); ok {
+			sb.WriteString("### Source Condition\n\n")
+			if fcj.SourceCondition != nil {
+				sb.WriteString(encodeYAMLBlock(fcj.SourceCondition))
+			}
+			sb.WriteString("\n")
+
+			sb.WriteString("### Target Condition\n\n")
+			if fcj.TargetCondition != nil {
+				sb.WriteString(encodeYAMLBlock(fcj.TargetCondition))
+			}
 			sb.WriteString("\n")
 		}
 	}
@@ -258,10 +379,7 @@ func SerializeActionType(at *BknActionType) string {
 	// Trigger Condition
 	sb.WriteString("### Trigger Condition\n\n")
 	if at.TriggerCondition != nil {
-		sb.WriteString("```yaml\n")
-		yamlContent, _ := yaml.Marshal(at.TriggerCondition)
-		sb.Write(yamlContent)
-		sb.WriteString("```\n")
+		sb.WriteString(encodeYAMLBlock(at.TriggerCondition))
 	}
 	sb.WriteString("\n")
 
@@ -317,39 +435,12 @@ func SerializeRiskType(rt *BknRiskType) string {
 		sb.WriteString(rt.Description + "\n\n")
 	}
 
-	sb.WriteString("### Control Scope\n\n")
-	if rt.ControlScope != "" {
-		sb.WriteString(rt.ControlScope)
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\n")
-
-	sb.WriteString("### Control Policy\n\n")
-	if rt.ControlPolicy != "" {
-		sb.WriteString(rt.ControlPolicy)
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\n")
-
-	sb.WriteString("### Rollback Plan\n\n")
-	if rt.RollbackPlan != "" {
-		sb.WriteString(rt.RollbackPlan)
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\n")
-
-	sb.WriteString("### Audit Requirements\n\n")
-	if rt.AuditRequirements != "" {
-		sb.WriteString(rt.AuditRequirements)
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\n")
-
 	return sb.String()
 }
 
-// SerializeConceptGroup Serializes BknConceptGroup to BKN format
-func SerializeConceptGroup(cg *BknConceptGroup) string {
+// SerializeConceptGroup Serializes BknConceptGroup to BKN format.
+// otIndex maps ObjectType ID → *BknObjectType for Name/Description lookup.
+func SerializeConceptGroup(cg *BknConceptGroup, otIndex map[string]*BknObjectType) string {
 	var sb strings.Builder
 	sb.WriteString("---\n")
 	sb.WriteString("type: concept_group\n")
@@ -362,6 +453,23 @@ func SerializeConceptGroup(cg *BknConceptGroup) string {
 	if cg.Description != "" {
 		sb.WriteString(cg.Description + "\n\n")
 	}
+
+	sb.WriteString("### Object Types\n\n")
+	sb.WriteString("| ID | Name | Description |\n")
+	sb.WriteString("|----|------|-------------|\n")
+	if len(cg.ObjectTypes) > 0 {
+		ids := append([]string(nil), cg.ObjectTypes...)
+		sort.Strings(ids)
+		for _, id := range ids {
+			name, desc := id, ""
+			if ot, ok := otIndex[id]; ok {
+				name = ot.Name
+				desc = ot.Summary
+			}
+			sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n", id, name, desc))
+		}
+	}
+	sb.WriteString("\n")
 
 	return sb.String()
 }
