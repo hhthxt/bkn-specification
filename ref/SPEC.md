@@ -139,7 +139,7 @@ namespace: scm.warehouse
 
 ### 文件类型 (type)
 
-BKN 定义四种**基本类型**和两种**辅助类型**：
+BKN 定义五种**基本类型**和两种**辅助类型**：
 
 | type | 分类 | 说明 |
 |------|------|------|
@@ -147,6 +147,7 @@ BKN 定义四种**基本类型**和两种**辅助类型**：
 | `relation` | 基本类型 | 关系类定义 |
 | `action` | 基本类型 | 行动类定义 |
 | `risk` | 基本类型 | 风险类定义 |
+| `metric` | 基本类型 | 网络级指标定义 |
 | `fragment` | 辅助类型 | 混合片段，一个文件包含多个定义 |
 | `delete` | 辅助类型 | 删除标记，显式声明要删除的定义 |
 
@@ -247,6 +248,21 @@ supply-chain 网络
 | `namespace` | NO | string | 层级分组 |
 | `owner` | NO | string | 负责人/团队 |
 | `checksum` | NO | string | 内容指纹 |
+
+### 网络级指标文件 (type: metric)
+
+| 字段 | 必填 | 类型 | 说明 |
+|------|:----:|------|------|
+| `type` | **YES** | string | 固定为 `metric` |
+| `id` | **YES** | string | 指标 ID |
+| `name` | **YES** | string | 显示名称 |
+| `version` | NO | string | 版本号 |
+| `network` | NO | string | 所属网络 ID |
+| `namespace` | NO | string | 层级分组 |
+| `tags` | NO | [string] | 标签列表 |
+| `checksum` | NO | string | 内容指纹 |
+
+正文结构概要：`## Metric: {名称}`；`### Metric attributes`（**`Metric Type` \| `Unit Type` \| `Unit`** 三列表，单列数据对应 DTO **`metric_type` / `unit_type` / `unit`**；**不得**出现在 YAML `---` 头）；**`Metric Type` 须与** `### Calculation Formula` 围栏内 YAML 根级 **`kind` 一致**，权威来源为 `kind`，解析器可据 `kind` 回填；`### Scope`；`### Calculation Formula`（ fenced YAML，根级 **`kind`**）；可选 `### Time Dimension`、`### Analysis Dimensions`。
 
 ### 混合片段 (type: fragment)
 
@@ -915,9 +931,13 @@ graph LR
 ├── actions/
 │   ├── check_inventory.bkn            # type: action
 │   └── adjust_inventory.bkn           # type: action
-└── risks/
-    └── inventory_adjustment_risk.bkn  # type: risk
+├── risks/
+│   └── inventory_adjustment_risk.bkn  # type: risk
+└── metrics/                           # type: metric
+    └── example_count.bkn
 ```
+
+> **与仓库示例一致**：bkn-specification 示例网络使用 `object_types/`、`relation_types/` 等目录名；语义上等价于上表中的 `objects/`、`relations/`。网络级指标推荐使用 **`metrics/`** 子目录存放 `type: metric` 文件。
 
 ### 单文件模式（小型网络）
 
@@ -938,8 +958,9 @@ graph LR
 | `relations/` | 关系类定义 |
 | `actions/` | 行动类定义 |
 | `risks/` | 风险类定义 |
+| `metrics/` | 网络级指标（`type: metric`） |
 
-目录名是约定而非强制，文件的 `type` 字段才是定义类型的权威声明。
+目录名是约定而非强制，文件的 `type` 字段才是定义类型的权威声明。**bkn-specification** 仓库中常用 `object_types/`、`relation_types/`、`metrics/` 等命名，与此表所指语义相同。
 
 ### 部署位置
 
@@ -1100,6 +1121,7 @@ operation: delete
 | 规则 | 适用类型 | 严重级别 |
 |------|---------|---------|
 | Frontmatter 包含必填字段 `type`、`id`、`name` | all（delete 除外） | ERROR |
+| `type: metric` 时，若存在 `metric_type`，须与正文公式根级 `kind` 一致（权威为 `kind`） | metric | ERROR 或 WARNING（由实现约定） |
 | Markdown Body 中的表格格式合法 | all | ERROR |
 | YAML 代码块语法合法 | all | ERROR |
 | `namespace` 格式合法（小写字母、数字、`.` 分隔） | all | ERROR |
@@ -1160,7 +1182,7 @@ operation: delete
 
 1. 每个 .bkn 文件只包含一个定义（推荐）
 2. 网络描述和拓扑图放在 SKILL.md 中
-3. 目录按 objects/relations/actions/risks 组织
+3. 目录按 objects/relations/actions/risks 组织，**可选**增加 **metrics/** 存放网络级指标（`type: metric`）
 4. 相关定义使用相同的 namespace 分组
 
 ### 简洁原则

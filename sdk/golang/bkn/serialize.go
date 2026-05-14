@@ -14,6 +14,75 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// encodeMetricFormulaYAML encodes a metric formula fenced with Markdown ```yaml code blocks, matching on-disk examples.
+func encodeMetricFormulaYAML(m *MetricFormula) string {
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+	_ = enc.Encode(m)
+	_ = enc.Close()
+	s := strings.TrimSuffix(buf.String(), "\n")
+	return "```yaml\n" + s + "\n```\n"
+}
+
+// SerializeMetric serializes BknMetric to BKN markdown.
+func SerializeMetric(m *BknMetric) string {
+	var sb strings.Builder
+	sb.WriteString("---\n")
+	sb.WriteString("type: metric\n")
+	sb.WriteString(fmt.Sprintf("id: %s\n", m.ID))
+	sb.WriteString(fmt.Sprintf("name: %s\n", m.Name))
+	sb.WriteString(fmt.Sprintf("tags: [%s]\n", strings.Join(m.Tags, ", ")))
+	sb.WriteString("---\n\n")
+
+	sb.WriteString(fmt.Sprintf("## Metric: %s\n\n", m.Name))
+	if m.Description != "" {
+		sb.WriteString(m.Description + "\n\n")
+	}
+
+	mtOut := strings.TrimSpace(m.MetricAttributes.MetricType)
+	if mtOut == "" && m.Formula != nil {
+		mtOut = strings.TrimSpace(m.Formula.Kind)
+	}
+	utOut := strings.TrimSpace(m.MetricAttributes.UnitType)
+	uOut := strings.TrimSpace(m.MetricAttributes.Unit)
+	if mtOut != "" || utOut != "" || uOut != "" {
+		sb.WriteString("### Metric attributes\n\n")
+		sb.WriteString("| Metric Type | Unit Type | Unit |\n")
+		sb.WriteString("|-------------|-----------|------|\n")
+		sb.WriteString(fmt.Sprintf("| %s | %s | %s |\n\n", mtOut, utOut, uOut))
+	}
+
+	sb.WriteString("### Scope\n\n")
+	sb.WriteString("| Scope Type | Scope Ref |\n")
+	sb.WriteString("|------------|-----------|\n")
+	sb.WriteString(fmt.Sprintf("| %s | %s |\n\n", m.ScopeType, m.ScopeRef))
+
+	sb.WriteString("### Calculation Formula\n\n")
+	if m.Formula != nil {
+		sb.WriteString(encodeMetricFormulaYAML(m.Formula))
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString("### Time Dimension\n\n")
+	sb.WriteString("| Property | Default Range Policy |\n")
+	sb.WriteString("|----------|------------------------|\n")
+	for _, row := range m.TimeDimensions {
+		sb.WriteString(fmt.Sprintf("| %s | %s |\n", row.Property, row.Policy))
+	}
+	sb.WriteString("\n")
+
+	sb.WriteString("### Analysis Dimensions\n\n")
+	sb.WriteString("| Name | Display Name |\n")
+	sb.WriteString("|------|--------------|\n")
+	for _, row := range m.AnalysisDimensions {
+		sb.WriteString(fmt.Sprintf("| %s | %s |\n", row.Name, row.DisplayName))
+	}
+	sb.WriteString("\n")
+
+	return sb.String()
+}
+
 // encodeYAMLBlock encodes v to YAML and wraps it in a ```yaml code fence.
 func encodeYAMLBlock(v any) string {
 	var buf bytes.Buffer
@@ -102,6 +171,16 @@ func SerializeBknNetwork(doc *BknNetwork) string {
 		}
 	}
 
+	sb.WriteString("\n### Metrics\n\n")
+	sb.WriteString("| ID | Name | File Path | Description |\n")
+	sb.WriteString("|----|------|-----------|-------------|\n")
+	if len(doc.Metrics) > 0 {
+		sort.Slice(doc.Metrics, func(i, j int) bool { return doc.Metrics[i].ID < doc.Metrics[j].ID })
+		for _, met := range doc.Metrics {
+			fmt.Fprintf(&sb, "| %s | %s | `metrics/%s.bkn` | %s |\n", met.ID, met.Name, met.ID, met.Summary)
+		}
+	}
+
 	// Directory Structure — full tree with file listings
 	type dirEntry struct {
 		dir   string
@@ -142,6 +221,13 @@ func SerializeBknNetwork(doc *BknNetwork) string {
 			files[i] = cg.ID + ".bkn"
 		}
 		dirs = append(dirs, dirEntry{"concept_groups", files})
+	}
+	if len(doc.Metrics) > 0 {
+		files := make([]string, len(doc.Metrics))
+		for i, met := range doc.Metrics {
+			files[i] = met.ID + ".bkn"
+		}
+		dirs = append(dirs, dirEntry{"metrics", files})
 	}
 
 	_, _ = fmt.Fprintf(&sb, "\n## Directory Structure\n\n```\n.\n├── network.bkn\n├── SKILL.md\n├── CHECKSUM\n")

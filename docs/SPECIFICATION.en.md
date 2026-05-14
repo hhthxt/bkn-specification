@@ -705,9 +705,14 @@ Each object/relation/action/risk is defined in its own file.
 │   └── inventory_adjustment_risk.bkn  # type: risk_type
 ├── concept_groups/
 │   └── supply_chain.bkn         # type: concept_group
+├── metrics/                     # Optional network-level metrics; omitting is not an error and is not a breaking change for legacy CHECKSUM layouts
+│   └── example_count.bkn        # type: metric
 └── data/                        # Optional, .csv instance data
     └── scenario.csv
 ```
+
+- **`metrics/` is optional**: Networks without this subdirectory or without metric files in `CHECKSUM` remain valid; metrics are not required to define a knowledge network.
+- **Files with `type: metric`** (`metrics/*.bkn`): besides `type`, `id`, `name`, and `tags`, the spec **reserves `metric_type`** in YAML frontmatter (`atomic` | `derived` | `composite`), aligned with the platform Metric DTO. It **must match** the root-level `kind` inside the `### Calculation Formula` fenced block; **`kind` is authoritative**. See `docs/DESIGN_BKN_METRIC.md`. Optional: `unit_type`, `unit`, etc.
 
 ### Data Files (CSV)
 

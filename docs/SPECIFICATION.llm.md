@@ -28,6 +28,7 @@
 | `action_type` | 单个行动类型定义 |
 | `risk_type` | 单个风险类型定义 |
 | `concept_group` | 概念分组 |
+| `metric` | 网络级指标（推荐 `metrics/*.bkn`） |
 
 ## 目录结构
 
@@ -45,6 +46,8 @@
 │   └── {risk}.bkn
 └── concept_groups/
     └── {group}.bkn
+└── metrics/
+    └── {metric}.bkn
 ```
 
 ## 网络 (Knowledge network)
@@ -209,6 +212,19 @@ tags: [tag1, tag2]               # 可选
 - `## ConceptGroup: {显示名称}` + 简短描述
 - `### Object Types`（必须）：表格 ID | Name | Description
 
+## 网络级指标 (metric)
+
+```yaml
+---
+type: metric
+id: {metric_id}
+name: {显示名称}
+tags: [tag1, tag2]               # 可选
+---
+```
+
+正文以 `DESIGN_BKN_METRIC.md` 为准；要点：`### Calculation Formula` 内 fenced YAML 的 **`kind` 为权威**；`metric_type` 规范保留并与 `kind` 对齐。
+
 ## 更新与删除（无 patch 模型）
 
 - 定义文件导入 = add/modify（upsert）；修改即编辑文件后重新导入
@@ -229,6 +245,7 @@ tags: [tag1, tag2]               # 可选
    - ActionType：Bound Object、Tool Configuration、Parameter Binding
    - RiskType：Control Scope、Control Policy
    - ConceptGroup：Object Types
+   - Metric：Scope、Calculation Formula（`metric_type` 与根级 `kind` 一致）
 7. **标题层级**：`#` 网络标题、`##` 类型定义、`###` 定义内 section、`####` 子项（逻辑属性名）
 8. **业务规则放置**：
    - 网络级规则 → `network.bkn` 的 `# {name}` 后描述区

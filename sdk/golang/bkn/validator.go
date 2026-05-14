@@ -23,7 +23,6 @@ const nameInvalidChars = `/:?\"<>|：？''""！《》,#[]{}%&*$^!=.'`
 
 const (
 	objectNameMaxLength = 40
-	commentMaxLength    = 1000
 	tagsMaxNumber       = 5
 	maxPropertyNum      = 1000
 )
@@ -113,6 +112,10 @@ var validActionSourceTypes = map[string]bool{
 	"tool": true, "mcp": true,
 }
 
+var validMetricAggregationAggr = map[string]bool{
+	"count": true, "count_distinct": true, "sum": true, "max": true, "min": true, "avg": true,
+}
+
 // actionCondOps — adp ActionCondOperationMap keys + common aliases (==, !=)
 var actionCondOps = map[string]bool{
 	"and": true, "or": true,
@@ -153,9 +156,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	}
 	if err := validateTags(doc.Tags); err != nil {
 		appendError(result, "network.bkn", "tags", "invalid_tags", err.Error())
-	}
-	if err := validateComment(doc.Description); err != nil {
-		appendError(result, "network.bkn", "description", "invalid_comment", err.Error())
 	}
 
 	duplicateIDs := func(ids []string, kind string) {
@@ -227,9 +227,19 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 	duplicateIDs(cgIDs, "concept_group")
 	duplicateNames(cgNames, "concept_group")
 
+	var metricIDs, metricNames []string
+	for _, met := range doc.Metrics {
+		metricIDs = append(metricIDs, met.ID)
+		metricNames = append(metricNames, met.Name)
+	}
+	duplicateIDs(metricIDs, "metric")
+	duplicateNames(metricNames, "metric")
+
 	objectIDs := make(map[string]struct{})
+	otByID := make(map[string]*BknObjectType)
 	for _, ot := range doc.ObjectTypes {
 		objectIDs[ot.ID] = struct{}{}
+		otByID[ot.ID] = ot
 	}
 
 	for _, ot := range doc.ObjectTypes {
@@ -237,9 +247,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 		validateDefFrontmatter(result, t, ot.Type, ot.ID, ot.Name)
 		if err := validateTags(ot.Tags); err != nil {
 			appendError(result, t, "tags", "invalid_tags", err.Error())
-		}
-		if err := validateComment(ot.Description); err != nil {
-			appendError(result, t, "description", "invalid_comment", err.Error())
 		}
 		if !ot.HasDataPropertiesSection {
 			appendError(result, t, "", "missing_section", "ObjectType must include a ### Data Properties section")
@@ -255,9 +262,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 		validateDefFrontmatter(result, t, rt.Type, rt.ID, rt.Name)
 		if err := validateTags(rt.Tags); err != nil {
 			appendError(result, t, "tags", "invalid_tags", err.Error())
-		}
-		if err := validateComment(rt.Description); err != nil {
-			appendError(result, t, "description", "invalid_comment", err.Error())
 		}
 		validateRelationTypeDeep(result, t, rt)
 		src := strings.TrimSpace(rt.Endpoint.Source)
@@ -283,9 +287,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 		if err := validateTags(at.Tags); err != nil {
 			appendError(result, t, "tags", "invalid_tags", err.Error())
 		}
-		if err := validateComment(at.Description); err != nil {
-			appendError(result, t, "description", "invalid_comment", err.Error())
-		}
 		validateActionTypeDeep(result, t, at)
 		bo := strings.TrimSpace(at.BoundObject)
 		if bo != "" {
@@ -301,9 +302,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 		if err := validateTags(r.Tags); err != nil {
 			appendError(result, t, "tags", "invalid_tags", err.Error())
 		}
-		if err := validateComment(r.Description); err != nil {
-			appendError(result, t, "description", "invalid_comment", err.Error())
-		}
 	}
 
 	for _, cg := range doc.ConceptGroups {
@@ -311,9 +309,6 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 		validateDefFrontmatter(result, t, cg.Type, cg.ID, cg.Name)
 		if err := validateTags(cg.Tags); err != nil {
 			appendError(result, t, "tags", "invalid_tags", err.Error())
-		}
-		if err := validateComment(cg.Description); err != nil {
-			appendError(result, t, "description", "invalid_comment", err.Error())
 		}
 		for _, oid := range cg.ObjectTypes {
 			oid = strings.TrimSpace(oid)
@@ -324,6 +319,12 @@ func ValidateNetwork(doc *BknNetwork) *ValidationResult {
 				appendError(result, t, "Object Types", "invalid_concept_group_ref", fmt.Sprintf("concept group lists unknown object type id %q", oid))
 			}
 		}
+	}
+
+	for _, met := range doc.Metrics {
+		t := tableName("metric", met.ID)
+		validateDefFrontmatter(result, t, met.Type, met.ID, met.Name)
+		validateMetricDeep(result, t, met, otByID)
 	}
 
 	return result
@@ -370,13 +371,6 @@ func validateTags(tags []string) error {
 	return nil
 }
 
-func validateComment(comment string) error {
-	if utf8.RuneCountInString(comment) > commentMaxLength {
-		return fmt.Errorf("description/comment exceeds %d characters", commentMaxLength)
-	}
-	return nil
-}
-
 func validateObjectTypeDeep(result *ValidationResult, table string, ot *BknObjectType) {
 	if ot.DataSource != nil && strings.TrimSpace(ot.DataSource.Type) != "" {
 		if !validDataSourceTypes[normType(ot.DataSource.Type)] {
@@ -403,9 +397,6 @@ func validateObjectTypeDeep(result *ValidationResult, table string, ot *BknObjec
 		}
 		if msg := validateObjectName(dp.DisplayName, ""); msg != "" {
 			appendError(result, table, "data_properties", "invalid_display_name", fmt.Sprintf("property %q: %s", dp.Name, msg))
-		}
-		if err := validateComment(dp.Description); err != nil {
-			appendError(result, table, "data_properties", "invalid_comment", err.Error())
 		}
 		if strings.TrimSpace(dp.Type) != "" {
 			nt := normType(dp.Type)
@@ -478,9 +469,6 @@ func validateObjectTypeDeep(result *ValidationResult, table string, ot *BknObjec
 		if msg := validateObjectName(lp.DisplayName, ""); msg != "" {
 			appendError(result, table, "logic_properties", "invalid_display_name", fmt.Sprintf("logic property %q: %s", lp.Name, msg))
 		}
-		if err := validateComment(lp.Description); err != nil {
-			appendError(result, table, "logic_properties", "invalid_comment", err.Error())
-		}
 		if strings.TrimSpace(lp.Type) != "" {
 			nt := normType(lp.Type)
 			if !validLogicPropertyTypes[nt] {
@@ -517,6 +505,177 @@ func validatePropertyName(name string) error {
 		return fmt.Errorf("property name %q must match %s", name, propertyNamePattern.String())
 	}
 	return nil
+}
+
+func dataPropertyNames(ot *BknObjectType) map[string]struct{} {
+	m := make(map[string]struct{})
+	if ot == nil {
+		return m
+	}
+	for _, dp := range ot.DataProperties {
+		if dp == nil || strings.TrimSpace(dp.Name) == "" {
+			continue
+		}
+		m[dp.Name] = struct{}{}
+	}
+	return m
+}
+
+// isMetricTimeDimPlaceholder matches example files that use an em dash or "none" when no time column exists.
+func isMetricTimeDimPlaceholder(prop string) bool {
+	p := strings.TrimSpace(prop)
+	if p == "" || strings.EqualFold(p, "none") || strings.EqualFold(p, "n/a") {
+		return true
+	}
+	// em dash / en dash / hyphen placeholders in tables
+	if p == "—" || p == "–" || p == "-" {
+		return true
+	}
+	return false
+}
+
+func validateMetricConditionField(result *ValidationResult, table, column, field string) {
+	field = strings.TrimSpace(field)
+	if field == "" {
+		return
+	}
+	if strings.EqualFold(field, "object_type_id") {
+		appendError(result, table, column, "invalid_metric_field", "metric condition.field must not be object_type_id")
+		return
+	}
+	if err := validatePropertyName(field); err != nil {
+		appendError(result, table, column, "invalid_property_name", err.Error())
+	}
+}
+
+func validateMetricPropertyRef(result *ValidationResult, table, column, field string) {
+	field = strings.TrimSpace(field)
+	if field == "" {
+		return
+	}
+	if field == "__value" {
+		return
+	}
+	if err := validatePropertyName(field); err != nil {
+		appendError(result, table, column, "invalid_property_name", err.Error())
+	}
+}
+
+func validateMetricDeep(result *ValidationResult, table string, met *BknMetric, otByID map[string]*BknObjectType) {
+	if err := validateTags(met.Tags); err != nil {
+		appendError(result, table, "tags", "invalid_tags", err.Error())
+	}
+	if !met.HasScopeSection {
+		appendError(result, table, "", "missing_section", "Metric must include a ### Scope section")
+	}
+	if !met.HasCalculationFormulaSection {
+		appendError(result, table, "", "missing_section", "Metric must include a ### Calculation Formula section")
+	}
+	if met.Formula == nil {
+		appendError(result, table, "Calculation Formula", "invalid_metric", "metric must contain a fenced yaml block under ### Calculation Formula")
+		return
+	}
+	kind := normType(met.Formula.Kind)
+	if kind == "" {
+		appendError(result, table, "kind", "invalid_metric", "calculation formula kind is required")
+		return
+	}
+	if kind != "atomic" {
+		appendError(result, table, "kind", "unsupported_metric_kind", fmt.Sprintf("only atomic metrics are supported, got %q", met.Formula.Kind))
+		return
+	}
+	if mt := strings.TrimSpace(met.MetricAttributes.MetricType); mt != "" && normType(mt) != kind {
+		appendError(result, table, "metric_type", "metric_type_kind_mismatch", fmt.Sprintf("effective metric_type %q must match formula kind %q when both are set", met.MetricAttributes.MetricType, met.Formula.Kind))
+	}
+	if met.Formula.Atomic == nil {
+		appendError(result, table, "atomic", "invalid_metric", "atomic kind requires non-nil atomic subtree")
+		return
+	}
+	a := met.Formula.Atomic
+	if a.Aggregation == nil || strings.TrimSpace(a.Aggregation.Property) == "" || strings.TrimSpace(a.Aggregation.Aggr) == "" {
+		appendError(result, table, "aggregation", "invalid_metric", "atomic metric requires aggregation.property and aggregation.aggr")
+	} else {
+		validateMetricPropertyRef(result, table, "aggregation.property", a.Aggregation.Property)
+		if !validMetricAggregationAggr[normType(a.Aggregation.Aggr)] {
+			appendError(result, table, "aggregation.aggr", "invalid_metric_aggregation", fmt.Sprintf("unsupported aggregation %q", a.Aggregation.Aggr))
+		}
+	}
+	if a.Condition != nil {
+		validateMetricConditionField(result, table, "condition.field", a.Condition.Field)
+	}
+	for i, g := range a.GroupBy {
+		col := fmt.Sprintf("group_by[%d].property", i)
+		validateMetricPropertyRef(result, table, col, g.Property)
+	}
+	for i, o := range a.OrderBy {
+		col := fmt.Sprintf("order_by[%d].property", i)
+		validateMetricPropertyRef(result, table, col, o.Property)
+	}
+	if a.Having != nil {
+		validateMetricPropertyRef(result, table, "having.field", a.Having.Field)
+	}
+
+	st := normType(met.ScopeType)
+	sref := strings.TrimSpace(met.ScopeRef)
+	if met.HasScopeSection {
+		if st == "" {
+			appendError(result, table, "Scope", "invalid_metric_scope_type", "Scope Type is required and must be object_type")
+		} else if st != "object_type" {
+			if st == "subgraph" {
+				appendError(result, table, "Scope", "unsupported_metric_scope", "subgraph scope is not supported")
+			} else {
+				appendError(result, table, "Scope", "unsupported_metric_scope", fmt.Sprintf("only object_type scope is supported, got %q", met.ScopeType))
+			}
+		} else if sref == "" {
+			appendError(result, table, "Scope", "invalid_metric_scope_ref", "scope_ref is required when scope type is object_type")
+		} else if _, ok := otByID[sref]; !ok {
+			appendError(result, table, "Scope", "invalid_metric_scope_ref", fmt.Sprintf("scope references unknown object type id %q", sref))
+		}
+	}
+
+	if st == "object_type" && sref != "" {
+		if ot, ok := otByID[sref]; ok {
+			names := dataPropertyNames(ot)
+			checkAgainstObject := func(field, col string) {
+				field = strings.TrimSpace(field)
+				if field == "" || field == "__value" {
+					return
+				}
+				if _, ok := names[field]; !ok {
+					appendError(result, table, col, "invalid_metric_field_ref", fmt.Sprintf("property %q is not a data property of object_type %q", field, sref))
+				}
+			}
+			if a.Condition != nil {
+				f := strings.TrimSpace(a.Condition.Field)
+				if f != "" && !strings.EqualFold(f, "object_type_id") {
+					checkAgainstObject(f, "condition.field")
+				}
+			}
+			if a.Aggregation != nil {
+				checkAgainstObject(a.Aggregation.Property, "aggregation.property")
+			}
+			for i, g := range a.GroupBy {
+				checkAgainstObject(g.Property, fmt.Sprintf("group_by[%d].property", i))
+			}
+			for i, o := range a.OrderBy {
+				checkAgainstObject(o.Property, fmt.Sprintf("order_by[%d].property", i))
+			}
+			if a.Having != nil {
+				checkAgainstObject(a.Having.Field, "having.field")
+			}
+			for i, td := range met.TimeDimensions {
+				if isMetricTimeDimPlaceholder(td.Property) {
+					continue
+				}
+				checkAgainstObject(td.Property, fmt.Sprintf("time_dimension[%d].property", i))
+			}
+			for i, ad := range met.AnalysisDimensions {
+				if err := validatePropertyName(strings.TrimSpace(ad.Name)); err != nil {
+					appendError(result, table, fmt.Sprintf("analysis_dimensions[%d].name", i), "invalid_property_name", err.Error())
+				}
+			}
+		}
+	}
 }
 
 func validateRelationTypeDeep(result *ValidationResult, table string, rt *BknRelationType) {

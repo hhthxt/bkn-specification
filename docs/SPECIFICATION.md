@@ -713,9 +713,14 @@ graph LR
 │   └── inventory_adjustment_risk.bkn  # type: risk_type
 ├── concept_groups/
 │   └── supply_chain.bkn         # type: concept_group
+├── metrics/                     # 可选，网络级指标；缺省不视为错误，亦非对旧 CHECKSUM 的破坏性变更
+│   └── example_count.bkn        # type: metric
 └── data/                        # 可选，.csv 实例数据
     └── scenario.csv
 ```
+
+- **`metrics/` 可选**：未包含该子目录或未将其中文件纳入 `CHECKSUM` 的历史网络包仍有效；指标非定义知识网络的必要条件。
+- **`type: metric` 文件**（`metrics/*.bkn`）：YAML frontmatter 除 `type`、`id`、`name`、`tags` 外，**规范保留 `metric_type`**（`atomic` \| `derived` \| `composite`），与平台 Metric DTO 对齐；**须与正文 `### Calculation Formula` 代码块根级 `kind` 一致**，权威来源为 `kind`，详见 `docs/DESIGN_BKN_METRIC.md`。另可选用 `unit_type`、`unit` 等。
 
 ### 数据文件（CSV）
 

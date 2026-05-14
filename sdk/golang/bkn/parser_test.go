@@ -8,6 +8,7 @@ package bkn
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1096,4 +1097,71 @@ name: Emp Dept
 	require.True(t, ok)
 	assert.Nil(t, rules.SourceCondition)
 	assert.Nil(t, rules.TargetCondition)
+}
+
+func TestParseMetricFile_MockEmployeeOnboarded(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	path := filepath.Join(filepath.Dir(file), "..", "..", "..", "examples", "mock_system", "metrics", "mock_employee_onboarded_count.bkn")
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	m, err := ParseMetricFile(string(data), path)
+	require.NoError(t, err)
+	assert.Equal(t, "metric", m.Type)
+	assert.Equal(t, "mock_employee_onboarded_count", m.ID)
+	assert.Equal(t, "object_type", m.ScopeType)
+	assert.Equal(t, "employee", m.ScopeRef)
+	require.True(t, m.HasScopeSection)
+	require.True(t, m.HasCalculationFormulaSection)
+	require.True(t, m.HasMetricAttributesSection)
+	require.NotNil(t, m.Formula)
+	assert.Equal(t, "atomic", m.Formula.Kind)
+	assert.Equal(t, "atomic", m.MetricAttributes.MetricType)
+	require.NotNil(t, m.Formula.Atomic)
+	require.NotNil(t, m.Formula.Atomic.Condition)
+	assert.Equal(t, "status", m.Formula.Atomic.Condition.Field)
+	require.NotNil(t, m.Formula.Atomic.Aggregation)
+	assert.Equal(t, "id", m.Formula.Atomic.Aggregation.Property)
+	assert.Equal(t, "count", m.Formula.Atomic.Aggregation.Aggr)
+	require.Len(t, m.TimeDimensions, 1)
+	assert.Equal(t, "hire_date", m.TimeDimensions[0].Property)
+	require.Len(t, m.AnalysisDimensions, 1)
+	assert.Equal(t, "name", m.AnalysisDimensions[0].Name)
+}
+
+func TestParseMetricAttributes_WideTable(t *testing.T) {
+	a := parseMetricAttributes(`| Metric Type | Unit Type | Unit |
+|---|---|---|
+| atomic | cnt | pcs |
+`)
+	assert.Equal(t, "atomic", a.MetricType)
+	assert.Equal(t, "cnt", a.UnitType)
+	assert.Equal(t, "pcs", a.Unit)
+}
+
+func TestSerializeMetric_MetricTypeFromKind(t *testing.T) {
+	m := &BknMetric{
+		BknMetricFrontmatter: BknMetricFrontmatter{
+			Type: "metric",
+			ID:   "m1",
+			Name: "One",
+			Tags: []string{"t"},
+		},
+		Description: "d",
+		ScopeType:   "object_type",
+		ScopeRef:    "obj1",
+		Formula: &MetricFormula{
+			Kind: "atomic",
+			Atomic: &MetricAtomic{
+				Aggregation: &MetricAggregation{Property: "id", Aggr: "count"},
+			},
+		},
+		HasScopeSection:              true,
+		HasCalculationFormulaSection: true,
+	}
+	out := SerializeMetric(m)
+	assert.Contains(t, out, "### Metric attributes")
+	assert.Contains(t, out, "| Metric Type | Unit Type | Unit |")
+	assert.Contains(t, out, "| atomic |  |  |")
+	assert.NotContains(t, out, "\nmetric_type: atomic\n")
 }
